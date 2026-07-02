@@ -1,5 +1,19 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
+export type NearbyCat = {
+  id: string
+  name: string | null
+  primary_photo_url: string
+  lat: number
+  lng: number
+  is_ear_tipped: boolean
+  notes: string | null
+  tagged_by: string | null
+  confidence_score: number
+  created_at: string
+  distance_km: number
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -41,6 +55,7 @@ export type Database = {
           tagged_by: string | null
           confidence_score: number
           created_at: string
+          photo_embedding: string | null
         }
         Insert: {
           id?: string
@@ -53,6 +68,7 @@ export type Database = {
           tagged_by?: string | null
           confidence_score?: number
           created_at?: string
+          photo_embedding?: number[] | null
         }
         Update: {
           id?: string
@@ -65,6 +81,7 @@ export type Database = {
           tagged_by?: string | null
           confidence_score?: number
           created_at?: string
+          photo_embedding?: number[] | null
         }
       }
       sightings: {
@@ -151,9 +168,41 @@ export type Database = {
           created_at?: string
         }
       }
+      cat_tags: {
+        Row: {
+          id: string
+          cat_id: string
+          tag: 'needs_medical' | 'possible_rabies' | 'deceased'
+          added_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          cat_id: string
+          tag: 'needs_medical' | 'possible_rabies' | 'deceased'
+          added_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          cat_id?: string
+          tag?: 'needs_medical' | 'possible_rabies' | 'deceased'
+          added_by?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      nearby_cats: {
+        Args: { user_lat: number; user_lng: number; radius_km?: number }
+        Returns: NearbyCat[]
+      }
+      nearby_cats_by_similarity: {
+        Args: { cat_ids: string[]; query_embedding: string; limit_n?: number }
+        Returns: { id: string; similarity: number }[]
+      }
+    }
     Enums: Record<string, never>
   }
 }
@@ -164,3 +213,4 @@ export type Cat = Database['public']['Tables']['cats']['Row']
 export type Sighting = Database['public']['Tables']['sightings']['Row']
 export type MatchVote = Database['public']['Tables']['match_votes']['Row']
 export type MatchVoteEntry = Database['public']['Tables']['match_vote_entries']['Row']
+export type CatTag = Database['public']['Tables']['cat_tags']['Row']
