@@ -27,11 +27,7 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -50,7 +46,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${geist.className} antialiased bg-background text-foreground`}>
+      <body className={`${geist.className} bg-background text-foreground antialiased`}>
         {children}
         <Toaster position="top-center" />
       </body>

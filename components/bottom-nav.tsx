@@ -15,10 +15,11 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="flex items-center justify-around px-4 pb-safe">
+    <nav className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed right-0 bottom-0 left-0 z-50 border-t backdrop-blur">
+      <div className="pb-safe flex items-center justify-around px-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon, isFab }) => {
-          const isActive = pathname.startsWith(href) && !(href === '/map' && pathname.startsWith('/matches'))
+          const isActive =
+            pathname.startsWith(href) && !(href === '/map' && pathname.startsWith('/matches'))
 
           if (isFab) {
             return (
@@ -26,7 +27,7 @@ export default function BottomNav() {
                 key={href}
                 href={href}
                 aria-label={label}
-                className="relative -top-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95"
+                className="bg-primary text-primary-foreground relative -top-4 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform active:scale-95"
               >
                 <Icon className="h-6 w-6" strokeWidth={2.5} />
               </Link>
@@ -40,9 +41,7 @@ export default function BottomNav() {
               aria-label={label}
               className={cn(
                 'flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors',
-                isActive
-                  ? 'text-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <Icon className={cn('h-5 w-5', isActive && 'fill-primary/20')} />

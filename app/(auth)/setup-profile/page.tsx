@@ -43,7 +43,10 @@ export default function SetupProfilePage() {
     setLoading(true)
     const supabase = createClient()
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
     if (userError || !user) {
       toast.error('Session expired. Please sign in again.')
       router.push('/login')
@@ -80,26 +83,24 @@ export default function SetupProfilePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-8 text-center">
         <span className="text-4xl">🐾</span>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">One last step</h1>
-        <p className="text-muted-foreground text-sm mt-1">Choose your Cat-A-Log username</p>
+        <p className="text-muted-foreground mt-1 text-sm">Choose your Cat-A-Log username</p>
       </div>
 
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle>Set up your profile</CardTitle>
-          <CardDescription>
-            Your username is public and shown when you tag cats.
-          </CardDescription>
+          <CardDescription>Your username is public and shown when you tag cats.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="username">Username</Label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                <span className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 text-sm">
                   @
                 </span>
                 <Input
@@ -117,8 +118,10 @@ export default function SetupProfilePage() {
 
             <div className="space-y-1">
               <div className="flex justify-between">
-                <Label htmlFor="bio">Bio <span className="text-muted-foreground">(optional)</span></Label>
-                <span className="text-xs text-muted-foreground">{bioValue.length}/160</span>
+                <Label htmlFor="bio">
+                  Bio <span className="text-muted-foreground">(optional)</span>
+                </Label>
+                <span className="text-muted-foreground text-xs">{bioValue.length}/160</span>
               </div>
               <Input
                 id="bio"
@@ -126,9 +129,7 @@ export default function SetupProfilePage() {
                 maxLength={160}
                 {...register('bio')}
               />
-              {errors.bio && (
-                <p className="text-destructive text-xs">{errors.bio.message}</p>
-              )}
+              {errors.bio && <p className="text-destructive text-xs">{errors.bio.message}</p>}
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>

@@ -46,7 +46,9 @@ export default function LoginPage() {
     }
 
     // Check if profile exists (username set up)
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -63,12 +65,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4">
+    <div className="bg-background flex min-h-screen flex-col items-center justify-center px-4">
       {/* Logo */}
       <div className="mb-8 text-center">
         <span className="text-4xl">🐱</span>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">Cat-A-Log</h1>
-        <p className="text-muted-foreground text-sm mt-1">Tag the strays in your area</p>
+        <p className="text-muted-foreground mt-1 text-sm">Tag the strays in your area</p>
       </div>
 
       <Card className="w-full max-w-sm">
@@ -87,9 +89,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 {...register('email')}
               />
-              {errors.email && (
-                <p className="text-destructive text-xs">{errors.email.message}</p>
-              )}
+              {errors.email && <p className="text-destructive text-xs">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-1">
@@ -111,7 +111,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground mt-4">
+          <p className="text-muted-foreground mt-4 text-center text-sm">
             No account?{' '}
             <Link href="/register" className="text-primary underline underline-offset-4">
               Create one
