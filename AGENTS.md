@@ -46,7 +46,8 @@ app/
     components/
       bottom-nav.tsx       # Fixed bottom nav: Map | Tag (FAB) | Profile — used by this group's layout only
     map/page.tsx          # /map — placeholder (Day 3)
-    tag/page.tsx          # /tag — placeholder (Day 2)
+    tag/page.tsx          # /tag — photo-first "catch a cat" flow orchestrator
+    tag/components/       # photo/candidates/match-found/name/details screens + location-picker-map
     profile/me/page.tsx   # /profile/me — placeholder (Day 4)
   (auth)/                 # Route group: unauthenticated flows
     components/
@@ -88,9 +89,12 @@ The server client is already typed with `Database`. Do not pass env vars directl
 ```
 NEXT_PUBLIC_SUPABASE_URL      # Supabase project URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY # Supabase anon/publishable key
+HUGGINGFACE_API_TOKEN         # Server-only — Hugging Face Inference API token for CLIP photo embeddings
 ```
 
-Both are referenced as `process.env.NEXT_PUBLIC_SUPABASE_URL` and `process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY`. Do not introduce other variable names.
+Both Supabase vars are referenced as `process.env.NEXT_PUBLIC_SUPABASE_URL` and `process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+`HUGGINGFACE_API_TOKEN` has no `NEXT_PUBLIC_` prefix and must only be read from server-side code (Route Handlers) — never from a Client Component.
 
 ## Database schema summary
 
@@ -111,7 +115,7 @@ Do not hand-edit the database via the Supabase dashboard SQL editor — it will 
 
 **cats** — one record per unique real-world stray.
 
-- `id`, `name` (optional, ≤50 chars), `primary_photo_url`, `lat`, `lng`, `is_ear_tipped`, `notes` (≤500 chars), `tagged_by` (FK → profiles), `confidence_score`, `created_at`
+- `id`, `name` (optional, ≤50 chars), `primary_photo_url`, `photo_embedding` (pgvector, nullable — CLIP embedding of the primary photo, used for visual-similarity matching), `lat`, `lng`, `is_ear_tipped`, `notes` (≤500 chars), `tagged_by` (FK → profiles), `confidence_score`, `created_at`
 
 **sightings** — each time a cat is photographed at a location.
 
@@ -127,7 +131,14 @@ Do not hand-edit the database via the Supabase dashboard SQL editor — it will 
 - `id`, `match_vote_id`, `voted_by`, `vote` (`confirm` | `deny`), `created_at`
 - One vote per user per proposal (unique constraint)
 
+**cat_tags** — medical/welfare status flags on a cat (fixed vocabulary: `needs_medical`, `possible_rabies`, `deceased`; TNR status is `cats.is_ear_tipped`, not a tag).
+
+- `id`, `cat_id` (FK → cats), `tag`, `added_by` (FK → profiles), `created_at`
+- One row per (cat, tag) pair — a cat can have multiple different tags but not the same tag twice
+
 **nearby_cats(lat, lng, radius_km)** — SQL function returning cats within a bounding box with `distance_km`.
+
+**nearby_cats_by_similarity(cat_ids, query_embedding, limit_n)** — SQL function re-ranking a set of candidate cats by CLIP embedding cosine similarity (`pgvector`'s `<=>` operator).
 
 ## Auth flow
 
@@ -205,5 +216,4 @@ Run `npm run format` to format all files at once. Run `npm run format:check` to 
 ## Pages still to be built
 
 - `/map` — interactive map showing tagged cats nearby (planned: Day 3)
-- `/tag` — tag a new cat with photo + GPS (planned: Day 2)
 - `/profile/me` — user's own profile and their tagged cats (planned: Day 4)
