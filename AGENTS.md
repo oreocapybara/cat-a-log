@@ -1,7 +1,9 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
 <!-- END:nextjs-agent-rules -->
 
 ---
@@ -14,17 +16,17 @@ Cat-A-Log is a crowdsourced stray cat registry. Logged-in users can tag stray ca
 
 ## Stack
 
-| Layer | Choice |
-|---|---|
-| Framework | Next.js 16.2.10 (App Router) |
-| Language | TypeScript 5, strict mode |
-| Styling | Tailwind CSS v4 |
+| Layer         | Choice                                                       |
+| ------------- | ------------------------------------------------------------ |
+| Framework     | Next.js 16.2.10 (App Router)                                 |
+| Language      | TypeScript 5, strict mode                                    |
+| Styling       | Tailwind CSS v4                                              |
 | UI components | shadcn/ui (in `components/ui/`) + Base UI (`@base-ui/react`) |
-| Icons | Lucide React |
-| Auth + DB | Supabase (`@supabase/supabase-js`, `@supabase/ssr`) |
-| Forms | React Hook Form + Zod |
-| Toasts | Sonner |
-| Font | Geist (via `next/font/google`) |
+| Icons         | Lucide React                                                 |
+| Auth + DB     | Supabase (`@supabase/supabase-js`, `@supabase/ssr`)          |
+| Forms         | React Hook Form + Zod                                        |
+| Toasts        | Sonner                                                       |
+| Font          | Geist (via `next/font/google`)                               |
 
 ## Critical Next.js 16 differences
 
@@ -68,11 +70,11 @@ proxy.ts                  # Auth guard + session refresh (replaces middleware.ts
 
 ## Supabase clients — always use the right one
 
-| Context | Import |
-|---|---|
+| Context                                           | Import                                                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Server Components, Server Actions, Route Handlers | `import { createClient } from '@/lib/supabase/server'` — returns a Promise, must be awaited |
-| Client Components | `import { createClient } from '@/lib/supabase/client'` |
-| Do NOT create a new client inline | Always use these helpers |
+| Client Components                                 | `import { createClient } from '@/lib/supabase/client'`                                      |
+| Do NOT create a new client inline                 | Always use these helpers                                                                    |
 
 The server client is already typed with `Database`. Do not pass env vars directly to `createServerClient` or `createBrowserClient` — the helpers handle that.
 
@@ -90,19 +92,24 @@ Both are referenced as `process.env.NEXT_PUBLIC_SUPABASE_URL` and `process.env.N
 All tables have RLS enabled. See `supabase/schema.sql` for full policies and `lib/supabase/types.ts` for TypeScript types.
 
 **profiles** — one row per user, created manually on `/setup-profile` after signup.
+
 - `id` (uuid, FK → auth.users), `username` (unique, 2–30 chars), `avatar_url`, `bio` (≤160 chars), `tags_count`, `created_at`
 
 **cats** — one record per unique real-world stray.
+
 - `id`, `name` (optional, ≤50 chars), `primary_photo_url`, `lat`, `lng`, `is_ear_tipped`, `notes` (≤500 chars), `tagged_by` (FK → profiles), `confidence_score`, `created_at`
 
 **sightings** — each time a cat is photographed at a location.
+
 - `id`, `cat_id` (FK → cats), `photo_url`, `lat`, `lng`, `spotted_by` (FK → profiles), `created_at`
 
 **match_votes** — proposals that two cat records are the same animal.
+
 - `id`, `cat_a_id`, `cat_b_id`, `proposed_by`, `votes_confirm`, `votes_deny`, `status` (`pending` | `merged` | `rejected`), `created_at`
 - `cat_a_id < cat_b_id` is enforced to prevent duplicate pair proposals
 
 **match_vote_entries** — individual community votes on a match proposal.
+
 - `id`, `match_vote_id`, `voted_by`, `vote` (`confirm` | `deny`), `created_at`
 - One vote per user per proposal (unique constraint)
 
@@ -125,6 +132,60 @@ Public routes (no auth required): `/login`, `/register`, `/setup-profile`
 - Forms use React Hook Form + Zod. Error messages render as `<p className="text-destructive text-xs">`.
 - Toast notifications use `sonner` via `toast.success()` / `toast.error()`.
 - `cn()` from `@/lib/utils` for conditional class merging.
+
+## Commit conventions
+
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <short summary>
+
+[optional body — wrap at 72 chars]
+```
+
+Common types: `feat`, `fix`, `chore`, `refactor`, `docs`, `style`, `test`, `ci`
+
+Common scopes for this project: `auth`, `shell`, `map`, `tag`, `profile`, `db`, `ci`
+
+Examples:
+
+```
+feat(auth): add login page with email/password validation
+fix(proxy): handle missing session cookie on first load
+chore(deps): upgrade next to 16.3.0
+ci: add format check step to GitHub Actions workflow
+```
+
+Rules:
+
+- Subject line is lowercase after the colon, no trailing period
+- Keep the subject under 72 characters
+- Use the body to explain _what_ and _why_, not _how_
+- Breaking changes add `!` after the scope: `feat(db)!: rename profiles.handle to username`
+
+## CI / quality gates
+
+### GitHub Actions (`.github/workflows/ci.yml`)
+
+Runs on every PR and every push to any branch except `main`. Steps in order:
+
+1. `npm ci` — clean install
+2. `npm run format:check` — Prettier must pass with no diffs
+3. `npm run lint` — ESLint (Next.js core-web-vitals + TypeScript rules)
+4. `npm run type-check` — `tsc --noEmit` with strict mode
+5. `npm run build` — full Next.js production build
+
+The build step requires two repository secrets (Settings → Secrets and variables → Actions):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+### Local git hooks (husky)
+
+- **pre-commit** — runs `lint-staged`: ESLint --fix + Prettier --write on staged `.ts`/`.tsx` files; Prettier --write on `.js`, `.mjs`, `.json`, `.md`, `.css`
+- **pre-push** — runs `type-check → lint → build` in sequence; push is blocked if any step fails
+
+Run `npm run format` to format all files at once. Run `npm run format:check` to verify without writing.
 
 ## Pages still to be built
 
