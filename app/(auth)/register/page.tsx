@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { Cat } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,8 +65,10 @@ export default function RegisterPage() {
     <div className="bg-background flex min-h-screen flex-col items-center justify-center px-4">
       {/* Logo */}
       <div className="mb-8 text-center">
-        <span className="text-4xl">🐱</span>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">Cat-A-Log</h1>
+        <div className="bg-primary text-primary-foreground mx-auto flex h-14 w-14 items-center justify-center rounded-2xl">
+          <Cat className="h-7 w-7" />
+        </div>
+        <h1 className="font-heading mt-3 text-2xl font-bold tracking-tight">Cat-A-Log</h1>
         <p className="text-muted-foreground mt-1 text-sm">Tag the strays in your area</p>
       </div>
 
