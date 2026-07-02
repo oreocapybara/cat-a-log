@@ -6,6 +6,7 @@ import { CandidatesScreen } from './components/candidates-screen'
 import { MatchFoundScreen } from './components/match-found-screen'
 import { NameScreen } from './components/name-screen'
 import { DetailsScreen } from './components/details-screen'
+import { StepDots } from './components/step-dots'
 import type { NearbyCat } from '@/lib/supabase/types'
 
 type Screen =
@@ -15,9 +16,27 @@ type Screen =
   | { type: 'name'; photoUrl: string; lat: number; lng: number }
   | { type: 'details'; photoUrl: string; lat: number; lng: number; catName: string }
 
+const STEP_INDEX: Record<Screen['type'], number> = {
+  photo: 1,
+  candidates: 2,
+  'match-found': 3,
+  name: 3,
+  details: 4,
+}
+
 export default function TagPage() {
   const [screen, setScreen] = useState<Screen>({ type: 'photo' })
+  const totalSteps = screen.type === 'match-found' ? 3 : 4
 
+  return (
+    <>
+      <StepDots currentStep={STEP_INDEX[screen.type]} totalSteps={totalSteps} />
+      {renderScreen(screen, setScreen)}
+    </>
+  )
+}
+
+function renderScreen(screen: Screen, setScreen: (screen: Screen) => void) {
   switch (screen.type) {
     case 'photo':
       return (
