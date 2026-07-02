@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { GoogleButton } from '@/components/google-button'
 import { toast } from 'sonner'
 
 const loginSchema = z.object({
@@ -29,6 +30,12 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) })
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('oauth_error')) {
+      toast.error('Google sign-in failed. Try again.')
+    }
+  }, [])
 
   async function onSubmit(data: LoginForm) {
     setLoading(true)
@@ -110,6 +117,14 @@ export default function LoginPage() {
               {loading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
+
+          <div className="my-4 flex items-center gap-3">
+            <div className="border-border h-px flex-1 border-t" />
+            <span className="text-muted-foreground text-xs">or continue with Google</span>
+            <div className="border-border h-px flex-1 border-t" />
+          </div>
+
+          <GoogleButton label="Continue with Google" />
 
           <p className="text-muted-foreground mt-4 text-center text-sm">
             No account?{' '}

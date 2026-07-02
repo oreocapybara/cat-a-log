@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { GoogleButton } from '@/components/google-button'
 import { toast } from 'sonner'
 
 const registerSchema = z
@@ -119,6 +120,14 @@ export default function RegisterPage() {
               {loading ? 'Creating account…' : 'Create account'}
             </Button>
           </form>
+
+          <div className="my-4 flex items-center gap-3">
+            <div className="border-border h-px flex-1 border-t" />
+            <span className="text-muted-foreground text-xs">or continue with Google</span>
+            <div className="border-border h-px flex-1 border-t" />
+          </div>
+
+          <GoogleButton label="Sign up with Google" />
 
           <p className="text-muted-foreground mt-4 text-center text-sm">
             Already have an account?{' '}
