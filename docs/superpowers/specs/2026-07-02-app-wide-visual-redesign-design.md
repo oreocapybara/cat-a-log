@@ -75,6 +75,16 @@ Lucide only (already a dependency). Remove every emoji placeholder: 🐱 (login/
 - Wire `ThemeProvider` in `app/layout.tsx` around existing children, `attribute="class"`, `defaultTheme="system"`, `enableSystem`.
 - Toggle UI: a `Sun`/`Moon` Lucide icon switch on `/profile/me`. Defaults to OS preference on first visit; an explicit toggle overrides and persists via `next-themes`' own localStorage handling.
 
+## Animation
+
+- **Micro-interactions** (buttons, inputs, nav): already handled by existing shadcn primitives (`transition-colors`/`transition-all`, 150–200ms) — inherit new colors, no changes needed.
+- **Tag flow screen transitions**: the 5-screen switch in `tag/page.tsx` currently swaps components instantly. Add `animate-in fade-in slide-in-from-right-4 duration-200` (via the already-installed `tw-animate-css` — no new dependency) on each screen's root.
+- **Step-progress dots**: active dot transitions color/scale over 150ms on step change.
+- **Candidates screen cards**: plain fade-in on load — no staggered entrance (unneeded complexity for a handful of cards).
+- **Dark mode toggle**: the color swap itself is instant, not animated — cross-fading a whole page's color scheme tends to read as lag rather than smoothness; deliberate non-animation.
+- **Reduced motion**: wrap the new transition/`animate-in` classes in Tailwind's `motion-safe:` variant (native CSS media-query-backed, no JS) so `prefers-reduced-motion` users get instant state changes instead.
+- **Loading states**: already present (`Loader2` spinners on photo upload, disabled-button text swaps on auth forms) — recolor only, no new loading UI.
+
 ## New dependencies
 
 - `next-themes` — dark mode toggle (justification above).
@@ -96,4 +106,4 @@ Not applicable — no new data-fetching or mutation paths are introduced by this
 No test framework exists in this repo (no `npm test` script) and this is a styling-only change (no new business logic). Verification:
 
 1. `npm run type-check`, `npm run lint`, `npm run build` — existing CI gates.
-2. Manual walkthrough at 375px width, in both light and dark mode (toggle via the new `/profile/me` switch, and via OS preference on first load): login → register → setup-profile → map → tag (all 5 steps) → profile. Check contrast, touch target sizes, no emoji remnants, no horizontal scroll, focus rings visible.
+2. Manual walkthrough at 375px width, in both light and dark mode (toggle via the new `/profile/me` switch, and via OS preference on first load): login → register → setup-profile → map → tag (all 5 steps) → profile. Check contrast, touch target sizes, no emoji remnants, no horizontal scroll, focus rings visible, screen transitions in the tag flow feel smooth (not jarring, not sluggish), and with OS-level "reduce motion" enabled, transitions become instant.
