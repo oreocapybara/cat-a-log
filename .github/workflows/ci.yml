@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches-ignore:
-      - main  # main only receives PRs; direct pushes skipped
+      - main # main only receives PRs; direct pushes skipped
 
 concurrency:
   group: ci-${{ github.ref }}
