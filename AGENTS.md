@@ -43,17 +43,21 @@ app/
   globals.css             # Tailwind base styles
   (app)/                  # Route group: authenticated app shell
     layout.tsx            # Wraps children with <main> + <BottomNav>
+    components/
+      bottom-nav.tsx       # Fixed bottom nav: Map | Tag (FAB) | Profile — used by this group's layout only
     map/page.tsx          # /map — placeholder (Day 3)
     tag/page.tsx          # /tag — placeholder (Day 2)
     profile/me/page.tsx   # /profile/me — placeholder (Day 4)
   (auth)/                 # Route group: unauthenticated flows
+    components/
+      google-button.tsx    # "Continue/Sign up with Google" — shared by login/ and register/ only
     login/page.tsx        # /login
     register/page.tsx     # /register
     setup-profile/page.tsx # /setup-profile — username + bio after signup
+  auth/callback/route.ts  # OAuth code exchange; routes to /setup-profile or /map
 
 components/
-  bottom-nav.tsx          # Fixed bottom nav: Map | Tag (FAB) | Profile
-  ui/                     # shadcn/ui primitives (button, input, card, label, etc.)
+  ui/                     # shadcn/ui primitives (button, input, card, label, etc.) — cross-cutting design system, not feature logic
 
 lib/
   supabase/
@@ -142,6 +146,7 @@ Public routes (no auth required): `/login`, `/register`, `/setup-profile`
 - Forms use React Hook Form + Zod. Error messages render as `<p className="text-destructive text-xs">`.
 - Toast notifications use `sonner` via `toast.success()` / `toast.error()`.
 - `cn()` from `@/lib/utils` for conditional class merging.
+- Component placement: colocate at the narrowest scope that's true. A component used by one page lives in that page's own `components/` folder; one shared across a route group (e.g. by both `login/` and `register/`) lives in that group's `components/` folder (`app/(auth)/components/`, `app/(app)/components/`); only cross-cutting design-system primitives belong in the top-level `components/ui/`. Don't duplicate a shared component into multiple page folders.
 
 ## Commit conventions
 
