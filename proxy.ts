@@ -35,9 +35,8 @@ export async function proxy(request: NextRequest) {
 
   // Redirect unauthenticated users away from protected routes
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
-  const isStaticAsset = pathname.startsWith('/_next') || pathname.startsWith('/icons') || pathname === '/manifest.json' || pathname === '/sw.js'
 
-  if (!user && !isPublicRoute && !isStaticAsset) {
+  if (!user && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone()
     redirectUrl.pathname = '/login'
     return NextResponse.redirect(redirectUrl)
@@ -60,7 +59,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization)
      * - favicon.ico
+     * - icons (PWA icons)
+     * - manifest.json, sw.js (PWA files)
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icons/|manifest.json|sw.js).*)',
   ],
 }

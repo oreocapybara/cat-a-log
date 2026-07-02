@@ -63,7 +63,8 @@ lib/
   utils.ts                # cn() helper (clsx + tailwind-merge)
 
 supabase/
-  schema.sql              # Full DB schema — run in Supabase SQL editor
+  schema.sql              # Historical snapshot of the initial schema — do not edit or re-run; superseded by migrations/
+  migrations/             # Source of truth for DB schema — applied via Supabase CLI
 
 proxy.ts                  # Auth guard + session refresh (replaces middleware.ts)
 ```
@@ -89,7 +90,16 @@ Both are referenced as `process.env.NEXT_PUBLIC_SUPABASE_URL` and `process.env.N
 
 ## Database schema summary
 
-All tables have RLS enabled. See `supabase/schema.sql` for full policies and `lib/supabase/types.ts` for TypeScript types.
+All tables have RLS enabled. See `supabase/migrations/` for full policies and `lib/supabase/types.ts` for TypeScript types.
+
+The project is linked to the `cat-a-log` Supabase project (ref `izmgruerqrbbovaigjqg`). To change the schema:
+
+1. `npx supabase migration new <name>` — creates a new timestamped file in `supabase/migrations/`
+2. Write the SQL change in that file
+3. `npx supabase db push` — applies pending local migrations to the remote database
+4. Update `lib/supabase/types.ts` by hand to match (no `supabase gen types` step configured yet)
+
+Do not hand-edit the database via the Supabase dashboard SQL editor — it will drift from `supabase/migrations/` and `supabase migration list` will show a mismatch between local and remote.
 
 **profiles** — one row per user, created manually on `/setup-profile` after signup.
 
