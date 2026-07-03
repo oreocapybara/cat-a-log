@@ -165,7 +165,7 @@ export default function MapPage() {
         onMoveEnd={handleMoveEnd}
       />
 
-      <div className="absolute inset-x-4 top-4 flex items-center gap-2">
+      <div className="absolute inset-x-4 top-4 z-10 flex items-center gap-2">
         {searchStale ? (
           <Button
             type="button"

@@ -24,7 +24,7 @@ export function CatPreviewCard({
   onClose: () => void
 }) {
   return (
-    <Card className="absolute inset-x-4 bottom-24 flex-row items-start gap-3 p-3 shadow-lg">
+    <Card className="absolute inset-x-4 bottom-24 z-10 flex-row items-start gap-3 p-3 shadow-lg">
       <div className="bg-secondary h-16 w-16 shrink-0 overflow-hidden rounded-lg">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={cat.primary_photo_url} alt="" className="h-full w-full object-cover" />
