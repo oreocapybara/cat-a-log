@@ -47,7 +47,7 @@ export function CatMap({
   onMoveEnd: (move: MapMoveEnd) => void
 }) {
   return (
-    <MapContainer center={center} zoom={15} className="h-full w-full" zoomControl={false}>
+    <MapContainer center={center} zoom={15} className="isolate h-full w-full" zoomControl={false}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
