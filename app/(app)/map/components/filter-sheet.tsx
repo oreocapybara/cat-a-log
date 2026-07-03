@@ -1,41 +1,63 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Scissors } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import type { CatTag } from '@/lib/supabase/types'
+import { cn } from '@/lib/utils'
+import { TAG_META } from '@/lib/welfare-colors'
+import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 export type CatFilters = {
   earTippedOnly: boolean
   tags: CatTag['tag'][]
 }
 
-const TAG_OPTIONS: { value: CatTag['tag']; label: string }[] = [
-  { value: 'needs_medical', label: 'Needs medical attention' },
-  { value: 'possible_rabies', label: 'Possible rabies' },
-  { value: 'deceased', label: 'Deceased' },
-]
+const TAG_OPTIONS = Object.entries(TAG_META) as [CatTag['tag'], (typeof TAG_META)[CatTag['tag']]][]
+
+function matchesFilters(cat: NearbyCat, tags: CatTag['tag'][], filters: CatFilters): boolean {
+  if (filters.earTippedOnly && !cat.is_ear_tipped) return false
+  if (filters.tags.length > 0 && !filters.tags.some((tag) => tags.includes(tag))) return false
+  return true
+}
 
 export function FilterSheet({
   open,
   onOpenChange,
   filters,
   onApply,
+  cats,
+  catTags,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   filters: CatFilters
   onApply: (filters: CatFilters) => void
+  cats: NearbyCat[]
+  catTags: Map<string, CatTag['tag'][]>
 }) {
   const [draft, setDraft] = useState<CatFilters>(filters)
 
-  function toggleTag(tag: CatTag['tag'], checked: boolean) {
+  const matchCount = useMemo(
+    () => cats.filter((cat) => matchesFilters(cat, catTags.get(cat.id) ?? [], draft)).length,
+    [cats, catTags, draft]
+  )
+
+  const hasActiveFilters = draft.earTippedOnly || draft.tags.length > 0
+
+  function toggleTag(tag: CatTag['tag']) {
     setDraft((prev) => ({
       ...prev,
-      tags: checked ? [...prev.tags, tag] : prev.tags.filter((t) => t !== tag),
+      tags: prev.tags.includes(tag) ? prev.tags.filter((t) => t !== tag) : [...prev.tags, tag],
     }))
+  }
+
+  function toggleEarTipped() {
+    setDraft((prev) => ({ ...prev, earTippedOnly: !prev.earTippedOnly }))
+  }
+
+  function reset() {
+    setDraft({ earTippedOnly: false, tags: [] })
   }
 
   function handleApply() {
@@ -52,36 +74,64 @@ export function FilterSheet({
       }}
     >
       <DialogContent>
-        <DialogTitle>Filter cats</DialogTitle>
+        <div className="bg-border mx-auto -mt-2 mb-3 h-1 w-10 shrink-0 rounded-full" />
 
-        <div className="mt-4 flex items-center gap-2">
-          <Checkbox
-            id="ear-tipped-filter"
-            checked={draft.earTippedOnly}
-            onCheckedChange={(checked) => setDraft((prev) => ({ ...prev, earTippedOnly: checked }))}
-          />
-          <Label htmlFor="ear-tipped-filter" className="font-normal">
-            Ear-tipped only
-          </Label>
+        <div className="flex items-center justify-between">
+          <DialogTitle>Filter cats</DialogTitle>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={reset}
+              className="text-muted-foreground hover:text-foreground cursor-pointer text-xs font-medium underline-offset-2 hover:underline"
+            >
+              Reset
+            </button>
+          )}
         </div>
 
-        <div className="mt-4 flex flex-col gap-3">
-          {TAG_OPTIONS.map((option) => (
-            <div key={option.value} className="flex items-center gap-2">
-              <Checkbox
-                id={`tag-filter-${option.value}`}
-                checked={draft.tags.includes(option.value)}
-                onCheckedChange={(checked) => toggleTag(option.value, checked)}
-              />
-              <Label htmlFor={`tag-filter-${option.value}`} className="font-normal">
-                {option.label}
-              </Label>
-            </div>
-          ))}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={toggleEarTipped}
+            aria-pressed={draft.earTippedOnly}
+            className={cn(
+              'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-colors',
+              draft.earTippedOnly
+                ? 'bg-secondary text-secondary-foreground border-transparent'
+                : 'text-muted-foreground border-border hover:border-secondary-foreground/40'
+            )}
+          >
+            <Scissors className="h-3 w-3" />
+            Ear-tipped
+          </button>
+
+          {TAG_OPTIONS.map(([tag, meta]) => {
+            const active = draft.tags.includes(tag)
+            const Icon = meta.icon
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                aria-pressed={active}
+                className={cn(
+                  'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-colors',
+                  active
+                    ? cn(meta.className, 'border-transparent')
+                    : 'text-muted-foreground border-border hover:border-current'
+                )}
+              >
+                {Icon && <Icon className="h-3 w-3" />}
+                {meta.label}
+              </button>
+            )
+          })}
         </div>
 
         <Button type="button" className="mt-6 w-full" onClick={handleApply}>
-          Apply filters
+          {matchCount === 0
+            ? 'Show 0 cats in this area'
+            : `Show ${matchCount} cat${matchCount === 1 ? '' : 's'}`}
         </Button>
       </DialogContent>
     </Dialog>
