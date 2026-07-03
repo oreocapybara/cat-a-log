@@ -11,10 +11,10 @@ export function NameScreen({ onNext }: { onNext: (name: string) => void }) {
   const [name, setName] = useState(() => generateCatName())
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-6">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 mx-auto max-w-sm px-4 pt-10 pb-6 motion-safe:duration-200">
       <div className="mb-6 text-center">
         <span className="text-5xl">🐱</span>
-        <h1 className="mt-4 text-2xl font-bold tracking-tight">Gotcha!</h1>
+        <h1 className="font-heading mt-4 text-2xl font-bold tracking-tight">Gotcha!</h1>
         <p className="text-muted-foreground mt-1 text-sm">You caught a new cat</p>
       </div>
 

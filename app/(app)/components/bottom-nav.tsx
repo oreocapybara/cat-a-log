@@ -27,7 +27,7 @@ export default function BottomNav() {
                 key={href}
                 href={href}
                 aria-label={label}
-                className="bg-primary text-primary-foreground relative -top-4 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform active:scale-95"
+                className="bg-primary text-primary-foreground shadow-primary/30 relative -top-4 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform active:scale-95"
               >
                 <Icon className="h-6 w-6" strokeWidth={2.5} />
               </Link>
