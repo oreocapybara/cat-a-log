@@ -128,3 +128,136 @@
     @apply font-sans;
   }
 }
+
+/* Map screen motion (cat markers, user-location dot, tile loading) */
+@keyframes bounce-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce-in-lift {
+  0% {
+    transform: scale(0) translateY(0);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.15) translateY(-2px);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(0.92) translateY(-6px);
+  }
+  100% {
+    transform: scale(1) translateY(-6px);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 16px rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes pulse-ring-urgent {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+}
+
+@keyframes pulse-ring-primary {
+  0% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 12px rgba(249, 115, 22, 0);
+  }
+}
+
+.map-marker-pop,
+.map-marker-pop-active {
+  transition: transform 100ms ease-out;
+}
+
+.map-marker-pop:active,
+.map-marker-pop-active:active {
+  transform: scale(0.9);
+}
+
+.map-marker-pop {
+  animation: bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+/* Selected marker: same pop-in, but settles lifted (translateY) instead of flat.
+   The lift is a plain declared `transform`, not animation fill-mode — a `forwards`/`both`
+   fill keeps "winning" the cascade forever and blocks the `:active` squish above from
+   ever applying. `backwards` only covers the pre-start (staggered) delay; once the
+   animation ends, this declared transform takes back over and `:active` can override it. */
+.map-marker-pop-active {
+  transform: translateY(-6px);
+  animation: bounce-in-lift 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.map-user-pulse {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.map-badge-pulse {
+  animation: pulse-ring-urgent 1.6s ease-out infinite;
+}
+
+.map-locate-pulse {
+  animation: pulse-ring-primary 1.8s ease-out infinite;
+}
+
+.leaflet-tile {
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+
+.leaflet-tile-loaded {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-marker-pop {
+    animation: none;
+  }
+  .map-marker-pop-active {
+    animation: none;
+    transform: translateY(-6px);
+  }
+  .map-user-pulse {
+    animation: none;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.35);
+  }
+  .map-badge-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.4);
+  }
+  .map-locate-pulse {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.4);
+  }
+  .leaflet-tile {
+    opacity: 1;
+    transition: none;
+  }
+}
