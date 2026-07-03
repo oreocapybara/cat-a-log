@@ -67,7 +67,7 @@ export function MatchFoundScreen({
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center px-4 pt-10 pb-6 text-center motion-safe:duration-200">
       <span className="text-5xl">🎉</span>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight">
+      <h1 className="font-heading mt-4 text-2xl font-bold tracking-tight">
         You found {cat.name ?? 'this cat'}!
       </h1>
       {/* eslint-disable-next-line @next/next/no-img-element */}

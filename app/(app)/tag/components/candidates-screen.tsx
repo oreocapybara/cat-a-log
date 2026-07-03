@@ -87,7 +87,7 @@ export function CandidatesScreen({
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 mx-auto max-w-sm px-4 pt-10 pb-6 motion-safe:duration-200">
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Is it one of these?</h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight">Is it one of these?</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {candidates.length > 0
             ? 'Cats spotted nearby'
