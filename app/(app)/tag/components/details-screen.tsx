@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,12 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
-import { toast } from 'sonner'
 
 const MEDICAL_TAGS = [
   { value: 'needs_medical', label: 'Needs medical attention' },
   { value: 'possible_rabies', label: 'Possible rabies' },
-  { value: 'deceased', label: 'Deceased' },
+  { value: 'deceased', label: 'Passed away' },
 ] as const
 
 const detailsSchema = z.object({
@@ -23,20 +21,15 @@ const detailsSchema = z.object({
   tags: z.array(z.string()),
 })
 
-type DetailsForm = z.infer<typeof detailsSchema>
+export type DetailsFormValues = z.infer<typeof detailsSchema>
 
 export function DetailsScreen({
   name,
-  photoUrl,
-  lat,
-  lng,
+  onSave,
 }: {
   name: string
-  photoUrl: string
-  lat: number
-  lng: number
+  onSave: (details: DetailsFormValues) => Promise<void>
 }) {
-  const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
 
   const {
@@ -44,43 +37,15 @@ export function DetailsScreen({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<DetailsForm>({
+  } = useForm<DetailsFormValues>({
     resolver: zodResolver(detailsSchema),
     defaultValues: { isEarTipped: false, tags: [] },
   })
 
-  async function onSubmit(data: DetailsForm) {
+  async function onSubmit(data: DetailsFormValues) {
     setSubmitting(true)
-
-    const response = await fetch('/api/catch-cat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        photoUrl,
-        lat,
-        lng,
-        name,
-        isEarTipped: data.isEarTipped,
-        notes: data.notes || null,
-        tags: data.tags,
-      }),
-    })
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        toast.error('Session expired. Please sign in again.')
-        router.push('/login')
-        return
-      }
-
-      const responseBody = await response.json().catch(() => ({ error: 'Something went wrong' }))
-      toast.error(responseBody.error ?? 'Something went wrong')
-      setSubmitting(false)
-      return
-    }
-
-    toast.success(`${name} was caught! 🐱`)
-    router.push('/map')
+    await onSave(data)
+    setSubmitting(false)
   }
 
   return (

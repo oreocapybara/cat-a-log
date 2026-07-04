@@ -46,7 +46,7 @@ export default function MapPage() {
   const firstMoveEndRef = useRef(true)
   const watchIdRef = useRef<number | null>(null)
 
-  async function fetchCats(lat: number, lng: number, radiusKm: number) {
+  async function fetchCats(lat: number, lng: number, radiusKm: number, selectCatId?: string) {
     setLoadingCats(true)
     const supabase = createClient()
     const { data, error } = await supabase.rpc('nearby_cats', {
@@ -63,7 +63,7 @@ export default function MapPage() {
 
     const nearbyCats = data ?? []
     setCats(nearbyCats)
-    setSelectedCatId(null)
+    setSelectedCatId(selectCatId ?? null)
 
     if (nearbyCats.length > 0) {
       const { data: tagRows, error: tagError } = await supabase
@@ -92,13 +92,14 @@ export default function MapPage() {
   }
 
   function fetchLocation() {
+    const initialCatId = new URLSearchParams(window.location.search).get('cat')
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude
         const lng = position.coords.longitude
         setLocation({ status: 'success', lat, lng })
         setUserLocation([lat, lng])
-        fetchCats(lat, lng, INITIAL_RADIUS_KM)
+        fetchCats(lat, lng, INITIAL_RADIUS_KM, initialCatId ?? undefined)
       },
       () => setLocation({ status: 'error' }),
       { enableHighAccuracy: true }

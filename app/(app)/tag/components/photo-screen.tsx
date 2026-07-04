@@ -2,11 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
 import { Camera, MapPin, Loader2, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
 
 const LocationPickerMap = dynamic(
   () => import('./location-picker-map').then((mod) => mod.LocationPickerMap),
@@ -21,13 +18,11 @@ type LocationState =
 export function PhotoScreen({
   onNext,
 }: {
-  onNext: (data: { photoUrl: string; lat: number; lng: number }) => void
+  onNext: (data: { photoUrl: string; file: File; lat: number; lng: number }) => void
 }) {
-  const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [location, setLocation] = useState<LocationState>({ status: 'loading' })
   const [showMap, setShowMap] = useState(false)
 
@@ -54,61 +49,25 @@ export function PhotoScreen({
     fetchLocation()
   }, [])
 
-  useEffect(() => {
-    return () => {
-      if (photoPreview) URL.revokeObjectURL(photoPreview)
-    }
-  }, [photoPreview])
-
-  async function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
-
     setPhotoPreview(URL.createObjectURL(file))
-    setPhotoUrl(null)
-    setUploading(true)
-
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      toast.error('Session expired. Please sign in again.')
-      setUploading(false)
-      router.push('/login')
-      return
-    }
-
-    const path = `${user.id}/${crypto.randomUUID()}-${file.name}`
-    const { error } = await supabase.storage.from('cat-photos').upload(path, file)
-
-    if (error) {
-      toast.error(error.message)
-      setUploading(false)
-      return
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('cat-photos').getPublicUrl(path)
-
-    setPhotoUrl(publicUrl)
-    setUploading(false)
+    setPhotoFile(file)
   }
 
   function clearPhoto() {
     setPhotoPreview(null)
-    setPhotoUrl(null)
+    setPhotoFile(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   function handleContinue() {
-    if (!photoUrl || location.status !== 'success') return
-    onNext({ photoUrl, lat: location.lat, lng: location.lng })
+    if (!photoFile || !photoPreview || location.status !== 'success') return
+    onNext({ photoUrl: photoPreview, file: photoFile, lat: location.lat, lng: location.lng })
   }
 
-  const canContinue = !!photoUrl && !uploading && location.status === 'success'
+  const canContinue = !!photoFile && location.status === 'success'
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 mx-auto max-w-sm px-4 pt-10 pb-6 motion-safe:duration-200">
@@ -135,11 +94,6 @@ export function PhotoScreen({
                 alt="Selected cat"
                 className="border-border h-56 w-full rounded-lg border object-cover"
               />
-              {uploading && (
-                <div className="bg-background/60 absolute inset-0 flex items-center justify-center rounded-lg">
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                </div>
-              )}
               <Button
                 type="button"
                 variant="outline"
@@ -210,7 +164,7 @@ export function PhotoScreen({
         )}
 
         <Button type="button" className="w-full" disabled={!canContinue} onClick={handleContinue}>
-          {uploading ? 'Uploading…' : 'Continue'}
+          Continue
         </Button>
       </div>
     </div>

@@ -2,7 +2,17 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/register', '/setup-profile', '/auth/callback']
+const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/register',
+  '/setup-profile',
+  '/auth/callback',
+  '/map',
+  '/tag',
+  '/tag/save',
+  '/profile/me',
+]
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -34,7 +44,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Redirect unauthenticated users away from protected routes
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname)
 
   if (!user && !isPublicRoute) {
     if (pathname.startsWith('/api/')) {

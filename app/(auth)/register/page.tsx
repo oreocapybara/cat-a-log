@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { GoogleButton } from '../components/google-button'
+import { GoogleButton } from '@/app/components/google-button'
+import { useReturnTo } from '@/lib/use-return-to'
 import { toast } from 'sonner'
 
 const registerSchema = z
@@ -35,6 +36,7 @@ type RegisterForm = z.infer<typeof registerSchema>
 export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const returnTo = useReturnTo()
 
   const {
     register,
@@ -58,7 +60,7 @@ export default function RegisterPage() {
     }
 
     toast.success('Account created! Set up your username.')
-    router.push('/setup-profile')
+    router.push(`/setup-profile${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`)
   }
 
   return (
@@ -130,11 +132,14 @@ export default function RegisterPage() {
             <div className="border-border h-px flex-1 border-t" />
           </div>
 
-          <GoogleButton label="Sign up with Google" />
+          <GoogleButton label="Sign up with Google" returnTo={returnTo ?? undefined} />
 
           <p className="text-muted-foreground mt-4 text-center text-sm">
             Already have an account?{' '}
-            <Link href="/login" className="text-primary underline underline-offset-4">
+            <Link
+              href={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login'}
+              className="text-primary underline underline-offset-4"
+            >
               Sign in
             </Link>
           </p>

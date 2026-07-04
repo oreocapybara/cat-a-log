@@ -28,16 +28,20 @@ function GoogleLogo() {
   )
 }
 
-export function GoogleButton({ label }: { label: string }) {
+export function GoogleButton({ label, returnTo }: { label: string; returnTo?: string }) {
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
     setLoading(true)
     const supabase = createClient()
 
+    const redirectTo = returnTo
+      ? `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`
+      : `${window.location.origin}/auth/callback`
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo },
     })
 
     if (error) {

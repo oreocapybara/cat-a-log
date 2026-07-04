@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useReturnTo } from '@/lib/use-return-to'
 import { toast } from 'sonner'
 
 const profileSchema = z.object({
@@ -39,6 +40,7 @@ export default function SetupProfilePage() {
   } = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) })
 
   const bioValue = watch('bio') ?? ''
+  const returnTo = useReturnTo()
 
   async function onSubmit(data: ProfileForm) {
     setLoading(true)
@@ -80,7 +82,7 @@ export default function SetupProfilePage() {
     }
 
     toast.success(`Welcome to Cat-A-Log, @${data.username}! 🐱`)
-    router.push('/map')
+    router.push(returnTo || '/map')
   }
 
   return (
