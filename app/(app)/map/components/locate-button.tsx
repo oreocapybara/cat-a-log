@@ -28,7 +28,7 @@ export function LocateButton({
         'absolute right-4 bottom-28 z-10 flex h-11 w-11 items-center justify-center rounded-full border shadow-sm backdrop-blur-md transition-colors',
         following
           ? 'map-locate-pulse bg-primary text-primary-foreground border-transparent'
-          : 'bg-card/70 dark:bg-card/50 border-white/40 dark:border-white/10'
+          : 'bg-card/70 dark:bg-card/90 border-white/40 dark:border-white/10'
       )}
     >
       <LocateFixed className="h-5 w-5" />

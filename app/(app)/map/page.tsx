@@ -288,7 +288,7 @@ export default function MapPage() {
           type="button"
           variant="outline"
           size="icon"
-          className="bg-card/70 dark:bg-card/50 relative shrink-0 rounded-full border-white/40 shadow-sm backdrop-blur-md dark:border-white/10"
+          className="bg-card/70 dark:bg-card/90 relative shrink-0 rounded-full border-white/40 shadow-sm backdrop-blur-md dark:border-white/10"
           aria-label={
             filters.earTippedOnly || filters.tags.length > 0
               ? 'Filter cats (filters active)'
