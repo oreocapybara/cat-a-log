@@ -11,7 +11,6 @@ export async function GET(_request: Request, { params }: Props) {
   const { username } = await params
   const supabase = await createClient()
 
-  // Fetch profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, username, avatar_url, bio, featured_cat_id')
@@ -22,7 +21,6 @@ export async function GET(_request: Request, { params }: Props) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
-  // Fetch user's cats
   const { data: myCats } = await supabase
     .from('cats')
     .select('id, name, primary_photo_url, created_at')
@@ -31,7 +29,6 @@ export async function GET(_request: Request, { params }: Props) {
 
   const catIds = (myCats ?? []).map((cat) => cat.id)
 
-  // Fetch sighting counts
   const sightingCounts = new Map<string, number>()
   if (catIds.length > 0) {
     const { data: sightingRows } = await supabase
@@ -51,7 +48,6 @@ export async function GET(_request: Request, { params }: Props) {
 
   const totalSightings = cats.reduce((sum, cat) => sum + cat.timesSpotted, 0)
 
-  // Determine featured/hero cat
   const heroCat = (() => {
     if (profile.featured_cat_id) {
       const picked = cats.find((c) => c.id === profile.featured_cat_id)
@@ -63,8 +59,13 @@ export async function GET(_request: Request, { params }: Props) {
 
   const heroTier = heroCat ? getSightingTier(heroCat.timesSpotted) : null
 
-  // Get up to 6 recent cats for grid (excluding hero)
-  const gridCats = cats.filter((c) => c.id !== heroCat?.id).slice(0, 6)
+  // Up to 4 cats for the collection strip (excluding hero)
+  const collectionCats = cats.filter((c) => c.id !== heroCat?.id).slice(0, 4)
+
+  // Psychology: the card tells a story in 3 seconds of glancing:
+  // 1. HERO IMAGE — "wow, cute/interesting cat" (emotional hook)
+  // 2. TIER + STATS — "this is rare/impressive" (status/envy)
+  // 3. PERSON + CTA — "someone real did this, I could too" (belonging + action)
 
   return new ImageResponse(
     (
@@ -74,80 +75,139 @@ export async function GET(_request: Request, { params }: Props) {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: '#0a0a0a',
+          backgroundColor: '#0c0a09',
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
+        {/* === SECTION 1: HERO IMAGE (60%) — The Emotional Hook === */}
         {heroCat && (
-          <div style={{ display: 'flex', position: 'relative', width: '100%', height: '55%' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div style={{ display: 'flex', position: 'relative', width: '100%', height: '58%' }}>
             <img
               src={heroCat.primary_photo_url}
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
+
+            {/* Dramatic vignette — draws eye to center of photo */}
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                background:
+                  'radial-gradient(ellipse at center, transparent 40%, rgba(12,10,9,0.7) 100%)',
+              }}
+            />
+
+            {/* Bottom gradient for text readability */}
             <div
               style={{
                 position: 'absolute',
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: '70%',
-                background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)',
+                height: '50%',
                 display: 'flex',
+                background: 'linear-gradient(to top, #0c0a09, transparent)',
               }}
             />
-            {heroTier && (
-              <div
+
+            {/* Hero cat name + tier — overlaid on photo for maximum impact */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 32,
+                left: 48,
+                right: 48,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              {/* Cat name — large, bold, the star of the show */}
+              <span
                 style={{
-                  position: 'absolute',
-                  bottom: 20,
-                  left: 40,
-                  display: 'flex',
-                  alignItems: 'center',
-                  backgroundColor: `${heroTier.color}33`,
-                  borderRadius: 999,
-                  padding: '8px 16px',
+                  color: 'white',
+                  fontSize: 56,
+                  fontWeight: 800,
+                  lineHeight: 1.1,
+                  textShadow: '0 2px 20px rgba(0,0,0,0.8)',
                 }}
               >
-                <span
-                  style={{
-                    color: heroTier.color,
-                    fontSize: 24,
-                    fontWeight: 800,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {heroTier.name}
-                </span>
-              </div>
-            )}
+                {heroCat.name ?? 'Unknown Cat'}
+              </span>
+
+              {/* Tier badge — THE status symbol that creates envy */}
+              {heroTier && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '10px 20px',
+                      borderRadius: 999,
+                      backgroundColor: `${heroTier.color}25`,
+                      border: `2px solid ${heroTier.color}60`,
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: heroTier.color,
+                        fontSize: 22,
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        textShadow: heroTier.glow
+                          ? `0 0 20px ${heroTier.color}, 0 0 40px ${heroTier.color}80`
+                          : 'none',
+                      }}
+                    >
+                      {heroTier.name}
+                    </span>
+                  </div>
+                  {/* Spotted count — social proof number */}
+                  <span
+                    style={{
+                      color: heroTier.color,
+                      fontSize: 22,
+                      fontWeight: 700,
+                      opacity: 0.9,
+                    }}
+                  >
+                    Spotted {heroCat.timesSpotted}×
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
+        {/* === SECTION 2: PROFILE INFO — Social Proof + Collection === */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
-            padding: '40px',
             flex: 1,
+            padding: '36px 48px',
             justifyContent: 'space-between',
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Profile identity */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            {/* Avatar + name row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
               {profile.avatar_url ? (
                 <div
                   style={{
-                    width: 64,
-                    height: 64,
+                    width: 72,
+                    height: 72,
                     borderRadius: 999,
                     overflow: 'hidden',
                     display: 'flex',
+                    border: '3px solid rgba(255,255,255,0.15)',
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={profile.avatar_url}
                     alt=""
@@ -157,68 +217,125 @@ export async function GET(_request: Request, { params }: Props) {
               ) : (
                 <div
                   style={{
-                    width: 64,
-                    height: 64,
+                    width: 72,
+                    height: 72,
                     borderRadius: 999,
                     backgroundColor: '#f97316',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: 'white',
-                    fontSize: 24,
+                    fontSize: 28,
                     fontWeight: 700,
                   }}
                 >
                   {username.slice(0, 2).toUpperCase()}
                 </div>
               )}
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ color: 'white', fontSize: 36, fontWeight: 700 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ color: 'white', fontSize: 34, fontWeight: 700 }}>
                   @{profile.username}
                 </span>
-                {profile.bio && (
-                  <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 22 }}>
-                    {profile.bio}
-                  </span>
-                )}
+                {/* Stats — creates "impressive collection" feeling */}
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22, fontWeight: 500 }}>
+                  {cats.length} {cats.length === 1 ? 'cat' : 'cats'} discovered · {totalSightings}{' '}
+                  {totalSightings === 1 ? 'sighting' : 'sightings'}
+                </span>
               </div>
             </div>
 
-            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 26, fontWeight: 600 }}>
-              {cats.length} {cats.length === 1 ? 'Cat' : 'Cats'} · {totalSightings}{' '}
-              {totalSightings === 1 ? 'Sighting' : 'Sightings'}
-            </span>
-
-            {gridCats.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 16 }}>
-                {gridCats.map((cat) => (
-                  <div
-                    key={cat.id}
-                    style={{
-                      width: 150,
-                      height: 150,
-                      borderRadius: 16,
-                      overflow: 'hidden',
-                      display: 'flex',
-                    }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={cat.primary_photo_url}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  </div>
-                ))}
+            {/* Collection strip — shows breadth, creates "I want this" feeling */}
+            {collectionCats.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <span
+                  style={{
+                    color: 'rgba(255,255,255,0.4)',
+                    fontSize: 16,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                  }}
+                >
+                  Collection
+                </span>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  {collectionCats.map((cat, i) => (
+                    <div
+                      key={cat.id}
+                      style={{
+                        width: 120,
+                        height: 120,
+                        borderRadius: 16,
+                        overflow: 'hidden',
+                        display: 'flex',
+                        opacity: 1 - i * 0.12,
+                        border: '2px solid rgba(255,255,255,0.08)',
+                      }}
+                    >
+                      <img
+                        src={cat.primary_photo_url}
+                        alt=""
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  ))}
+                  {/* "More" indicator — creates curiosity gap */}
+                  {cats.length > 5 && (
+                    <div
+                      style={{
+                        width: 120,
+                        height: 120,
+                        borderRadius: 16,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        border: '2px solid rgba(255,255,255,0.08)',
+                      }}
+                    >
+                      <span
+                        style={{ color: 'rgba(255,255,255,0.5)', fontSize: 24, fontWeight: 700 }}
+                      >
+                        +{cats.length - 5}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 24 }}>
-            <span style={{ fontSize: 24 }}>🐾</span>
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22, fontWeight: 600 }}>
-              cat-a-log.app
-            </span>
+          {/* === SECTION 3: CTA — The Conversion Hook === */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
+              paddingTop: 24,
+            }}
+          >
+            {/* Branding + CTA that creates action intent */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 22, fontWeight: 700 }}>
+                🐾 Cat-A-Log
+              </span>
+              <span style={{ color: '#f97316', fontSize: 18, fontWeight: 600 }}>
+                Discover the strays around you
+              </span>
+            </div>
+            {/* Fake button — visual CTA that implies tappability */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '12px 24px',
+                borderRadius: 999,
+                backgroundColor: '#f97316',
+              }}
+            >
+              <span style={{ color: 'white', fontSize: 18, fontWeight: 700 }}>Join the hunt</span>
+            </div>
           </div>
         </div>
       </div>
