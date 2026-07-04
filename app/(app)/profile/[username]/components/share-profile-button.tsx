@@ -9,14 +9,13 @@ export function ShareProfileButton({ username }: { username: string }) {
   const [loading, setLoading] = useState(false)
 
   async function handleShare() {
-    setLoading(true)
-
     const cardUrl = `/api/profile-card/${username}`
     const profileUrl = `${window.location.origin}/profile/${username}`
 
-    try {
-      // Try Web Share API with image file (mobile-first path)
-      if (navigator.canShare) {
+    // Try Web Share API with image file (mobile-first path)
+    if (navigator.canShare) {
+      setLoading(true)
+      try {
         const res = await fetch(cardUrl)
         if (!res.ok) throw new Error('Failed to generate card')
         const blob = await res.blob()
@@ -32,9 +31,24 @@ export function ShareProfileButton({ username }: { username: string }) {
           setLoading(false)
           return
         }
+      } catch (error) {
+        // User cancelled share sheet — not an error
+        if (error instanceof Error && error.name === 'AbortError') {
+          setLoading(false)
+          return
+        }
+        // Fall through to copy link fallback
+      } finally {
+        setLoading(false)
       }
+    }
 
-      // Fallback: download the image
+    // Fallback: copy profile link to clipboard
+    try {
+      await navigator.clipboard.writeText(profileUrl)
+      toast.success('Link copied! 🔗')
+    } catch {
+      // Clipboard API failed — last resort: download the image
       const a = document.createElement('a')
       a.href = cardUrl
       a.download = `${username}-cat-a-log.png`
@@ -42,15 +56,6 @@ export function ShareProfileButton({ username }: { username: string }) {
       a.click()
       document.body.removeChild(a)
       toast.success('Card downloaded!')
-    } catch (error) {
-      // User cancelled share sheet — not an error
-      if (error instanceof Error && error.name === 'AbortError') {
-        // no-op
-      } else {
-        toast.error('Could not share profile')
-      }
-    } finally {
-      setLoading(false)
     }
   }
 
