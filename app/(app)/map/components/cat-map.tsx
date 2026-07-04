@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { getStalenessOpacity } from '@/lib/geo'
+import { buildClusterIndex, getMapPoints, type MapPoint } from '@/lib/clustering'
 import { DEFAULT_WELFARE_COLOR, getWelfareTier } from '@/lib/welfare-colors'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
@@ -82,6 +82,90 @@ function welfareBadgeHtml(badge: WelfareStyle['badge'], size: number): string {
       line-height:1;
     ">${badge.glyph}</div>
   `
+}
+
+const CLUSTER_PHOTO_OFFSETS = [
+  { top: 2, left: 2, z: 3 },
+  { top: 12, left: 12, z: 2 },
+  { top: 22, left: 22, z: 1 },
+]
+
+// Cluster bubble: a clipped-circle stack of up to 3 member photos (fanned
+// diagonally) plus a count badge, so a cluster reads as "a pile of cats"
+// rather than a plain counter — matches the photo-forward pin style used
+// everywhere else on the map. Welfare urgency is computed by flattening every
+// member cat's tags into one list and running the existing priority logic
+// (getWelfareStyle) over it, so a single needs_medical cat inside a cluster
+// of 20 still surfaces the same red ring/pulse an individual pin would show.
+function makeClusterIcon(
+  point: Extract<MapPoint, { type: 'cluster' }>,
+  catTags: Map<string, CatTag['tag'][]>
+): L.DivIcon {
+  const allTags = point.cats.flatMap((cat) => catTags.get(cat.id) ?? NO_TAGS)
+  const welfare = getWelfareStyle(allTags)
+  const photoFilter = welfare.desaturate ? 'filter:grayscale(1) opacity(0.75);' : ''
+
+  const photosHtml = point.cats
+    .slice(0, 3)
+    .map((cat, i) => {
+      const encodedUrl = cat.primary_photo_url.replace(/'/g, '%27').replace(/"/g, '%22')
+      const { top, left, z } = CLUSTER_PHOTO_OFFSETS[i]
+      return `
+        <div style="
+          position:absolute;
+          top:${top}px;
+          left:${left}px;
+          width:26px;
+          height:26px;
+          border-radius:50%;
+          border:1.5px solid #fff;
+          background-image:url('${encodedUrl}');
+          background-size:cover;
+          background-position:center;
+          z-index:${z};
+          ${photoFilter}
+        "></div>
+      `
+    })
+    .join('')
+
+  const countLabel = point.count > 99 ? '99+' : String(point.count)
+
+  const html = `
+    <div class="map-marker-pop" style="position:relative;width:52px;height:52px;">
+      <div style="
+        position:relative;
+        width:52px;
+        height:52px;
+        border-radius:50%;
+        border:2.5px solid ${welfare.borderColor};
+        background:#fff;
+        overflow:hidden;
+        isolation:isolate;
+        box-shadow:0 2px 6px rgba(0,0,0,0.2);
+      ">${photosHtml}</div>
+      ${welfareBadgeHtml(welfare.badge, 18)}
+      <div style="
+        position:absolute;
+        bottom:-2px;
+        right:-2px;
+        min-width:20px;
+        height:20px;
+        padding:0 4px;
+        border-radius:9999px;
+        background:#f97316;
+        color:#fff;
+        font-size:10px;
+        font-weight:700;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:2px solid #fff;
+        box-shadow:0 1px 3px rgba(0,0,0,0.3);
+      ">${countLabel}</div>
+    </div>
+  `
+  return L.divIcon({ className: '', html, iconSize: [52, 52], iconAnchor: [26, 26] })
 }
 
 /**
@@ -225,6 +309,24 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   return null
 }
 
+type ClusterViewport = { bounds: L.LatLngBounds; zoom: number }
+
+// Recomputes clusters only when a pan/zoom gesture settles (moveend), not on
+// every intermediate animation frame — matches how cat data itself only
+// refetches at moveend (see page.tsx's onMoveEnd), and avoids cluster
+// bubbles visibly thrashing mid-gesture.
+function ClusterViewportTracker({ onChange }: { onChange: (viewport: ClusterViewport) => void }) {
+  const map = useMapEvents({
+    moveend() {
+      onChange({ bounds: map.getBounds(), zoom: map.getZoom() })
+    },
+  })
+  useEffect(() => {
+    onChange({ bounds: map.getBounds(), zoom: map.getZoom() })
+  }, [map, onChange])
+  return null
+}
+
 // Memoizes its own icon rather than sharing one combined map across all
 // markers — selecting/deselecting one cat must not rebuild (and thus
 // remount + re-animate) every other marker on the map. See the root-cause
@@ -256,6 +358,32 @@ function CatMarker({
   )
 }
 
+// Tapping a cluster always zooms in to break it apart — no list/preview view
+// (see design spec). getClusterExpansionZoom was already computed for this
+// exact point in lib/clustering.ts, straight off the same index, so it's safe
+// to fly to directly here without re-querying the index.
+function ClusterMarker({
+  point,
+  catTags,
+  dimmed,
+}: {
+  point: Extract<MapPoint, { type: 'cluster' }>
+  catTags: Map<string, CatTag['tag'][]>
+  dimmed: boolean
+}) {
+  const map = useMap()
+  const icon = useMemo(() => makeClusterIcon(point, catTags), [point, catTags])
+
+  return (
+    <Marker
+      position={[point.lat, point.lng]}
+      icon={icon}
+      opacity={dimmed ? 0.55 : 1}
+      eventHandlers={{ click: () => map.flyTo([point.lat, point.lng], point.expansionZoom) }}
+    />
+  )
+}
+
 export function CatMap({
   center,
   userLocation,
@@ -280,22 +408,39 @@ export function CatMap({
   const { resolvedTheme } = useTheme()
   const tileUrl = resolvedTheme === 'dark' ? TILE_URLS.dark : TILE_URLS.light
 
+  const [clusterViewport, setClusterViewport] = useState<ClusterViewport | null>(null)
+  const clusterIndex = useMemo(() => buildClusterIndex(cats), [cats])
+  const points = useMemo<MapPoint[]>(() => {
+    if (!clusterViewport) return cats.map((cat): MapPoint => ({ type: 'single', cat }))
+    return getMapPoints(clusterIndex, clusterViewport.bounds, clusterViewport.zoom)
+  }, [cats, clusterIndex, clusterViewport])
+
   return (
     <MapContainer center={center} zoom={15} className="isolate h-full w-full" zoomControl={false}>
       <TileLayer attribution={TILE_ATTRIBUTION} url={tileUrl} />
       <MapEvents onMoveEnd={onMoveEnd} onUserDrag={onUserDrag} />
+      <ClusterViewportTracker onChange={setClusterViewport} />
       <FlyTo target={flyTo} />
       <Marker position={userLocation} icon={userIcon} />
-      {cats.map((cat, index) => (
-        <CatMarker
-          key={cat.id}
-          cat={cat}
-          index={index}
-          selectedCatId={selectedCatId}
-          tags={catTags.get(cat.id) ?? NO_TAGS}
-          onSelectCat={onSelectCat}
-        />
-      ))}
+      {points.map((point, index) =>
+        point.type === 'single' ? (
+          <CatMarker
+            key={point.cat.id}
+            cat={point.cat}
+            index={index}
+            selectedCatId={selectedCatId}
+            tags={catTags.get(point.cat.id) ?? NO_TAGS}
+            onSelectCat={onSelectCat}
+          />
+        ) : (
+          <ClusterMarker
+            key={`cluster-${point.id}`}
+            point={point}
+            catTags={catTags}
+            dimmed={selectedCatId !== null}
+          />
+        )
+      )}
     </MapContainer>
   )
 }
