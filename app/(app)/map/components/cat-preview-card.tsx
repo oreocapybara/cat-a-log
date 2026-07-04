@@ -25,8 +25,13 @@ export function CatPreviewCard({
 }) {
   // The card is always mounted by the parent now — closing it still needs to render
   // for one more animation frame-window so the exit transition can actually play,
-  // instead of being yanked out of the DOM the instant `cat` goes null.
+  // instead of being yanked out of the DOM the instant `cat` goes null. `tags` is
+  // frozen alongside `cat` for the same reason: the parent resets `tags` to `[]`
+  // in the same render `cat` goes null, so reading the live `tags` prop during the
+  // close animation would flash the frame back to the default color just as it's
+  // supposed to be playing the exit transition in the cat's actual welfare color.
   const [renderedCat, setRenderedCat] = useState(cat)
+  const [renderedTags, setRenderedTags] = useState(tags)
   const [closing, setClosing] = useState(false)
   const [prevCat, setPrevCat] = useState(cat)
 
@@ -38,6 +43,7 @@ export function CatPreviewCard({
     setPrevCat(cat)
     if (cat) {
       setRenderedCat(cat)
+      setRenderedTags(tags)
       setClosing(false)
     } else {
       setClosing(true)
@@ -52,7 +58,7 @@ export function CatPreviewCard({
 
   if (!renderedCat) return null
 
-  const tier = getWelfareTier(tags)
+  const tier = getWelfareTier(renderedTags)
   const frameColor = tier?.color ?? DEFAULT_WELFARE_COLOR
 
   return (
@@ -103,7 +109,7 @@ export function CatPreviewCard({
             </>
           )}
         </div>
-        {(renderedCat.is_ear_tipped || tags.length > 0) && (
+        {(renderedCat.is_ear_tipped || renderedTags.length > 0) && (
           <div className="mt-1.5 flex flex-wrap gap-1">
             {renderedCat.is_ear_tipped && (
               <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase">
@@ -111,7 +117,7 @@ export function CatPreviewCard({
                 Ear-tipped
               </span>
             )}
-            {tags.map((tag) => {
+            {renderedTags.map((tag) => {
               const meta = TAG_META[tag]
               const Icon = meta.icon
               return (

@@ -29,6 +29,11 @@ const userIcon = L.divIcon({
 const MAX_STAGGER_DELAY_MS = 400
 const STAGGER_STEP_MS = 40
 
+// Stable reference for "no tags" — `catTags.get(id) ?? []` would otherwise
+// hand back a brand-new empty array every render, defeating memoization for
+// every untagged cat's icon (see CatMarker below).
+const NO_TAGS: CatTag['tag'][] = []
+
 type WelfareStyle = {
   borderColor: string
   badge: { color: string; glyph: string; pulse: boolean } | null
@@ -215,6 +220,37 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   return null
 }
 
+// Memoizes its own icon rather than sharing one combined map across all
+// markers — selecting/deselecting one cat must not rebuild (and thus
+// remount + re-animate) every other marker on the map. See the root-cause
+// note on CatMap's previous `catIcons` useMemo for why that mattered.
+function CatMarker({
+  cat,
+  index,
+  selectedCatId,
+  tags,
+  onSelectCat,
+}: {
+  cat: NearbyCat
+  index: number
+  selectedCatId: string | null
+  tags: CatTag['tag'][]
+  onSelectCat: (cat: NearbyCat) => void
+}) {
+  const selected = cat.id === selectedCatId
+  const icon = useMemo(() => makeCatIcon(cat, selected, index, tags), [cat, selected, index, tags])
+
+  return (
+    <Marker
+      position={[cat.lat, cat.lng]}
+      icon={icon}
+      opacity={selectedCatId && !selected ? 0.55 : 1}
+      zIndexOffset={selected ? 1000 : 0}
+      eventHandlers={{ click: () => onSelectCat(cat) }}
+    />
+  )
+}
+
 export function CatMap({
   center,
   userLocation,
@@ -239,30 +275,20 @@ export function CatMap({
   const { resolvedTheme } = useTheme()
   const tileUrl = resolvedTheme === 'dark' ? TILE_URLS.dark : TILE_URLS.light
 
-  // Build icons once per cat+selected+tags combination to avoid recreating on every render
-  const catIcons = useMemo(() => {
-    return new Map(
-      cats.map((cat, index) => [
-        cat.id,
-        makeCatIcon(cat, cat.id === selectedCatId, index, catTags.get(cat.id) ?? []),
-      ])
-    )
-  }, [cats, selectedCatId, catTags])
-
   return (
     <MapContainer center={center} zoom={15} className="isolate h-full w-full" zoomControl={false}>
       <TileLayer attribution={TILE_ATTRIBUTION} url={tileUrl} />
       <MapEvents onMoveEnd={onMoveEnd} onUserDrag={onUserDrag} />
       <FlyTo target={flyTo} />
       <Marker position={userLocation} icon={userIcon} />
-      {cats.map((cat) => (
-        <Marker
+      {cats.map((cat, index) => (
+        <CatMarker
           key={cat.id}
-          position={[cat.lat, cat.lng]}
-          icon={catIcons.get(cat.id)}
-          opacity={selectedCatId && selectedCatId !== cat.id ? 0.55 : 1}
-          zIndexOffset={selectedCatId === cat.id ? 1000 : 0}
-          eventHandlers={{ click: () => onSelectCat(cat) }}
+          cat={cat}
+          index={index}
+          selectedCatId={selectedCatId}
+          tags={catTags.get(cat.id) ?? NO_TAGS}
+          onSelectCat={onSelectCat}
         />
       ))}
     </MapContainer>
