@@ -289,6 +289,7 @@ export default function MapPage() {
         cat={selectedCat}
         tags={selectedCat ? (catTags.get(selectedCat.id) ?? []) : []}
         onClose={() => setSelectedCatId(null)}
+        onViewLocation={(lat, lng) => setFlyToTarget([lat, lng])}
       />
 
       <FilterSheet
