@@ -13,7 +13,7 @@ const varelaRound = Varela_Round({
 
 export const metadata: Metadata = {
   title: 'Cat-A-Log',
-  description: 'Crowdsourced stray cat registry — tag, track, and identify strays in your area.',
+  description: 'Crowdsourced cat registry — tag, track, and identify cats in your area.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

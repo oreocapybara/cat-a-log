@@ -1,7 +1,7 @@
 {
   "name": "Cat-A-Log",
   "short_name": "Cat-A-Log",
-  "description": "Crowdsourced stray cat registry — tag, track, and identify strays in your area.",
+  "description": "Crowdsourced cat registry — tag, track, and identify cats in your area.",
   "start_url": "/map",
   "display": "standalone",
   "background_color": "#0f172a",
