@@ -6,6 +6,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-lea
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { buildClusterIndex, getMapPoints, type MapPoint } from '@/lib/clustering'
+import { getStalenessOpacity } from '@/lib/geo'
 import { DEFAULT_WELFARE_COLOR, getWelfareTier } from '@/lib/welfare-colors'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
