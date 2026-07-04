@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { buttonVariants } from '@/components/ui/button'
-import { GoogleButton } from '../../components/google-button'
+import { GoogleButton } from '@/app/components/google-button'
 import { readPendingTag, clearPendingTag } from '@/lib/pending-tag'
 
 export default function TagSavePage() {

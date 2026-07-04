@@ -11,6 +11,7 @@ const PUBLIC_ROUTES = [
   '/map',
   '/tag',
   '/tag/save',
+  '/profile/me',
 ]
 
 export async function proxy(request: NextRequest) {

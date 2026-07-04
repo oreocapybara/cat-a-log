@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation'
 import { User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { SignOutButton } from './components/sign-out-button'
 import { ThemeToggle } from './components/theme-toggle'
 import { MyCatsList } from './components/my-cats-list'
+import { SignedOutProfile } from './components/signed-out-profile'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -13,7 +13,14 @@ export default async function ProfilePage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    return (
+      <div className="mx-auto flex min-h-screen max-w-sm flex-col items-center gap-6 px-4 py-6 text-center">
+        <div className="flex w-full justify-end">
+          <ThemeToggle />
+        </div>
+        <SignedOutProfile />
+      </div>
+    )
   }
 
   const { data: profile } = await supabase
