@@ -22,9 +22,6 @@ const TILE_URLS = {
   dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
 }
 
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-
 const userIcon = L.divIcon({
   className: '',
   html: '<span class="map-user-pulse block h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-500 shadow"></span>',
@@ -261,8 +258,8 @@ function makeCatIcon(
           display:flex;
           align-items:center;
           gap:4px;
-          background:rgba(15,23,42,0.85);
-          color:#fff;
+          background:var(--popover);
+          color:var(--popover-foreground);
           font-size:10px;
           font-weight:500;
           padding:2px 7px;
@@ -448,8 +445,14 @@ export function CatMap({
   }, [cats, clusterIndex, clusterViewport])
 
   return (
-    <MapContainer center={center} zoom={15} className="isolate h-full w-full" zoomControl={false}>
-      <TileLayer attribution={TILE_ATTRIBUTION} url={tileUrl} />
+    <MapContainer
+      center={center}
+      zoom={15}
+      className="isolate h-full w-full"
+      zoomControl={false}
+      attributionControl={false}
+    >
+      <TileLayer url={tileUrl} />
       <MapEvents onMoveEnd={onMoveEnd} onUserDrag={onUserDrag} />
       <ClusterViewportTracker onChange={setClusterViewport} />
       <FlyTo target={flyTo} />

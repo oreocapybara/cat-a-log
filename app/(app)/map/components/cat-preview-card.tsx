@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Eye, Images, MapPin, Scissors, X } from 'lucide-react'
+import { Check, Clock, Eye, Images, MapPin, Scissors, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { formatLastSeen } from '@/lib/geo'
@@ -21,11 +21,13 @@ export function CatPreviewCard({
   tags,
   onClose,
   onViewLocation,
+  onResolveTag,
 }: {
   cat: NearbyCat | null
   tags: CatTag['tag'][]
   onClose: () => void
   onViewLocation: (lat: number, lng: number) => void
+  onResolveTag: (catId: string, tag: CatTag['tag']) => void
 }) {
   // The card is always mounted by the parent now — closing it still needs to render
   // for one more animation frame-window so the exit transition can actually play,
@@ -71,6 +73,16 @@ export function CatPreviewCard({
     onViewLocation(lat, lng)
   }
 
+  // The card freezes `tags` into `renderedTags` on cat-identity change only
+  // (see the effect above), so a resolve here needs its own local update —
+  // otherwise the chip wouldn't disappear until the card is closed and
+  // reopened, even though the parent's source-of-truth state did update.
+  function handleResolve(tag: CatTag['tag']) {
+    if (!renderedCat) return
+    setRenderedTags((prev) => prev.filter((t) => t !== tag))
+    onResolveTag(renderedCat.id, tag)
+  }
+
   return (
     <Card
       className={cn(
@@ -81,8 +93,11 @@ export function CatPreviewCard({
       )}
     >
       <div className="relative shrink-0">
-        <div
-          className="h-16 w-16 overflow-hidden rounded-xl"
+        <button
+          type="button"
+          onClick={() => setGalleryOpen(true)}
+          aria-label="View photos of this cat"
+          className="block h-16 w-16 cursor-pointer overflow-hidden rounded-xl"
           style={{
             border: `3px solid ${frameColor}`,
             boxShadow: `0 0 0 3px ${frameColor}26`,
@@ -94,7 +109,7 @@ export function CatPreviewCard({
             alt=""
             className={cn('h-full w-full object-cover', tier?.desaturate && 'opacity-75 grayscale')}
           />
-        </div>
+        </button>
         {tier?.glyph && (
           <div
             className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold text-white dark:border-neutral-900"
@@ -102,6 +117,17 @@ export function CatPreviewCard({
           >
             {tier.glyph}
           </div>
+        )}
+        {renderedCat.times_spotted > 1 && (
+          <button
+            type="button"
+            onClick={() => setGalleryOpen(true)}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="bg-primary text-primary-foreground absolute -right-1.5 -bottom-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-2 border-white dark:border-neutral-900"
+          >
+            <Images className="h-3 w-3" />
+          </button>
         )}
       </div>
       <div className="min-w-0 flex-1 text-left">
@@ -121,14 +147,6 @@ export function CatPreviewCard({
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
               <Eye className="h-3 w-3 shrink-0" />
               Spotted {renderedCat.times_spotted} times
-              <button
-                type="button"
-                onClick={() => setGalleryOpen(true)}
-                aria-label="View gallery of all sightings"
-                className="text-primary relative flex shrink-0 cursor-pointer items-center before:absolute before:-inset-2.5 before:content-['']"
-              >
-                <Images className="h-3.5 w-3.5" />
-              </button>
             </span>
           )}
         </div>
@@ -143,17 +161,43 @@ export function CatPreviewCard({
             {renderedTags.map((tag) => {
               const meta = TAG_META[tag]
               const Icon = meta.icon
+              // Deceased-cascade already auto-resolves needs_medical/possible_rabies,
+              // so an active deceased tag alongside them shouldn't occur — this
+              // guard is defensive, matching the design doc's disabling rule.
+              const resolvable =
+                (tag === 'needs_medical' || tag === 'possible_rabies') &&
+                !renderedTags.includes('deceased')
+
+              if (!resolvable) {
+                return (
+                  <span
+                    key={tag}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase',
+                      meta.className
+                    )}
+                  >
+                    {Icon && <Icon className="h-2.5 w-2.5" />}
+                    {meta.label}
+                  </span>
+                )
+              }
+
               return (
-                <span
+                <button
                   key={tag}
+                  type="button"
+                  aria-label={tag === 'needs_medical' ? 'Mark as recovered' : 'Mark as cleared'}
+                  onClick={() => handleResolve(tag)}
                   className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase',
+                    'inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase transition-opacity hover:opacity-70',
                     meta.className
                   )}
                 >
                   {Icon && <Icon className="h-2.5 w-2.5" />}
                   {meta.label}
-                </span>
+                  <Check className="h-2.5 w-2.5" />
+                </button>
               )
             })}
           </div>

@@ -33,13 +33,20 @@ export function getStalenessOpacity(createdAt: string): number {
   return 0.4
 }
 
-export function formatLastSeen(createdAt: string): string {
-  const ageMs = Date.now() - new Date(createdAt).getTime()
-  if (ageMs < HOUR_MS) return 'Seen just now'
-  if (ageMs < DAY_MS) return `Seen ${Math.floor(ageMs / HOUR_MS)}h ago`
+// Same thresholds formatLastSeen uses, factored out so resolved/deceased
+// tag badges (e.g. "✓ Recovered 3 days ago") can reuse the wording without
+// the "Seen" prefix that only makes sense for a cat's own last-seen caption.
+export function formatRelativeTime(iso: string): string {
+  const ageMs = Date.now() - new Date(iso).getTime()
+  if (ageMs < HOUR_MS) return 'just now'
+  if (ageMs < DAY_MS) return `${Math.floor(ageMs / HOUR_MS)}h ago`
   const days = Math.floor(ageMs / DAY_MS)
-  if (days < 7) return `Seen ${days} day${days === 1 ? '' : 's'} ago`
+  if (days < 7) return `${days} day${days === 1 ? '' : 's'} ago`
   const weeks = Math.floor(days / 7)
-  if (weeks > 4) return 'Seen over a month ago'
-  return `Seen ${weeks} week${weeks === 1 ? '' : 's'} ago`
+  if (weeks > 4) return 'over a month ago'
+  return `${weeks} week${weeks === 1 ? '' : 's'} ago`
+}
+
+export function formatLastSeen(createdAt: string): string {
+  return `Seen ${formatRelativeTime(createdAt)}`
 }

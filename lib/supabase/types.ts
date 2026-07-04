@@ -176,6 +176,8 @@ export type Database = {
           tag: 'needs_medical' | 'possible_rabies' | 'deceased'
           added_by: string | null
           created_at: string
+          resolved_at: string | null
+          resolved_by: string | null
         }
         Insert: {
           id?: string
@@ -183,6 +185,8 @@ export type Database = {
           tag: 'needs_medical' | 'possible_rabies' | 'deceased'
           added_by?: string | null
           created_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
         }
         Update: {
           id?: string
@@ -190,6 +194,8 @@ export type Database = {
           tag?: 'needs_medical' | 'possible_rabies' | 'deceased'
           added_by?: string | null
           created_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
         }
       }
     }
