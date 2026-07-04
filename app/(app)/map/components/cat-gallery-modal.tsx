@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { ChevronLeft, ChevronRight, Loader2, MapPin, User, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -196,9 +197,13 @@ export function CatGalleryModal({
                         {formatSpottedDate(photo.spottedAt)}
                       </p>
                       {photo.spottedByUsername && (
-                        <p className="flex items-center gap-0.5 truncate text-[10px] text-white/80">
+                        <Link
+                          href={`/profile/${photo.spottedByUsername}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center gap-0.5 truncate text-[10px] text-white/80 transition-colors hover:text-white"
+                        >
                           <User className="h-2.5 w-2.5 shrink-0" />@{photo.spottedByUsername}
-                        </p>
+                        </Link>
                       )}
                     </div>
                   </button>
@@ -267,9 +272,12 @@ export function CatGalleryModal({
                   </p>
                   <div className="mt-1 flex items-center justify-between gap-2">
                     {activePhoto.spottedByUsername ? (
-                      <p className="flex items-center gap-1 text-xs text-white/70">
+                      <Link
+                        href={`/profile/${activePhoto.spottedByUsername}`}
+                        className="flex items-center gap-1 text-xs text-white/70 transition-colors hover:text-white"
+                      >
                         <User className="h-3 w-3 shrink-0" />@{activePhoto.spottedByUsername}
-                      </p>
+                      </Link>
                     ) : (
                       <span />
                     )}
