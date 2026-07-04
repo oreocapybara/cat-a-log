@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MapPin, Scissors, X } from 'lucide-react'
+import { Eye, MapPin, Scissors, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -95,6 +95,13 @@ export function CatPreviewCard({
         <div className="text-muted-foreground flex items-center gap-1 text-xs">
           <MapPin className="h-3 w-3 shrink-0" />
           <span>{formatDistance(renderedCat.distance_km)}</span>
+          {renderedCat.times_spotted > 1 && (
+            <>
+              <span aria-hidden>·</span>
+              <Eye className="h-3 w-3 shrink-0" />
+              <span>Spotted {renderedCat.times_spotted} times</span>
+            </>
+          )}
         </div>
         {(renderedCat.is_ear_tipped || tags.length > 0) && (
           <div className="mt-1.5 flex flex-wrap gap-1">
