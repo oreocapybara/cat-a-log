@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Clock, Eye, HandHeart, Trash2 } from 'lucide-react'
+import { Clock, Eye, HandHeart, Star, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import { formatLastSeen, formatRelativeTime } from '@/lib/geo'
 import { TAG_META } from '@/lib/welfare-colors'
 import type { CatTag } from '@/lib/supabase/types'
+import { setFeaturedCat } from '../actions'
 
 type MyCat = {
   id: string
@@ -58,9 +59,38 @@ export function MyCatsList({
   })
   const [confirmTarget, setConfirmTarget] = useState<MyCat | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [optimisticFeaturedId, setOptimisticFeaturedId] = useState<string | null>(featuredCatId)
 
   function setCatTags(catId: string, tags: CatTag[]) {
     setTagsByCat((prev) => new Map(prev).set(catId, tags))
+  }
+
+  async function handleSetFeatured(catId: string) {
+    const newId = optimisticFeaturedId === catId ? null : catId
+    const prevId = optimisticFeaturedId
+    setOptimisticFeaturedId(newId)
+
+    const catName = cats.find((c) => c.id === catId)?.name ?? 'cat'
+
+    if (newId) {
+      toast.success(`⭐ ${catName} is now your featured cat`, {
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            setOptimisticFeaturedId(prevId)
+            setFeaturedCat(prevId)
+          },
+        },
+      })
+    } else {
+      toast.success('Featured cat reset — showing your top cat')
+    }
+
+    const result = await setFeaturedCat(newId)
+    if (result.error) {
+      setOptimisticFeaturedId(prevId)
+      toast.error(result.error)
+    }
   }
 
   async function handleInsertTag(catId: string, tag: CatTag['tag']) {
@@ -281,6 +311,25 @@ export function MyCatsList({
                   })}
                 </div>
               </div>
+
+              {/* Featured star */}
+              <button
+                type="button"
+                onClick={() => handleSetFeatured(cat.id)}
+                aria-label={
+                  optimisticFeaturedId === cat.id
+                    ? `Remove ${cat.name ?? 'cat'} as featured`
+                    : `Set ${cat.name ?? 'cat'} as featured`
+                }
+                className="text-muted-foreground hover:text-primary shrink-0 self-start p-1 transition-colors"
+              >
+                <Star
+                  className={cn(
+                    'h-4 w-4',
+                    optimisticFeaturedId === cat.id && 'fill-primary text-primary'
+                  )}
+                />
+              </button>
 
               {/* Release / Undo trigger */}
               <button
