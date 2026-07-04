@@ -21,7 +21,7 @@ export function SignOutButton() {
       return
     }
 
-    router.push('/login')
+    router.push('/map')
   }
 
   return (

@@ -64,29 +64,33 @@ export default async function ProfilePage() {
         <ThemeToggle />
       </div>
 
-      {profile?.avatar_url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={profile.avatar_url}
-          alt={profile.username}
-          className="border-border h-24 w-24 rounded-full border object-cover"
-        />
-      ) : (
-        <div className="bg-primary text-primary-foreground flex h-24 w-24 items-center justify-center rounded-full text-2xl font-semibold">
-          {initials ?? <User className="h-10 w-10" />}
-        </div>
-      )}
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-300">
+        {profile?.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={profile.avatar_url}
+            alt={profile.username}
+            className="border-border h-24 w-24 rounded-full border object-cover"
+          />
+        ) : (
+          <div className="bg-primary text-primary-foreground flex h-24 w-24 items-center justify-center rounded-full text-2xl font-semibold">
+            {initials ?? <User className="h-10 w-10" />}
+          </div>
+        )}
+      </div>
 
-      <div className="space-y-1">
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:fill-mode-backwards space-y-1 motion-safe:delay-100 motion-safe:duration-300">
         <h1 className="font-heading text-2xl font-bold tracking-tight">
           {profile?.username ? `@${profile.username}` : 'Your profile'}
         </h1>
         {profile?.bio && <p className="text-muted-foreground text-sm">{profile.bio}</p>}
       </div>
 
-      <SignOutButton />
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:fill-mode-backwards w-full motion-safe:delay-200 motion-safe:duration-300">
+        <SignOutButton />
+      </div>
 
-      <div className="w-full text-left">
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:fill-mode-backwards w-full text-left motion-safe:delay-300 motion-safe:duration-300">
         <h2 className="font-heading mb-3 text-lg font-bold tracking-tight">My Cats</h2>
         <MyCatsList cats={cats} initialTags={tagRows ?? []} currentUserId={user.id} />
       </div>

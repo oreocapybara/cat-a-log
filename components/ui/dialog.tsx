@@ -16,7 +16,7 @@ function DialogContent({ className, children, ...props }: DialogPrimitive.Popup.
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          'bg-card border-border fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t p-6 shadow-lg data-[ending-style]:translate-y-full data-[starting-style]:translate-y-full motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out',
+          'bg-card border-border fixed inset-x-0 bottom-0 z-50 rounded-t-2xl border-t p-6 shadow-lg data-[ending-style]:translate-y-full data-[starting-style]:translate-y-full motion-safe:transition-[translate] motion-safe:duration-200 motion-safe:ease-out',
           className
         )}
         {...props}
