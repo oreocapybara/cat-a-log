@@ -12,6 +12,7 @@ export type NearbyCat = {
   confidence_score: number
   created_at: string
   distance_km: number
+  times_spotted: number
 }
 
 export type Database = {
