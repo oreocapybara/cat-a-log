@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Camera, MapPin, Loader2, X } from 'lucide-react'
+import { Camera, MapPin, Loader2, X, Aperture, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 const LocationPickerMap = dynamic(
@@ -16,8 +16,10 @@ type LocationState =
   | { status: 'error' }
 
 export function PhotoScreen({
+  onBack,
   onNext,
 }: {
+  onBack: () => void
   onNext: (data: { photoUrl: string; file: File; lat: number; lng: number }) => void
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -70,76 +72,108 @@ export function PhotoScreen({
   const canContinue = !!photoFile && location.status === 'success'
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 mx-auto max-w-sm px-4 pt-10 pb-6 motion-safe:duration-200">
-      <div className="mb-6 text-center">
-        <h1 className="font-heading text-2xl font-bold tracking-tight">Catch a cat</h1>
-        <p className="text-muted-foreground mt-1 text-sm">Snap a photo to get started</p>
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col px-4 pt-16 pb-6 motion-safe:duration-300">
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 self-start text-sm transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back</span>
+      </button>
+
+      {/* Hero section */}
+      <div className="mb-8 text-center">
+        <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl">
+          <Aperture className="text-primary h-8 w-8" strokeWidth={1.5} />
+        </div>
+        <h1 className="font-heading text-2xl font-bold tracking-tight">Spotted a cat?</h1>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          Snap a photo and we&apos;ll check if this kitty&apos;s already in the neighborhood
+          registry.
+        </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-1">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handlePhotoChange}
-            className="hidden"
-          />
-          {photoPreview ? (
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photoPreview}
-                alt="Selected cat"
-                className="border-border h-56 w-full rounded-lg border object-cover"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon-sm"
-                className="absolute top-2 right-2"
-                onClick={clearPhoto}
-                aria-label="Remove photo"
-              >
-                <X />
-              </Button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="border-border text-muted-foreground hover:text-foreground hover:border-primary flex h-56 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed transition-colors"
-            >
-              <Camera className="h-8 w-8" />
-              <span className="text-sm">Take or choose a photo</span>
-            </button>
-          )}
-        </div>
+      {/* Photo capture */}
+      <div className="flex-1 space-y-4">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handlePhotoChange}
+          className="hidden"
+        />
 
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+        {photoPreview ? (
+          <div className="relative overflow-hidden rounded-2xl shadow-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photoPreview}
+              alt="Selected cat"
+              className="motion-safe:animate-in motion-safe:zoom-in-95 h-64 w-full object-cover motion-safe:duration-300"
+            />
+            <div className="ring-primary/20 absolute inset-0 rounded-2xl ring-2 ring-inset" />
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon-sm"
+              className="absolute top-3 right-3 rounded-full shadow-md"
+              onClick={clearPhoto}
+              aria-label="Remove photo"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
+              <Camera className="h-3 w-3" />
+              <span>Ready</span>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="group border-primary/30 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 relative flex h-64 w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed transition-all active:scale-[0.98]"
+          >
+            <div className="bg-primary/15 flex h-14 w-14 items-center justify-center rounded-full transition-transform group-hover:scale-110">
+              <Camera className="text-primary h-7 w-7" />
+            </div>
+            <div className="text-center">
+              <span className="text-foreground block text-sm font-medium">
+                Take or choose a photo
+              </span>
+              <span className="text-muted-foreground mt-0.5 block text-xs">Tap to open camera</span>
+            </div>
+          </button>
+        )}
+
+        {/* Location status */}
+        <div className="bg-muted/50 flex items-center gap-2.5 rounded-xl px-3.5 py-2.5">
           {location.status === 'loading' && (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Getting your location…</span>
+              <Loader2 className="text-muted-foreground h-4 w-4 animate-spin" />
+              <span className="text-muted-foreground text-sm">Pinpointing your location…</span>
             </>
           )}
           {location.status === 'success' && (
             <>
-              <MapPin className="text-primary h-4 w-4" />
-              <span>Location captured</span>
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+                <MapPin className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <span className="text-sm">Location locked</span>
             </>
           )}
           {location.status === 'error' && (
             <>
               <MapPin className="text-destructive h-4 w-4" />
-              <span>Location unavailable — </span>
+              <span className="text-sm">Location unavailable</span>
               <button
                 type="button"
                 onClick={retryLocation}
-                className="text-primary underline underline-offset-4"
+                className="text-primary ml-auto text-xs font-medium"
               >
-                retry
+                Retry
               </button>
             </>
           )}
@@ -149,9 +183,9 @@ export function PhotoScreen({
           <button
             type="button"
             onClick={() => setShowMap(true)}
-            className="text-primary text-sm underline underline-offset-4"
+            className="text-muted-foreground hover:text-foreground w-full text-center text-xs transition-colors"
           >
-            Not your location? Adjust on map
+            Not quite right? <span className="text-primary font-medium">Adjust on map</span>
           </button>
         )}
 
@@ -162,9 +196,17 @@ export function PhotoScreen({
             onChange={(lat, lng) => setLocation({ status: 'success', lat, lng })}
           />
         )}
+      </div>
 
-        <Button type="button" className="w-full" disabled={!canContinue} onClick={handleContinue}>
-          Continue
+      {/* Continue button */}
+      <div className="mt-6">
+        <Button
+          type="button"
+          className="shadow-primary/20 w-full rounded-xl py-6 text-base font-semibold shadow-lg transition-all disabled:shadow-none"
+          disabled={!canContinue}
+          onClick={handleContinue}
+        >
+          Find matches
         </Button>
       </div>
     </div>

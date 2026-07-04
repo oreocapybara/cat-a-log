@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { MapPin, HelpCircle } from 'lucide-react'
+import { MapPin, Sparkles, Eye, Cat, Loader2, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
+
 import type { NearbyCat } from '@/lib/supabase/types'
 
 const SEARCH_RADIUS_KM = 0.5
@@ -14,12 +14,14 @@ export function CandidatesScreen({
   photoUrl,
   lat,
   lng,
+  onBack,
   onMatch,
   onNoMatch,
 }: {
   photoUrl: string
   lat: number
   lng: number
+  onBack: () => void
   onMatch: (cat: NearbyCat) => void
   onNoMatch: () => void
 }) {
@@ -76,63 +78,172 @@ export function CandidatesScreen({
     setCandidates([...ranked, ...unranked])
   }
 
+  // Loading state with skeleton
   if (candidates === null) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-muted-foreground text-sm">Checking nearby cats…</p>
+      <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-sm px-4 pt-16 pb-6 motion-safe:duration-300">
+        <div className="mb-6 text-center">
+          <div className="bg-primary/10 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl">
+            <Loader2 className="text-primary h-6 w-6 animate-spin" />
+          </div>
+          <h1 className="font-heading text-xl font-bold tracking-tight">Searching nearby…</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Checking if this cat&apos;s already registered
+          </p>
+        </div>
+
+        {/* Skeleton cards */}
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-card ring-foreground/5 flex items-center gap-3 rounded-xl p-3 ring-1"
+            >
+              <div className="bg-muted h-16 w-16 animate-pulse rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <div className="bg-muted h-4 w-24 animate-pulse rounded" />
+                <div className="bg-muted h-3 w-16 animate-pulse rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
+  // Empty state — no candidates found
+  if (candidates.length === 0) {
+    return (
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 relative mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col items-center justify-center px-4 pt-16 pb-6 text-center motion-safe:duration-300">
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-muted-foreground hover:text-foreground absolute top-16 left-0 flex items-center gap-1 text-sm transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back</span>
+        </button>
+        <div className="bg-primary/10 mb-4 flex h-20 w-20 items-center justify-center rounded-full">
+          <Cat className="text-primary h-10 w-10" />
+        </div>
+        <h1 className="font-heading text-xl font-bold tracking-tight">A new face!</h1>
+        <p className="text-muted-foreground mt-2 max-w-[260px] text-sm leading-relaxed">
+          No cats spotted nearby yet. Looks like you found a new one for the registry.
+        </p>
+        <Button
+          type="button"
+          className="shadow-primary/20 mt-8 w-full rounded-xl py-6 text-base font-semibold shadow-lg"
+          onClick={onNoMatch}
+        >
+          Register this cat
+        </Button>
+      </div>
+    )
+  }
+
+  // Candidates found
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-right-4 mx-auto max-w-sm px-4 pt-10 pb-6 motion-safe:duration-200">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-sm px-4 pt-16 pb-6 motion-safe:duration-300">
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={onBack}
+        className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 text-sm transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span>Back</span>
+      </button>
+
       <div className="mb-6 text-center">
-        <h1 className="font-heading text-2xl font-bold tracking-tight">Is it one of these?</h1>
+        <h1 className="font-heading text-xl font-bold tracking-tight">Recognize anyone?</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          {candidates.length > 0
-            ? 'Cats spotted nearby'
-            : "No cats spotted nearby — this one's new"}
+          {candidates.length} {candidates.length === 1 ? 'cat' : 'cats'} spotted nearby — tap if you
+          see a match
         </p>
       </div>
 
-      <div className="space-y-3">
-        {candidates.map((cat) => (
-          <Card
+      {/* Cat listing */}
+      <div className="space-y-2.5">
+        {candidates.map((cat, index) => (
+          <button
             key={cat.id}
-            className="hover:ring-primary flex-row items-center gap-3 p-3 transition-colors"
+            type="button"
             onClick={() => onMatch(cat)}
+            className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 group bg-card ring-foreground/5 hover:ring-primary/40 flex w-full items-center gap-3 rounded-xl p-3 text-left ring-1 transition-all hover:shadow-md active:scale-[0.98] motion-safe:duration-200"
+            style={{ animationDelay: `${index * 75}ms` }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cat.primary_photo_url}
-              alt={cat.name ?? 'Unnamed cat'}
-              className="h-16 w-16 rounded-lg object-cover"
-            />
-            <div className="flex-1">
-              <p className="font-medium">{cat.name ?? 'Unnamed'}</p>
-              <div className="text-muted-foreground flex items-center gap-1 text-xs">
-                <MapPin className="h-3 w-3" />
-                <span>{(cat.distance_km * 1000).toFixed(0)}m away</span>
+            {/* Cat photo */}
+            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cat.primary_photo_url}
+                alt={cat.name ?? 'Unnamed cat'}
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              />
+              {cat.is_ear_tipped && (
+                <div className="bg-secondary text-secondary-foreground absolute top-0.5 left-0.5 rounded-sm px-1 py-0.5 text-[9px] font-bold">
+                  TNR
+                </div>
+              )}
+            </div>
+
+            {/* Cat info */}
+            <div className="min-w-0 flex-1">
+              <p className="truncate leading-tight font-medium">{cat.name ?? 'Unnamed kitty'}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                  <MapPin className="h-3 w-3" />
+                  {cat.distance_km < 0.1
+                    ? `${(cat.distance_km * 1000).toFixed(0)}m`
+                    : `${cat.distance_km.toFixed(1)}km`}
+                </span>
+                {cat.times_spotted > 1 && (
+                  <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                    <Eye className="h-3 w-3" />
+                    Seen {cat.times_spotted}×
+                  </span>
+                )}
               </div>
             </div>
-          </Card>
-        ))}
 
+            {/* Tap hint chevron */}
+            <div className="text-muted-foreground transition-transform group-hover:translate-x-0.5">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="opacity-40">
+                <path
+                  d="M6 4L10 8L6 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Actions */}
+      <div className="mt-6 space-y-2.5">
         {candidates.length > 0 && !photoUrl.startsWith('blob:') && (
           <Button
             type="button"
             variant="outline"
-            className="w-full"
+            className="w-full rounded-xl py-5"
             onClick={handleNotSure}
             disabled={analyzing}
           >
-            <HelpCircle />
-            {analyzing ? 'Analyzing…' : 'Not sure'}
+            <Sparkles className="h-4 w-4" />
+            {analyzing ? 'Analyzing photo…' : 'Help me decide (AI match)'}
           </Button>
         )}
 
-        <Button type="button" variant="secondary" className="w-full" onClick={onNoMatch}>
-          Not this cat — it&apos;s new!
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full rounded-xl py-5"
+          onClick={onNoMatch}
+        >
+          None of these — it&apos;s a new cat
         </Button>
       </div>
     </div>

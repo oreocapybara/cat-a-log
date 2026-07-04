@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { PhotoScreen } from './components/photo-screen'
@@ -30,8 +30,24 @@ const STEP_INDEX: Record<Screen['type'], number> = {
 export default function TagPage() {
   const router = useRouter()
   const [screen, setScreen] = useState<Screen>({ type: 'photo' })
+  const [history, setHistory] = useState<Screen[]>([])
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const totalSteps = screen.type === 'match-found' ? 3 : 4
+
+  function goTo(next: Screen) {
+    setHistory((prev) => [...prev, screen])
+    setScreen(next)
+  }
+
+  function goBack() {
+    if (history.length === 0) {
+      router.push('/map')
+      return
+    }
+    const prev = history[history.length - 1]
+    setHistory((h) => h.slice(0, -1))
+    setScreen(prev)
+  }
 
   async function handleSave(name: string, lat: number, lng: number, details: DetailsFormValues) {
     if (!photoFile) return
@@ -59,36 +75,23 @@ export default function TagPage() {
   return (
     <>
       <StepDots currentStep={STEP_INDEX[screen.type]} totalSteps={totalSteps} />
-      {renderScreen(screen, setScreen, setPhotoFile, handleSave)}
-    </>
-  )
-}
-
-function renderScreen(
-  screen: Screen,
-  setScreen: (screen: Screen) => void,
-  setPhotoFile: (file: File) => void,
-  handleSave: (name: string, lat: number, lng: number, details: DetailsFormValues) => Promise<void>
-) {
-  switch (screen.type) {
-    case 'photo':
-      return (
+      {screen.type === 'photo' && (
         <PhotoScreen
+          onBack={goBack}
           onNext={({ photoUrl, file, lat, lng }) => {
             setPhotoFile(file)
-            setScreen({ type: 'candidates', photoUrl, lat, lng })
+            goTo({ type: 'candidates', photoUrl, lat, lng })
           }}
         />
-      )
-
-    case 'candidates':
-      return (
+      )}
+      {screen.type === 'candidates' && (
         <CandidatesScreen
           photoUrl={screen.photoUrl}
           lat={screen.lat}
           lng={screen.lng}
+          onBack={goBack}
           onMatch={(cat) =>
-            setScreen({
+            goTo({
               type: 'match-found',
               cat,
               photoUrl: screen.photoUrl,
@@ -97,36 +100,32 @@ function renderScreen(
             })
           }
           onNoMatch={() =>
-            setScreen({ type: 'name', photoUrl: screen.photoUrl, lat: screen.lat, lng: screen.lng })
+            goTo({ type: 'name', photoUrl: screen.photoUrl, lat: screen.lat, lng: screen.lng })
           }
         />
-      )
-
-    case 'match-found':
-      return (
+      )}
+      {screen.type === 'match-found' && (
         <MatchFoundScreen
           cat={screen.cat}
           photoUrl={screen.photoUrl}
           lat={screen.lat}
           lng={screen.lng}
+          onBack={goBack}
         />
-      )
-
-    case 'name':
-      return (
+      )}
+      {screen.type === 'name' && (
         <NameScreen
-          onNext={(catName) =>
-            setScreen({ type: 'details', lat: screen.lat, lng: screen.lng, catName })
-          }
+          onBack={goBack}
+          onNext={(catName) => goTo({ type: 'details', lat: screen.lat, lng: screen.lng, catName })}
         />
-      )
-
-    case 'details':
-      return (
+      )}
+      {screen.type === 'details' && (
         <DetailsScreen
           name={screen.catName}
+          onBack={goBack}
           onSave={(details) => handleSave(screen.catName, screen.lat, screen.lng, details)}
         />
-      )
-  }
+      )}
+    </>
+  )
 }
