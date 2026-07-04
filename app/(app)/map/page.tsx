@@ -36,6 +36,7 @@ export default function MapPage() {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null)
   const [pendingSearch, setPendingSearch] = useState<MapMoveEnd | null>(null)
   const [searchStale, setSearchStale] = useState(false)
+  const [searchBarResetKey, setSearchBarResetKey] = useState(0)
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [locationMode, setLocationMode] = useState<LocationMode>('idle')
@@ -186,6 +187,7 @@ export default function MapPage() {
     if (!pendingSearch) return
     fetchCats(pendingSearch.lat, pendingSearch.lng, pendingSearch.radiusKm)
     setSearchStale(false)
+    setSearchBarResetKey((n) => n + 1)
   }
 
   async function handleSelectSearchedCat(cat: SearchedCat) {
@@ -248,6 +250,7 @@ export default function MapPage() {
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-center gap-2">
         <SearchBar
+          resetSignal={searchBarResetKey}
           userLocation={{ lat: location.lat, lng: location.lng }}
           onSelectCat={handleSelectSearchedCat}
           displayContent={
