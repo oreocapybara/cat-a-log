@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 // Routes that don't require authentication
 const PUBLIC_ROUTES = [
+  '/',
   '/login',
   '/register',
   '/setup-profile',
