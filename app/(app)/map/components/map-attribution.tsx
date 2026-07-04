@@ -9,7 +9,7 @@
 // meant to cover it when a cat is selected rather than the reverse.
 export function MapAttribution() {
   return (
-    <div className="bg-card/60 dark:bg-card/40 text-muted-foreground/80 absolute right-4 bottom-[88px] flex items-center gap-1 rounded-full border border-white/40 px-1.5 py-0.5 text-[8px] leading-none shadow-sm backdrop-blur-md dark:border-white/10">
+    <div className="bg-card/60 dark:bg-card/70 text-muted-foreground dark:text-foreground/70 absolute right-4 bottom-[88px] flex items-center gap-1 rounded-full border border-white/40 px-1.5 py-0.5 text-[8px] leading-none shadow-sm backdrop-blur-md dark:border-white/15">
       <a
         href="https://www.openstreetmap.org/copyright"
         target="_blank"
