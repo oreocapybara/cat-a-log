@@ -118,7 +118,7 @@ export function CandidatesScreen({
           </Card>
         ))}
 
-        {candidates.length > 0 && (
+        {candidates.length > 0 && !photoUrl.startsWith('blob:') && (
           <Button
             type="button"
             variant="outline"
