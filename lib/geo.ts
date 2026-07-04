@@ -9,13 +9,27 @@ export function distanceKm(lat1: number, lng1: number, lat2: number, lng2: numbe
 const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
 
+export type StalenessTier = 'fresh' | 'aging' | 'stale'
+
+// Single source of truth for the day/week cutoffs so the opacity fade and
+// the active marker's freshness dot can't drift apart.
+export function getStalenessTier(createdAt: string): StalenessTier {
+  const ageMs = Date.now() - new Date(createdAt).getTime()
+  if (ageMs < DAY_MS) return 'fresh'
+  if (ageMs < 7 * DAY_MS) return 'aging'
+  return 'stale'
+}
+
 // A cat pin marks where it was last tagged, not where it is now — opacity
 // passively signals how stale that location might be. Size stays constant;
 // shrinking pins on a crowded map would hurt tappability for little signal.
+// Only used for *unselected* pins — the active pin stays fully opaque and
+// shows staleness via a dot + relative-time caption instead, since a
+// faded-out active marker reads as broken rather than "old".
 export function getStalenessOpacity(createdAt: string): number {
-  const ageMs = Date.now() - new Date(createdAt).getTime()
-  if (ageMs < DAY_MS) return 1
-  if (ageMs < 7 * DAY_MS) return 0.7
+  const tier = getStalenessTier(createdAt)
+  if (tier === 'fresh') return 1
+  if (tier === 'aging') return 0.7
   return 0.4
 }
 
