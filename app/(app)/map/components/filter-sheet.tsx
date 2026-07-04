@@ -15,7 +15,16 @@ export type CatFilters = {
 
 const TAG_OPTIONS = Object.entries(TAG_META) as [CatTag['tag'], (typeof TAG_META)[CatTag['tag']]][]
 
-function matchesFilters(cat: NearbyCat, tags: CatTag['tag'][], filters: CatFilters): boolean {
+// Exported so map/page.tsx's default-view filtering reuses this exact rule
+// set — keeping the deceased-exclusion logic in one place is the point.
+export function matchesFilters(
+  cat: NearbyCat,
+  tags: CatTag['tag'][],
+  filters: CatFilters
+): boolean {
+  // A deceased cat is hidden from the default view; it only reappears when
+  // the user explicitly opts in via the "Passed away" filter chip.
+  if (tags.includes('deceased') && !filters.tags.includes('deceased')) return false
   if (filters.earTippedOnly && !cat.is_ear_tipped) return false
   if (filters.tags.length > 0 && !filters.tags.some((tag) => tags.includes(tag))) return false
   return true

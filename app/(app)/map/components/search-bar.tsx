@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Loader2, Search, X } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ArrowLeft, Loader2, Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
 import { distanceKm } from '@/lib/geo'
@@ -27,16 +26,23 @@ export function SearchBar({
   userLocation,
   displayContent,
   onSelectCat,
+  resetSignal,
 }: {
   userLocation: { lat: number; lng: number }
   displayContent: React.ReactNode
   onSelectCat: (cat: SearchedCat) => void
+  resetSignal?: number
 }) {
   const [expanded, setExpanded] = useState(false)
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<SearchedCat[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (resetSignal === undefined) return
+    collapse()
+  }, [resetSignal])
 
   useEffect(() => {
     const trimmed = query.trim()
@@ -101,8 +107,15 @@ export function SearchBar({
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 relative flex-1 duration-150">
-      <div className="bg-card/70 dark:bg-card/90 focus-within:ring-primary/40 flex items-center gap-2 rounded-full border border-white/40 py-1 pr-1 pl-4 shadow-sm backdrop-blur-md transition-shadow focus-within:ring-2 dark:border-white/10">
-        <Search className="text-muted-foreground h-4 w-4 shrink-0" />
+      <div className="bg-card/70 dark:bg-card/90 focus-within:ring-primary/40 flex items-center gap-2 rounded-full border border-white/40 py-1 pr-2 pl-1 shadow-sm backdrop-blur-md transition-shadow focus-within:ring-2 dark:border-white/10">
+        <button
+          type="button"
+          onClick={collapse}
+          aria-label="Back"
+          className="text-muted-foreground hover:text-foreground flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
         <Input
           ref={inputRef}
           autoFocus
@@ -122,16 +135,6 @@ export function SearchBar({
             <X className="h-3.5 w-3.5" />
           </button>
         )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="shrink-0 rounded-full"
-          aria-label="Cancel search"
-          onClick={collapse}
-        >
-          <X className="h-4 w-4" />
-        </Button>
       </div>
 
       {query.trim() && (

@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { CatPreviewCard } from './components/cat-preview-card'
-import { FilterSheet, type CatFilters } from './components/filter-sheet'
+import { FilterSheet, type CatFilters, matchesFilters } from './components/filter-sheet'
 import { SearchBar, type SearchedCat } from './components/search-bar'
 import { SearchThisAreaPill } from './components/search-this-area-pill'
 import { LocateButton, type LocationMode } from './components/locate-button'
+import { MapAttribution } from './components/map-attribution'
 import type { MapMoveEnd } from './components/cat-map'
 import { distanceKm } from '@/lib/geo'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
@@ -36,6 +37,7 @@ export default function MapPage() {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null)
   const [pendingSearch, setPendingSearch] = useState<MapMoveEnd | null>(null)
   const [searchStale, setSearchStale] = useState(false)
+  const [searchBarResetKey, setSearchBarResetKey] = useState(0)
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [locationMode, setLocationMode] = useState<LocationMode>('idle')
@@ -71,6 +73,7 @@ export default function MapPage() {
           'cat_id',
           nearbyCats.map((cat: NearbyCat) => cat.id)
         )
+        .is('resolved_at', null)
 
       if (tagError) {
         toast.error('Could not load cat tags')
@@ -186,6 +189,7 @@ export default function MapPage() {
     if (!pendingSearch) return
     fetchCats(pendingSearch.lat, pendingSearch.lng, pendingSearch.radiusKm)
     setSearchStale(false)
+    setSearchBarResetKey((n) => n + 1)
   }
 
   async function handleSelectSearchedCat(cat: SearchedCat) {
@@ -199,15 +203,36 @@ export default function MapPage() {
     setSelectedCatId(null)
   }
 
+  async function handleResolveTag(catId: string, tag: CatTag['tag']) {
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+
+    const prevTags = catTags.get(catId) ?? []
+    setCatTags((prev) =>
+      new Map(prev).set(
+        catId,
+        prevTags.filter((t) => t !== tag)
+      )
+    )
+
+    const { error } = await supabase
+      .from('cat_tags')
+      .update({ resolved_at: new Date().toISOString(), resolved_by: user.id })
+      .eq('cat_id', catId)
+      .eq('tag', tag)
+      .is('resolved_at', null)
+
+    if (error) {
+      setCatTags((prev) => new Map(prev).set(catId, prevTags))
+      toast.error(error.message)
+    }
+  }
+
   const filteredCats = useMemo(() => {
-    return cats.filter((cat) => {
-      if (filters.earTippedOnly && !cat.is_ear_tipped) return false
-      if (filters.tags.length > 0) {
-        const tags = catTags.get(cat.id) ?? []
-        if (!filters.tags.some((tag) => tags.includes(tag))) return false
-      }
-      return true
-    })
+    return cats.filter((cat) => matchesFilters(cat, catTags.get(cat.id) ?? [], filters))
   }, [cats, filters, catTags])
 
   const selectedCat = filteredCats.find((cat) => cat.id === selectedCatId) ?? null
@@ -248,6 +273,7 @@ export default function MapPage() {
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-center gap-2">
         <SearchBar
+          resetSignal={searchBarResetKey}
           userLocation={{ lat: location.lat, lng: location.lng }}
           onSelectCat={handleSelectSearchedCat}
           displayContent={
@@ -284,12 +310,14 @@ export default function MapPage() {
       />
 
       <LocateButton mode={locationMode} visible={!selectedCat} onClick={handleLocateClick} />
+      <MapAttribution />
 
       <CatPreviewCard
         cat={selectedCat}
         tags={selectedCat ? (catTags.get(selectedCat.id) ?? []) : []}
         onClose={() => setSelectedCatId(null)}
         onViewLocation={(lat, lng) => setFlyToTarget([lat, lng])}
+        onResolveTag={handleResolveTag}
       />
 
       <FilterSheet

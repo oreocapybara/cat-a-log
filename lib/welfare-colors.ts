@@ -44,7 +44,7 @@ export const TAG_META: Record<
     className: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-400',
   },
   deceased: {
-    label: 'Deceased',
+    label: 'Passed away',
     icon: null,
     className: 'bg-secondary text-secondary-foreground',
   },

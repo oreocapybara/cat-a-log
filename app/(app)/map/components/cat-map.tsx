@@ -6,7 +6,12 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-lea
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { buildClusterIndex, getMapPoints, type MapPoint } from '@/lib/clustering'
-import { getStalenessOpacity } from '@/lib/geo'
+import {
+  formatLastSeen,
+  getStalenessOpacity,
+  getStalenessTier,
+  type StalenessTier,
+} from '@/lib/geo'
 import { DEFAULT_WELFARE_COLOR, getWelfareTier } from '@/lib/welfare-colors'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
@@ -17,9 +22,6 @@ export type MapMoveEnd = { lat: number; lng: number; radiusKm: number }
 // matching the app chrome. Dark mode reuses the light basemap and tones it to
 // neutral gray with a CSS filter (map-tiles-dark, globals.css) instead.
 const TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 
 const userIcon = L.divIcon({
   className: '',
@@ -84,6 +86,14 @@ function welfareBadgeHtml(badge: WelfareStyle['badge'], size: number): string {
       line-height:1;
     ">${badge.glyph}</div>
   `
+}
+
+// Dot color for the active marker's freshness caption — a fixed palette
+// (not theme-derived) so it reads the same over both light and dark map tiles.
+const STALENESS_DOT_COLOR: Record<StalenessTier, string> = {
+  fresh: '#22c55e',
+  aging: '#f59e0b',
+  stale: '#94a3b8',
 }
 
 const CLUSTER_PHOTO_OFFSETS = [
@@ -204,15 +214,20 @@ function makeCatIcon(
   const welfare = getWelfareStyle(tags)
   const photoFilter = welfare.desaturate ? 'filter:grayscale(1) opacity(0.75);' : ''
   // A pin marks where a cat was last tagged, not where it is now — fade older
-  // pins so that's visible at a glance without shrinking (and hurting tap
-  // targets for) markers on a crowded map.
+  // *unselected* pins so that's visible at a glance without shrinking (and
+  // hurting tap targets for) markers on a crowded map.
   const stalenessOpacity = getStalenessOpacity(cat.created_at)
 
   if (selected) {
     const label = cat.name ?? 'Unknown'
-    // 64×64 photo square + ~20px label below = ~88px total height
+    const tier = getStalenessTier(cat.created_at)
+    const lastSeen = formatLastSeen(cat.created_at)
+    // Photo stays fully opaque even when stale — staleness on the active pin
+    // is shown via the dot + relative-time caption below, not by fading the
+    // one marker the user is currently looking at.
+    // 64×64 photo square + ~20px name pill + ~18px caption pill = ~110px total
     const html = `
-      <div class="map-marker-pop-active" style="animation-delay:${delayMs}ms;opacity:${stalenessOpacity};display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="map-marker-pop-active" style="animation-delay:${delayMs}ms;display:flex;flex-direction:column;align-items:center;gap:4px;">
         <div style="position:relative;width:64px;height:64px;">
           <div style="
             width:64px;
@@ -240,13 +255,26 @@ function makeCatIcon(
           overflow:hidden;
           text-overflow:ellipsis;
         ">${label}</span>
+        <span style="
+          display:flex;
+          align-items:center;
+          gap:4px;
+          background:var(--popover);
+          color:var(--popover-foreground);
+          font-size:10px;
+          font-weight:500;
+          padding:2px 7px;
+          border-radius:9999px;
+          white-space:nowrap;
+          box-shadow:0 1px 4px rgba(0,0,0,0.25);
+        "><span style="width:6px;height:6px;border-radius:50%;background:${STALENESS_DOT_COLOR[tier]};flex-shrink:0;"></span>${lastSeen}</span>
       </div>
     `
     return L.divIcon({
       className: '',
       html,
-      // total block is ~88px tall, 96px wide; anchor at bottom-centre of photo (not label)
-      iconSize: [96, 88],
+      // total block is ~110px tall, 96px wide; anchor at bottom-centre of photo (not the labels)
+      iconSize: [96, 110],
       iconAnchor: [48, 67],
     })
   }
@@ -417,9 +445,14 @@ export function CatMap({
   }, [cats, clusterIndex, clusterViewport])
 
   return (
-    <MapContainer center={center} zoom={15} className="isolate h-full w-full" zoomControl={false}>
+    <MapContainer
+      center={center}
+      zoom={15}
+      className="isolate h-full w-full"
+      zoomControl={false}
+      attributionControl={false}
+    >
       <TileLayer
-        attribution={TILE_ATTRIBUTION}
         url={TILE_URL}
         className={resolvedTheme === 'dark' ? 'map-tiles-dark' : undefined}
       />
