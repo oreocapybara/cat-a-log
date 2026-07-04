@@ -59,13 +59,14 @@ export async function GET(_request: Request, { params }: Props) {
 
   const heroTier = heroCat ? getSightingTier(heroCat.timesSpotted) : null
 
-  // Up to 4 cats for the collection strip (excluding hero)
+  // Collection preview (up to 4, excluding hero)
   const collectionCats = cats.filter((c) => c.id !== heroCat?.id).slice(0, 4)
 
-  // Psychology: the card tells a story in 3 seconds of glancing:
-  // 1. HERO IMAGE — "wow, cute/interesting cat" (emotional hook)
-  // 2. TIER + STATS — "this is rare/impressive" (status/envy)
-  // 3. PERSON + CTA — "someone real did this, I could too" (belonging + action)
+  // Card border color based on tier — the "rarity" indicator
+  const borderColor = heroTier?.color ?? '#94a3b8'
+  const borderGlow = heroTier?.glow
+    ? `0 0 40px ${borderColor}60, 0 0 80px ${borderColor}30`
+    : `0 0 20px ${borderColor}30`
 
   return new ImageResponse(
     (
@@ -74,267 +75,313 @@ export async function GET(_request: Request, { params }: Props) {
           width: '100%',
           height: '100%',
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           backgroundColor: '#0c0a09',
-          position: 'relative',
-          overflow: 'hidden',
+          padding: '60px 48px',
         }}
       >
-        {/* === SECTION 1: HERO IMAGE (60%) — The Emotional Hook === */}
-        {heroCat && (
-          <div style={{ display: 'flex', position: 'relative', width: '100%', height: '58%' }}>
-            <img
-              src={heroCat.primary_photo_url}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-
-            {/* Dramatic vignette — draws eye to center of photo */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                background:
-                  'radial-gradient(ellipse at center, transparent 40%, rgba(12,10,9,0.7) 100%)',
-              }}
-            />
-
-            {/* Bottom gradient for text readability */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: '50%',
-                display: 'flex',
-                background: 'linear-gradient(to top, #0c0a09, transparent)',
-              }}
-            />
-
-            {/* Hero cat name + tier — overlaid on photo for maximum impact */}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 32,
-                left: 48,
-                right: 48,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-              }}
-            >
-              {/* Cat name — large, bold, the star of the show */}
-              <span
-                style={{
-                  color: 'white',
-                  fontSize: 56,
-                  fontWeight: 800,
-                  lineHeight: 1.1,
-                  textShadow: '0 2px 20px rgba(0,0,0,0.8)',
-                }}
-              >
-                {heroCat.name ?? 'Unknown Cat'}
-              </span>
-
-              {/* Tier badge — THE status symbol that creates envy */}
-              {heroTier && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '10px 20px',
-                      borderRadius: 999,
-                      backgroundColor: `${heroTier.color}25`,
-                      border: `2px solid ${heroTier.color}60`,
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: heroTier.color,
-                        fontSize: 22,
-                        fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        textShadow: heroTier.glow
-                          ? `0 0 20px ${heroTier.color}, 0 0 40px ${heroTier.color}80`
-                          : 'none',
-                      }}
-                    >
-                      {heroTier.name}
-                    </span>
-                  </div>
-                  {/* Spotted count — social proof number */}
-                  <span
-                    style={{
-                      color: heroTier.color,
-                      fontSize: 22,
-                      fontWeight: 700,
-                      opacity: 0.9,
-                    }}
-                  >
-                    Spotted {heroCat.timesSpotted}×
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* === SECTION 2: PROFILE INFO — Social Proof + Collection === */}
+        {/* === THE CARD === */}
         <div
           style={{
+            width: '100%',
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            flex: 1,
-            padding: '36px 48px',
-            justifyContent: 'space-between',
+            borderRadius: 32,
+            overflow: 'hidden',
+            position: 'relative',
+            // Tier-colored border — like a holographic card edge
+            border: `4px solid ${borderColor}`,
+            boxShadow: borderGlow,
+            backgroundColor: '#18181b',
           }}
         >
-          {/* Profile identity */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            {/* Avatar + name row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              {profile.avatar_url ? (
-                <div
-                  style={{
-                    width: 72,
-                    height: 72,
-                    borderRadius: 999,
-                    overflow: 'hidden',
-                    display: 'flex',
-                    border: '3px solid rgba(255,255,255,0.15)',
-                  }}
-                >
-                  <img
-                    src={profile.avatar_url}
-                    alt=""
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
-              ) : (
-                <div
-                  style={{
-                    width: 72,
-                    height: 72,
-                    borderRadius: 999,
-                    backgroundColor: '#f97316',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: 28,
-                    fontWeight: 700,
-                  }}
-                >
-                  {username.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ color: 'white', fontSize: 34, fontWeight: 700 }}>
-                  @{profile.username}
-                </span>
-                {/* Stats — creates "impressive collection" feeling */}
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 22, fontWeight: 500 }}>
-                  {cats.length} {cats.length === 1 ? 'cat' : 'cats'} discovered · {totalSightings}{' '}
-                  {totalSightings === 1 ? 'sighting' : 'sightings'}
-                </span>
-              </div>
-            </div>
-
-            {/* Collection strip — shows breadth, creates "I want this" feeling */}
-            {collectionCats.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <span
-                  style={{
-                    color: 'rgba(255,255,255,0.4)',
-                    fontSize: 16,
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.12em',
-                  }}
-                >
-                  Collection
-                </span>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  {collectionCats.map((cat, i) => (
-                    <div
-                      key={cat.id}
-                      style={{
-                        width: 120,
-                        height: 120,
-                        borderRadius: 16,
-                        overflow: 'hidden',
-                        display: 'flex',
-                        opacity: 1 - i * 0.12,
-                        border: '2px solid rgba(255,255,255,0.08)',
-                      }}
-                    >
-                      <img
-                        src={cat.primary_photo_url}
-                        alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-                  ))}
-                  {/* "More" indicator — creates curiosity gap */}
-                  {cats.length > 5 && (
-                    <div
-                      style={{
-                        width: 120,
-                        height: 120,
-                        borderRadius: 16,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: 'rgba(255,255,255,0.05)',
-                        border: '2px solid rgba(255,255,255,0.08)',
-                      }}
-                    >
-                      <span
-                        style={{ color: 'rgba(255,255,255,0.5)', fontSize: 24, fontWeight: 700 }}
-                      >
-                        +{cats.length - 5}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* === SECTION 3: CTA — The Conversion Hook === */}
+          {/* Card header — tier name + rarity dots */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              borderTop: '1px solid rgba(255,255,255,0.08)',
-              paddingTop: 24,
+              padding: '20px 28px 16px',
             }}
           >
-            {/* Branding + CTA that creates action intent */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 22, fontWeight: 700 }}>
-                🐾 Cat-A-Log
+            <span
+              style={{
+                color: borderColor,
+                fontSize: 20,
+                fontWeight: 800,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+              }}
+            >
+              {heroTier?.name ?? 'Stray'}
+            </span>
+            {/* Tier dots — visual rarity indicator like card games */}
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 999,
+                    backgroundColor:
+                      i <= (heroTier?.tier ?? 1) ? borderColor : 'rgba(255,255,255,0.1)',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* === ILLUSTRATION WINDOW — the cat photo === */}
+          {heroCat && (
+            <div
+              style={{
+                display: 'flex',
+                position: 'relative',
+                margin: '0 24px',
+                borderRadius: 20,
+                overflow: 'hidden',
+                height: '48%',
+                // Inner border like a card illustration frame
+                border: `3px solid ${borderColor}30`,
+              }}
+            >
+              <img
+                src={heroCat.primary_photo_url}
+                alt=""
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              {/* Subtle vignette */}
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  background:
+                    'radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%)',
+                }}
+              />
+            </div>
+          )}
+
+          {/* === CARD INFO PANEL === */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              padding: '24px 28px',
+              justifyContent: 'space-between',
+            }}
+          >
+            {/* Cat name + spotted count */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span
+                style={{
+                  color: 'white',
+                  fontSize: 44,
+                  fontWeight: 800,
+                  lineHeight: 1.1,
+                  textShadow: heroTier?.glow ? `0 0 20px ${borderColor}80` : 'none',
+                }}
+              >
+                {heroCat?.name ?? 'Unknown Cat'}
               </span>
-              <span style={{ color: '#f97316', fontSize: 18, fontWeight: 600 }}>
-                Discover the strays around you
+              <span style={{ color: borderColor, fontSize: 22, fontWeight: 600 }}>
+                Spotted {heroCat?.timesSpotted ?? 0}× by the community
               </span>
             </div>
-            {/* Fake button — visual CTA that implies tappability */}
+
+            {/* Stats row — card-game style */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 16,
+                marginTop: 16,
+                padding: '16px 0',
+                borderTop: '1px solid rgba(255,255,255,0.08)',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  flex: 1,
+                }}
+              >
+                <span style={{ color: 'white', fontSize: 32, fontWeight: 800 }}>{cats.length}</span>
+                <span
+                  style={{
+                    color: 'rgba(255,255,255,0.5)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  Discovered
+                </span>
+              </div>
+              <div
+                style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.08)', display: 'flex' }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  flex: 1,
+                }}
+              >
+                <span style={{ color: 'white', fontSize: 32, fontWeight: 800 }}>
+                  {totalSightings}
+                </span>
+                <span
+                  style={{
+                    color: 'rgba(255,255,255,0.5)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  Sightings
+                </span>
+              </div>
+              <div
+                style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.08)', display: 'flex' }}
+              />
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  flex: 1,
+                }}
+              >
+                <span style={{ color: borderColor, fontSize: 32, fontWeight: 800 }}>
+                  {heroTier?.tier ?? 1}
+                </span>
+                <span
+                  style={{
+                    color: 'rgba(255,255,255,0.5)',
+                    fontSize: 14,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                  }}
+                >
+                  Tier
+                </span>
+              </div>
+            </div>
+
+            {/* Collection strip */}
+            {collectionCats.length > 0 && (
+              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                {collectionCats.map((cat) => (
+                  <div
+                    key={cat.id}
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 12,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      border: '2px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <img
+                      src={cat.primary_photo_url}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                ))}
+                {cats.length > 5 && (
+                  <div
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 12,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'rgba(255,255,255,0.05)',
+                      border: '2px solid rgba(255,255,255,0.1)',
+                    }}
+                  >
+                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18, fontWeight: 700 }}>
+                      +{cats.length - 5}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* === CARD FOOTER — Trainer info + branding === */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '12px 24px',
-                borderRadius: 999,
-                backgroundColor: '#f97316',
+                justifyContent: 'space-between',
+                marginTop: 'auto',
+                paddingTop: 16,
               }}
             >
-              <span style={{ color: 'white', fontSize: 18, fontWeight: 700 }}>Join the hunt</span>
+              {/* Trainer (user) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {profile.avatar_url ? (
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 999,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      border: `2px solid ${borderColor}40`,
+                    }}
+                  >
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 999,
+                      backgroundColor: '#f97316',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontSize: 16,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {username.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, fontWeight: 600 }}>
+                  @{profile.username}
+                </span>
+              </div>
+
+              {/* Branding — subtle, card-game style */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 18 }}>🐾</span>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 16, fontWeight: 600 }}>
+                  Cat-A-Log
+                </span>
+              </div>
             </div>
           </div>
         </div>
