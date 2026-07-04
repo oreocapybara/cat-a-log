@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { GoogleButton } from '../components/google-button'
+import { useReturnTo } from '@/lib/use-return-to'
 import { toast } from 'sonner'
 
 const loginSchema = z.object({
@@ -31,6 +32,8 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) })
+
+  const returnTo = useReturnTo()
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('oauth_error')) {
@@ -65,9 +68,9 @@ export default function LoginPage() {
         .single()
 
       if (!profile) {
-        router.push('/setup-profile')
+        router.push(`/setup-profile${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`)
       } else {
-        router.push('/map')
+        router.push(returnTo || '/map')
       }
     }
   }
@@ -127,11 +130,14 @@ export default function LoginPage() {
             <div className="border-border h-px flex-1 border-t" />
           </div>
 
-          <GoogleButton label="Continue with Google" />
+          <GoogleButton label="Continue with Google" returnTo={returnTo ?? undefined} />
 
           <p className="text-muted-foreground mt-4 text-center text-sm">
             No account?{' '}
-            <Link href="/register" className="text-primary underline underline-offset-4">
+            <Link
+              href={returnTo ? `/register?returnTo=${encodeURIComponent(returnTo)}` : '/register'}
+              className="text-primary underline underline-offset-4"
+            >
               Create one
             </Link>
           </p>
