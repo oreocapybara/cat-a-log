@@ -81,8 +81,11 @@ export function CatPreviewCard({
       )}
     >
       <div className="relative shrink-0">
-        <div
-          className="h-16 w-16 overflow-hidden rounded-xl"
+        <button
+          type="button"
+          onClick={() => setGalleryOpen(true)}
+          aria-label="View photos of this cat"
+          className="block h-16 w-16 cursor-pointer overflow-hidden rounded-xl"
           style={{
             border: `3px solid ${frameColor}`,
             boxShadow: `0 0 0 3px ${frameColor}26`,
@@ -94,7 +97,7 @@ export function CatPreviewCard({
             alt=""
             className={cn('h-full w-full object-cover', tier?.desaturate && 'opacity-75 grayscale')}
           />
-        </div>
+        </button>
         {tier?.glyph && (
           <div
             className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold text-white dark:border-neutral-900"
@@ -102,6 +105,17 @@ export function CatPreviewCard({
           >
             {tier.glyph}
           </div>
+        )}
+        {renderedCat.times_spotted > 1 && (
+          <button
+            type="button"
+            onClick={() => setGalleryOpen(true)}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="bg-primary text-primary-foreground absolute -right-1.5 -bottom-1.5 flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-2 border-white dark:border-neutral-900"
+          >
+            <Images className="h-3 w-3" />
+          </button>
         )}
       </div>
       <div className="min-w-0 flex-1 text-left">
@@ -121,14 +135,6 @@ export function CatPreviewCard({
             <span className="inline-flex items-center gap-1 whitespace-nowrap">
               <Eye className="h-3 w-3 shrink-0" />
               Spotted {renderedCat.times_spotted} times
-              <button
-                type="button"
-                onClick={() => setGalleryOpen(true)}
-                aria-label="View gallery of all sightings"
-                className="text-primary relative flex shrink-0 cursor-pointer items-center before:absolute before:-inset-2.5 before:content-['']"
-              >
-                <Images className="h-3.5 w-3.5" />
-              </button>
             </span>
           )}
         </div>

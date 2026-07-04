@@ -11,6 +11,7 @@ import { FilterSheet, type CatFilters } from './components/filter-sheet'
 import { SearchBar, type SearchedCat } from './components/search-bar'
 import { SearchThisAreaPill } from './components/search-this-area-pill'
 import { LocateButton, type LocationMode } from './components/locate-button'
+import { MapAttribution } from './components/map-attribution'
 import type { MapMoveEnd } from './components/cat-map'
 import { distanceKm } from '@/lib/geo'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
@@ -287,6 +288,7 @@ export default function MapPage() {
       />
 
       <LocateButton mode={locationMode} visible={!selectedCat} onClick={handleLocateClick} />
+      <MapAttribution />
 
       <CatPreviewCard
         cat={selectedCat}
