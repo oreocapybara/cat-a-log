@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Eye, MapPin, Scissors, X } from 'lucide-react'
+import { Clock, Eye, Images, MapPin, Scissors, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { formatLastSeen } from '@/lib/geo'
 import { cn } from '@/lib/utils'
 import { DEFAULT_WELFARE_COLOR, getWelfareTier, TAG_META } from '@/lib/welfare-colors'
+import { CatGalleryModal } from './cat-gallery-modal'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 // Matches the `duration-200` used on both the enter and exit animation classes below.
@@ -18,10 +20,12 @@ export function CatPreviewCard({
   cat,
   tags,
   onClose,
+  onViewLocation,
 }: {
   cat: NearbyCat | null
   tags: CatTag['tag'][]
   onClose: () => void
+  onViewLocation: (lat: number, lng: number) => void
 }) {
   // The card is always mounted by the parent now — closing it still needs to render
   // for one more animation frame-window so the exit transition can actually play,
@@ -34,6 +38,7 @@ export function CatPreviewCard({
   const [renderedTags, setRenderedTags] = useState(tags)
   const [closing, setClosing] = useState(false)
   const [prevCat, setPrevCat] = useState(cat)
+  const [galleryOpen, setGalleryOpen] = useState(false)
 
   // React's documented pattern for "adjust state when a prop changes" without an
   // effect: compare against the previous prop value during render itself, rather
@@ -60,6 +65,11 @@ export function CatPreviewCard({
 
   const tier = getWelfareTier(renderedTags)
   const frameColor = tier?.color ?? DEFAULT_WELFARE_COLOR
+
+  function handleViewLocation(lat: number, lng: number) {
+    setGalleryOpen(false)
+    onViewLocation(lat, lng)
+  }
 
   return (
     <Card
@@ -98,15 +108,28 @@ export function CatPreviewCard({
         <p className="font-heading truncate text-base font-bold">
           {renderedCat.name ?? 'Unnamed cat'}
         </p>
-        <div className="text-muted-foreground flex items-center gap-1 text-xs">
-          <MapPin className="h-3 w-3 shrink-0" />
-          <span>{formatDistance(renderedCat.distance_km)}</span>
+        <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <MapPin className="h-3 w-3 shrink-0" />
+            {formatDistance(renderedCat.distance_km)}
+          </span>
+          <span className="inline-flex items-center gap-1 whitespace-nowrap">
+            <Clock className="h-3 w-3 shrink-0" />
+            {formatLastSeen(renderedCat.created_at)}
+          </span>
           {renderedCat.times_spotted > 1 && (
-            <>
-              <span aria-hidden>·</span>
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
               <Eye className="h-3 w-3 shrink-0" />
-              <span>Spotted {renderedCat.times_spotted} times</span>
-            </>
+              Spotted {renderedCat.times_spotted} times
+              <button
+                type="button"
+                onClick={() => setGalleryOpen(true)}
+                aria-label="View gallery of all sightings"
+                className="text-primary relative flex shrink-0 cursor-pointer items-center before:absolute before:-inset-2.5 before:content-['']"
+              >
+                <Images className="h-3.5 w-3.5" />
+              </button>
+            </span>
           )}
         </div>
         {(renderedCat.is_ear_tipped || renderedTags.length > 0) && (
@@ -151,6 +174,13 @@ export function CatPreviewCard({
       >
         <X className="h-4 w-4" />
       </Button>
+
+      <CatGalleryModal
+        cat={renderedCat}
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        onViewLocation={handleViewLocation}
+      />
     </Card>
   )
 }
