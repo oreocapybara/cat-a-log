@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Clock, Eye, Images, MapPin, Scissors, X } from 'lucide-react'
+import { Check, Clock, Eye, Images, MapPin, Scissors, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { formatLastSeen } from '@/lib/geo'
@@ -21,11 +21,13 @@ export function CatPreviewCard({
   tags,
   onClose,
   onViewLocation,
+  onResolveTag,
 }: {
   cat: NearbyCat | null
   tags: CatTag['tag'][]
   onClose: () => void
   onViewLocation: (lat: number, lng: number) => void
+  onResolveTag: (catId: string, tag: CatTag['tag']) => void
 }) {
   // The card is always mounted by the parent now — closing it still needs to render
   // for one more animation frame-window so the exit transition can actually play,
@@ -69,6 +71,16 @@ export function CatPreviewCard({
   function handleViewLocation(lat: number, lng: number) {
     setGalleryOpen(false)
     onViewLocation(lat, lng)
+  }
+
+  // The card freezes `tags` into `renderedTags` on cat-identity change only
+  // (see the effect above), so a resolve here needs its own local update —
+  // otherwise the chip wouldn't disappear until the card is closed and
+  // reopened, even though the parent's source-of-truth state did update.
+  function handleResolve(tag: CatTag['tag']) {
+    if (!renderedCat) return
+    setRenderedTags((prev) => prev.filter((t) => t !== tag))
+    onResolveTag(renderedCat.id, tag)
   }
 
   return (
@@ -149,17 +161,43 @@ export function CatPreviewCard({
             {renderedTags.map((tag) => {
               const meta = TAG_META[tag]
               const Icon = meta.icon
+              // Deceased-cascade already auto-resolves needs_medical/possible_rabies,
+              // so an active deceased tag alongside them shouldn't occur — this
+              // guard is defensive, matching the design doc's disabling rule.
+              const resolvable =
+                (tag === 'needs_medical' || tag === 'possible_rabies') &&
+                !renderedTags.includes('deceased')
+
+              if (!resolvable) {
+                return (
+                  <span
+                    key={tag}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase',
+                      meta.className
+                    )}
+                  >
+                    {Icon && <Icon className="h-2.5 w-2.5" />}
+                    {meta.label}
+                  </span>
+                )
+              }
+
               return (
-                <span
+                <button
                   key={tag}
+                  type="button"
+                  aria-label={tag === 'needs_medical' ? 'Mark as recovered' : 'Mark as cleared'}
+                  onClick={() => handleResolve(tag)}
                   className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase',
+                    'inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase transition-opacity hover:opacity-70',
                     meta.className
                   )}
                 >
                   {Icon && <Icon className="h-2.5 w-2.5" />}
                   {meta.label}
-                </span>
+                  <Check className="h-2.5 w-2.5" />
+                </button>
               )
             })}
           </div>
