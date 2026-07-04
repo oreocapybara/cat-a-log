@@ -15,7 +15,7 @@ export default function BottomNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="border-border bg-background/95 supports-[backdrop-filter]:bg-background/80 fixed right-0 bottom-0 left-0 z-50 border-t backdrop-blur">
+    <nav className="bg-card/70 dark:bg-card/50 fixed inset-x-4 bottom-4 z-50 rounded-full border border-white/40 shadow-lg backdrop-blur-md dark:border-white/10">
       <div className="pb-safe flex items-center justify-around px-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon, isFab }) => {
           const isActive =

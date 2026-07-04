@@ -214,7 +214,7 @@ export default function MapPage() {
 
   if (location.status === 'loading') {
     return (
-      <div className="-mb-20 flex h-screen items-center justify-center">
+      <div className="-mb-28 flex h-screen items-center justify-center">
         <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
       </div>
     )
@@ -222,7 +222,7 @@ export default function MapPage() {
 
   if (location.status === 'error') {
     return (
-      <div className="-mb-20 flex h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="-mb-28 flex h-screen flex-col items-center justify-center gap-3 px-6 text-center">
         <MapPin className="text-muted-foreground h-8 w-8" />
         <p className="text-muted-foreground text-sm">Location unavailable</p>
         <Button type="button" variant="outline" onClick={retryLocation}>
@@ -233,7 +233,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="relative -mb-20 h-screen overflow-hidden">
+    <div className="relative -mb-28 h-screen overflow-hidden">
       <CatMap
         center={[location.lat, location.lng]}
         userLocation={userLocation ?? [location.lat, location.lng]}
