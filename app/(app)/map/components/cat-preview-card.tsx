@@ -74,7 +74,7 @@ export function CatPreviewCard({
   return (
     <Card
       className={cn(
-        'bg-card/70 dark:bg-card/50 absolute inset-x-4 bottom-24 z-10 flex-row items-center gap-3 p-3 shadow-lg ring-white/40 backdrop-blur-md duration-200 dark:ring-white/10',
+        'bg-card/70 dark:bg-card/90 absolute inset-x-4 bottom-24 z-10 flex-row items-center gap-3 p-3 shadow-lg ring-white/40 backdrop-blur-md duration-200 dark:ring-white/10',
         closing
           ? 'motion-safe:animate-out motion-safe:fade-out motion-safe:slide-out-to-bottom-2'
           : 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2'

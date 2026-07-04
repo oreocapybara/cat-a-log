@@ -84,23 +84,23 @@
 }
 
 .dark {
-  --background: #10141c;
+  --background: #1c2534;
   --foreground: #eef1f6;
-  --card: #1a212c;
+  --card: #232e42;
   --card-foreground: #eef1f6;
-  --popover: #1a212c;
+  --popover: #232e42;
   --popover-foreground: #eef1f6;
   --primary: #f5b942;
   --primary-foreground: #14181f;
-  --secondary: #26303d;
+  --secondary: #34435c;
   --secondary-foreground: #fcd34d;
-  --muted: #1e2530;
-  --muted-foreground: #93a1b5;
-  --accent: #26303d;
+  --muted: #1f2839;
+  --muted-foreground: #9aa8bb;
+  --accent: #34435c;
   --accent-foreground: #fcd34d;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: #26303d;
-  --input: #26303d;
+  --border: #34435c;
+  --input: #34435c;
   --ring: #f5b942;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
@@ -234,6 +234,13 @@
 
 .leaflet-tile-loaded {
   opacity: 1;
+}
+
+/* Dark mode reuses the light (Positron) basemap tiles for legibility outdoors
+   — this tones their cream tint to neutral gray and dims them slightly so
+   they don't glare against the app's dark chrome. */
+.map-tiles-dark {
+  filter: grayscale(50%) brightness(0.92);
 }
 
 @media (prefers-reduced-motion: reduce) {

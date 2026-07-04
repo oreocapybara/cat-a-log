@@ -46,7 +46,7 @@ export function SearchThisAreaPill({
         type="button"
         onClick={onSearch}
         className={cn(
-          'bg-card/90 dark:bg-card/70 flex cursor-pointer items-center gap-1.5 rounded-full border border-white/40 px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur-md transition-transform duration-200 active:scale-95 dark:border-white/10',
+          'bg-card/90 dark:bg-card/90 flex cursor-pointer items-center gap-1.5 rounded-full border border-white/40 px-3.5 py-1.5 text-xs font-medium shadow-md backdrop-blur-md transition-transform duration-200 active:scale-95 dark:border-white/10',
           closing
             ? 'motion-safe:animate-out motion-safe:fade-out motion-safe:zoom-out-95 motion-safe:slide-out-to-top-1'
             : 'motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:slide-in-from-top-1'

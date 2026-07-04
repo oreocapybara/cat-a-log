@@ -12,10 +12,11 @@ import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 export type MapMoveEnd = { lat: number; lng: number; radiusKm: number }
 
-const TILE_URLS = {
-  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-}
+// CARTO's dark_all basemap is near-black — legible indoors, but this app is
+// used outdoors on a phone where reading streets/labels matters more than
+// matching the app chrome. Dark mode reuses the light basemap and tones it to
+// neutral gray with a CSS filter (map-tiles-dark, globals.css) instead.
+const TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 
 const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -407,7 +408,6 @@ export function CatMap({
   flyTo?: [number, number] | null
 }) {
   const { resolvedTheme } = useTheme()
-  const tileUrl = resolvedTheme === 'dark' ? TILE_URLS.dark : TILE_URLS.light
 
   const [clusterViewport, setClusterViewport] = useState<ClusterViewport | null>(null)
   const clusterIndex = useMemo(() => buildClusterIndex(cats), [cats])
@@ -418,7 +418,11 @@ export function CatMap({
 
   return (
     <MapContainer center={center} zoom={15} className="isolate h-full w-full" zoomControl={false}>
-      <TileLayer attribution={TILE_ATTRIBUTION} url={tileUrl} />
+      <TileLayer
+        attribution={TILE_ATTRIBUTION}
+        url={TILE_URL}
+        className={resolvedTheme === 'dark' ? 'map-tiles-dark' : undefined}
+      />
       <MapEvents onMoveEnd={onMoveEnd} onUserDrag={onUserDrag} />
       <ClusterViewportTracker onChange={setClusterViewport} />
       <FlyTo target={flyTo} />

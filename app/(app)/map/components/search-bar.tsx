@@ -91,7 +91,7 @@ export function SearchBar({
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="bg-card/70 dark:bg-card/50 text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 flex flex-1 cursor-pointer items-center gap-2 rounded-full border border-white/40 px-4 py-2.5 text-left shadow-sm backdrop-blur-md duration-150 dark:border-white/10"
+        className="bg-card/70 dark:bg-card/90 text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 flex flex-1 cursor-pointer items-center gap-2 rounded-full border border-white/40 px-4 py-2.5 text-left shadow-sm backdrop-blur-md duration-150 dark:border-white/10"
       >
         <Search className="h-4 w-4 shrink-0" />
         <span className="truncate text-sm">{displayContent}</span>
@@ -101,7 +101,7 @@ export function SearchBar({
 
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 relative flex-1 duration-150">
-      <div className="bg-card/70 dark:bg-card/50 focus-within:ring-primary/40 flex items-center gap-2 rounded-full border border-white/40 py-1 pr-1 pl-4 shadow-sm backdrop-blur-md transition-shadow focus-within:ring-2 dark:border-white/10">
+      <div className="bg-card/70 dark:bg-card/90 focus-within:ring-primary/40 flex items-center gap-2 rounded-full border border-white/40 py-1 pr-1 pl-4 shadow-sm backdrop-blur-md transition-shadow focus-within:ring-2 dark:border-white/10">
         <Search className="text-muted-foreground h-4 w-4 shrink-0" />
         <Input
           ref={inputRef}
