@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
+  const returnTo = searchParams.get('returnTo')
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?oauth_error=1`)
@@ -21,5 +22,11 @@ export async function GET(request: NextRequest) {
 
   const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
 
-  return NextResponse.redirect(`${origin}${profile ? '/map' : '/setup-profile'}`)
+  if (profile) {
+    return NextResponse.redirect(`${origin}${returnTo || '/map'}`)
+  }
+
+  return NextResponse.redirect(
+    `${origin}/setup-profile${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`
+  )
 }
