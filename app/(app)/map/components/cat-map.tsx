@@ -201,12 +201,16 @@ function makeCatIcon(
   const delayMs = Math.min(index * STAGGER_STEP_MS, MAX_STAGGER_DELAY_MS)
   const welfare = getWelfareStyle(tags)
   const photoFilter = welfare.desaturate ? 'filter:grayscale(1) opacity(0.75);' : ''
+  // A pin marks where a cat was last tagged, not where it is now — fade older
+  // pins so that's visible at a glance without shrinking (and hurting tap
+  // targets for) markers on a crowded map.
+  const stalenessOpacity = getStalenessOpacity(cat.created_at)
 
   if (selected) {
     const label = cat.name ?? 'Unknown'
     // 64×64 photo square + ~20px label below = ~88px total height
     const html = `
-      <div class="map-marker-pop-active" style="animation-delay:${delayMs}ms;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="map-marker-pop-active" style="animation-delay:${delayMs}ms;opacity:${stalenessOpacity};display:flex;flex-direction:column;align-items:center;gap:4px;">
         <div style="position:relative;width:64px;height:64px;">
           <div style="
             width:64px;
@@ -247,7 +251,7 @@ function makeCatIcon(
 
   // Inactive: 44×44 circle (WCAG minimum touch target)
   const html = `
-    <div class="map-marker-pop" style="position:relative;width:44px;height:44px;animation-delay:${delayMs}ms;">
+    <div class="map-marker-pop" style="position:relative;width:44px;height:44px;animation-delay:${delayMs}ms;opacity:${stalenessOpacity};">
       <div style="
         width:44px;
         height:44px;
