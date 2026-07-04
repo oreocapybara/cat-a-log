@@ -41,10 +41,12 @@ export function MyCatsList({
   cats,
   initialTags,
   currentUserId,
+  featuredCatId,
 }: {
   cats: MyCat[]
   initialTags: CatTag[]
   currentUserId: string
+  featuredCatId: string | null
 }) {
   const router = useRouter()
   const [tagsByCat, setTagsByCat] = useState<Map<string, CatTag[]>>(() => {
