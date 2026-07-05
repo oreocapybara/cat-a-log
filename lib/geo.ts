@@ -50,3 +50,19 @@ export function formatRelativeTime(iso: string): string {
 export function formatLastSeen(createdAt: string): string {
   return `Seen ${formatRelativeTime(createdAt)}`
 }
+
+// Inverse of the flat-earth approximation distanceKm uses above — moves a
+// point `meters` along a compass bearing (0 = north, clockwise) and returns
+// the new [lat, lng]. Used to fan out map pins that would otherwise render
+// stacked on identical/near-identical coordinates (see lib/clustering.ts).
+export function offsetLatLng(
+  lat: number,
+  lng: number,
+  bearingRad: number,
+  meters: number
+): [number, number] {
+  const km = meters / 1000
+  const dLat = (km * Math.cos(bearingRad)) / 111.0
+  const dLng = (km * Math.sin(bearingRad)) / (111.0 * Math.cos((lat * Math.PI) / 180))
+  return [lat + dLat, lng + dLng]
+}

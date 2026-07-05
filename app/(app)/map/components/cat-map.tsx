@@ -5,7 +5,12 @@ import { useTheme } from 'next-themes'
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { buildClusterIndex, getMapPoints, type MapPoint } from '@/lib/clustering'
+import {
+  buildClusterIndex,
+  getMapPoints,
+  separateOverlappingCats,
+  type MapPoint,
+} from '@/lib/clustering'
 import {
   formatLastSeen,
   getStalenessOpacity,
@@ -85,6 +90,32 @@ function welfareBadgeHtml(badge: WelfareStyle['badge'], size: number): string {
       font-weight:700;
       line-height:1;
     ">${badge.glyph}</div>
+  `
+}
+
+// Small orange count badge marking a pin that's the anchor of a fanned-out
+// overlap group — without it, cats tagged at the same spot just look like
+// several coincidentally-close pins instead of "N cats logged right here."
+function overlapBadgeHtml(count: number, size: number): string {
+  return `
+    <div style="
+      position:absolute;
+      bottom:${-(size * 0.15)}px;
+      left:${-(size * 0.15)}px;
+      min-width:${size}px;
+      height:${size}px;
+      padding:0 4px;
+      border-radius:9999px;
+      background:#f97316;
+      color:#fff;
+      font-size:${Math.round(size * 0.55)}px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:2px solid #fff;
+      box-shadow:0 1px 3px rgba(0,0,0,0.3);
+    ">${count}</div>
   `
 }
 
@@ -202,7 +233,8 @@ function makeCatIcon(
   cat: NearbyCat,
   selected: boolean,
   index: number,
-  tags: CatTag['tag'][]
+  tags: CatTag['tag'][],
+  overlapCount?: number
 ): L.DivIcon {
   const photoUrl = cat.primary_photo_url
   // Escape quote characters only — encodeURIComponent would mangle the
@@ -241,6 +273,7 @@ function makeCatIcon(
             ${photoFilter}
           "></div>
           ${welfareBadgeHtml(welfare.badge, 22)}
+          ${overlapCount ? overlapBadgeHtml(overlapCount, 20) : ''}
         </div>
         <span style="
           background:#f97316;
@@ -294,6 +327,7 @@ function makeCatIcon(
         ${photoFilter}
       "></div>
       ${welfareBadgeHtml(welfare.badge, 18)}
+      ${overlapCount ? overlapBadgeHtml(overlapCount, 16) : ''}
     </div>
   `
   return L.divIcon({
@@ -363,26 +397,39 @@ function ClusterViewportTracker({ onChange }: { onChange: (viewport: ClusterView
 // note on CatMap's previous `catIcons` useMemo for why that mattered.
 function CatMarker({
   cat,
+  lat,
+  lng,
   index,
   selectedCatId,
   tags,
+  overlapCount,
   onSelectCat,
 }: {
   cat: NearbyCat
+  lat: number
+  lng: number
   index: number
   selectedCatId: string | null
   tags: CatTag['tag'][]
+  overlapCount?: number
   onSelectCat: (cat: NearbyCat) => void
 }) {
   const selected = cat.id === selectedCatId
-  const icon = useMemo(() => makeCatIcon(cat, selected, index, tags), [cat, selected, index, tags])
+  const icon = useMemo(
+    () => makeCatIcon(cat, selected, index, tags, overlapCount),
+    [cat, selected, index, tags, overlapCount]
+  )
 
   return (
     <Marker
-      position={[cat.lat, cat.lng]}
+      position={[lat, lng]}
       icon={icon}
       opacity={selectedCatId && !selected ? 0.55 : 1}
-      zIndexOffset={selected ? 1000 : 0}
+      // Leaflet ranks same-pane markers by screen y-position by default, so a
+      // satellite fanned below/left of its anchor can outrank it and cover
+      // the anchor's overlap badge. Boost the anchor above its own
+      // satellites (but still below the always-on-top selected marker).
+      zIndexOffset={selected ? 1000 : overlapCount ? 500 : 0}
       eventHandlers={{ click: () => onSelectCat(cat) }}
     />
   )
@@ -440,8 +487,10 @@ export function CatMap({
   const [clusterViewport, setClusterViewport] = useState<ClusterViewport | null>(null)
   const clusterIndex = useMemo(() => buildClusterIndex(cats), [cats])
   const points = useMemo<MapPoint[]>(() => {
-    if (!clusterViewport) return cats.map((cat): MapPoint => ({ type: 'single', cat }))
-    return getMapPoints(clusterIndex, clusterViewport.bounds, clusterViewport.zoom)
+    const raw: MapPoint[] = !clusterViewport
+      ? cats.map((cat): MapPoint => ({ type: 'single', cat, lat: cat.lat, lng: cat.lng }))
+      : getMapPoints(clusterIndex, clusterViewport.bounds, clusterViewport.zoom)
+    return separateOverlappingCats(raw)
   }, [cats, clusterIndex, clusterViewport])
 
   return (
@@ -459,15 +508,21 @@ export function CatMap({
       <MapEvents onMoveEnd={onMoveEnd} onUserDrag={onUserDrag} />
       <ClusterViewportTracker onChange={setClusterViewport} />
       <FlyTo target={flyTo} />
-      <Marker position={userLocation} icon={userIcon} />
+      {/* zIndexOffset keeps this below cat pins even when a cat is tagged at
+          the user's exact location — otherwise the blue dot can fully hide a
+          cat pin (and its overlap badge) underneath it. */}
+      <Marker position={userLocation} icon={userIcon} zIndexOffset={-1000} />
       {points.map((point, index) =>
         point.type === 'single' ? (
           <CatMarker
             key={point.cat.id}
             cat={point.cat}
+            lat={point.lat}
+            lng={point.lng}
             index={index}
             selectedCatId={selectedCatId}
             tags={catTags.get(point.cat.id) ?? NO_TAGS}
+            overlapCount={point.overlapCount}
             onSelectCat={onSelectCat}
           />
         ) : (
