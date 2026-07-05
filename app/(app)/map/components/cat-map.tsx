@@ -504,7 +504,10 @@ export function CatMap({
       <MapEvents onMoveEnd={onMoveEnd} onUserDrag={onUserDrag} />
       <ClusterViewportTracker onChange={setClusterViewport} />
       <FlyTo target={flyTo} />
-      <Marker position={userLocation} icon={userIcon} />
+      {/* zIndexOffset keeps this below cat pins even when a cat is tagged at
+          the user's exact location — otherwise the blue dot can fully hide a
+          cat pin (and its overlap badge) underneath it. */}
+      <Marker position={userLocation} icon={userIcon} zIndexOffset={-1000} />
       {points.map((point, index) =>
         point.type === 'single' ? (
           <CatMarker
