@@ -129,58 +129,18 @@
   }
 }
 
-/* Dialog / bottom-sheet animations.
-   Uses @starting-style for entry (display:none → visible) and
-   data-ending-style attribute for exit (Base UI keeps element visible
-   until the transition completes, then adds hidden). */
-@media (prefers-reduced-motion: no-preference) {
-  .dialog-backdrop {
-    opacity: 1;
-    transition:
-      opacity 200ms ease,
-      display 200ms ease allow-discrete;
-  }
-  .dialog-backdrop[data-ending-style] {
-    opacity: 0;
-  }
-  .dialog-backdrop[hidden] {
-    opacity: 0;
-  }
-  @starting-style {
-    .dialog-backdrop:not([hidden]) {
-      opacity: 0;
-    }
-  }
-
-  .dialog-popup {
-    translate: 0 0;
-    transition:
-      translate 200ms ease-out,
-      display 200ms ease-out allow-discrete;
-  }
-  .dialog-popup[data-ending-style] {
-    translate: 0 100%;
-  }
-  .dialog-popup[hidden] {
-    translate: 0 100%;
-  }
-  @starting-style {
-    .dialog-popup:not([hidden]) {
-      translate: 0 100%;
-    }
-  }
-}
-
 /* Dark/light switch: crossfade theme colors instead of snapping.
-   Uses non-shorthand properties so component-level `transition:` declarations
-   (e.g. Base UI dialog slide-in) can override via the shorthand cascade. */
-@media (prefers-reduced-motion: no-preference) {
-  *,
-  *::before,
-  *::after {
-    transition-property: background-color, border-color, color, fill, stroke;
-    transition-duration: 200ms;
-    transition-timing-function: ease;
+   Inside @layer base so Tailwind utility-layer classes (like transition-transform)
+   can override these longhands via layer precedence. */
+@layer base {
+  @media (prefers-reduced-motion: no-preference) {
+    *,
+    *::before,
+    *::after {
+      transition-property: background-color, border-color, color, fill, stroke;
+      transition-duration: 200ms;
+      transition-timing-function: ease;
+    }
   }
 }
 

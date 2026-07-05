@@ -20,7 +20,7 @@ export function StepDots({ currentStep, totalSteps }: { currentStep: number; tot
   const steps = totalSteps === 3 ? STEPS_3 : STEPS_4
 
   return (
-    <div className="from-background/95 to-background/0 fixed inset-x-0 top-0 z-40 bg-gradient-to-b pt-3 pb-4">
+    <div className="from-background/80 to-background/0 fixed inset-x-0 top-0 z-40 bg-gradient-to-b pt-3 pb-4 backdrop-blur-md">
       <div className="mx-auto flex max-w-xs items-center justify-center gap-0">
         {steps.map((step, i) => {
           const stepNum = i + 1

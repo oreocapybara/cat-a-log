@@ -25,15 +25,15 @@ export function NameScreen({
   }, [])
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col px-4 pt-16 pb-6 motion-safe:duration-300">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col px-4 pt-20 pb-6 motion-safe:duration-300">
       {/* Back button */}
       <button
         type="button"
         onClick={onBack}
-        className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 self-start text-sm transition-colors"
+        className="text-muted-foreground hover:bg-muted hover:text-foreground mb-2 -ml-1 flex h-8 w-8 items-center justify-center self-start rounded-full transition-colors"
+        aria-label="Go back"
       >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back</span>
+        <ArrowLeft className="h-5 w-5" />
       </button>
 
       {/* Celebration header */}
