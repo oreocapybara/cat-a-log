@@ -63,7 +63,10 @@ export function getMapPoints(
 }
 
 const OVERLAP_THRESHOLD_KM = 0.001 // 1 meter
-const NUDGE_RADIUS_M = 2
+// ponytail: 2m measured as only a few screen px even at max practical zoom
+// (real-world distance is fixed regardless of zoom level) — bumped to 8m
+// after manual testing showed 2m pins still nearly fully overlapping.
+const NUDGE_RADIUS_M = 8
 
 type SinglePoint = Extract<MapPoint, { type: 'single' }>
 
