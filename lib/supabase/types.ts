@@ -25,6 +25,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           tags_count: number
+          featured_cat_id: string | null
           created_at: string
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           tags_count?: number
+          featured_cat_id?: string | null
           created_at?: string
         }
         Update: {
@@ -41,6 +43,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           tags_count?: number
+          featured_cat_id?: string | null
           created_at?: string
         }
       }
