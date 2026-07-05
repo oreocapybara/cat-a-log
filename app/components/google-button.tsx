@@ -28,20 +28,34 @@ function GoogleLogo() {
   )
 }
 
+function getAppOrigin() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, '')
+}
+
+function getSafeReturnTo(returnTo: string | undefined) {
+  if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) {
+    return null
+  }
+
+  return returnTo
+}
+
 export function GoogleButton({ label, returnTo }: { label: string; returnTo?: string }) {
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
     setLoading(true)
     const supabase = createClient()
+    const callbackUrl = new URL('/auth/callback', getAppOrigin())
+    const safeReturnTo = getSafeReturnTo(returnTo)
 
-    const redirectTo = returnTo
-      ? `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(returnTo)}`
-      : `${window.location.origin}/auth/callback`
+    if (safeReturnTo) {
+      callbackUrl.searchParams.set('returnTo', safeReturnTo)
+    }
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: { redirectTo: callbackUrl.toString() },
     })
 
     if (error) {
