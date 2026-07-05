@@ -68,6 +68,16 @@ export function MatchFoundScreen({
         toast.error(error.message)
       }
 
+      // Update the cat's location to the latest sighting coordinates
+      const { error: updateError } = await supabase
+        .from('cats')
+        .update({ lat, lng })
+        .eq('id', cat.id)
+
+      if (updateError) {
+        toast.error('Could not update cat location.')
+      }
+
       setSaving(false)
     }
 
