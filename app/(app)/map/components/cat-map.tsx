@@ -154,7 +154,7 @@ function makeClusterIcon(
       const encodedUrl = cat.primary_photo_url.replace(/'/g, '%27').replace(/"/g, '%22')
       const { top, left, z } = CLUSTER_PHOTO_OFFSETS[i]
       return `
-        <div style="
+        <div class="map-marker-photo" style="
           position:absolute;
           top:${top}px;
           left:${left}px;
@@ -176,17 +176,9 @@ function makeClusterIcon(
 
   const html = `
     <div class="map-marker-pop" style="position:relative;width:52px;height:52px;">
-      <div style="
-        position:relative;
-        width:52px;
-        height:52px;
-        border-radius:50%;
-        border:2.5px solid ${welfare.borderColor};
-        background:#fff;
-        overflow:hidden;
-        isolation:isolate;
-        box-shadow:0 2px 6px rgba(0,0,0,0.2);
-      ">${photosHtml}</div>
+      <div class="map-cluster-bubble" style="--cluster-color:${welfare.borderColor};">
+        ${photosHtml}
+      </div>
       ${welfareBadgeHtml(welfare.badge, 18)}
       <div style="
         position:absolute;
@@ -261,7 +253,7 @@ function makeCatIcon(
     const html = `
       <div class="map-marker-pop-active" style="animation-delay:${delayMs}ms;display:flex;flex-direction:column;align-items:center;gap:4px;">
         <div style="position:relative;width:64px;height:64px;">
-          <div style="
+          <div class="map-marker-photo" style="
             width:64px;
             height:64px;
             border-radius:10px;
@@ -315,7 +307,7 @@ function makeCatIcon(
   // Inactive: 44×44 circle (WCAG minimum touch target)
   const html = `
     <div class="map-marker-pop" style="position:relative;width:44px;height:44px;animation-delay:${delayMs}ms;opacity:${stalenessOpacity};">
-      <div style="
+      <div class="map-marker-photo" style="
         width:44px;
         height:44px;
         border-radius:50%;
@@ -365,11 +357,11 @@ function MapEvents({
 // MapContainer's `center` prop only sets the initial view — it isn't synced on
 // updates, so panning programmatically (e.g. after picking a search result)
 // needs this instead.
-function FlyTo({ target }: { target: [number, number] | null }) {
+function FlyTo({ target, zoom = 15 }: { target: [number, number] | null; zoom?: number }) {
   const map = useMap()
   useEffect(() => {
-    if (target) map.flyTo(target, 15)
-  }, [target, map])
+    if (target) map.flyTo(target, zoom)
+  }, [target, zoom, map])
   return null
 }
 
@@ -471,6 +463,7 @@ export function CatMap({
   onMoveEnd,
   onUserDrag,
   flyTo = null,
+  flyToZoom,
 }: {
   center: [number, number]
   userLocation: [number, number]
@@ -481,6 +474,7 @@ export function CatMap({
   onMoveEnd: (move: MapMoveEnd) => void
   onUserDrag?: () => void
   flyTo?: [number, number] | null
+  flyToZoom?: number
 }) {
   const { resolvedTheme } = useTheme()
 
@@ -507,7 +501,7 @@ export function CatMap({
       />
       <MapEvents onMoveEnd={onMoveEnd} onUserDrag={onUserDrag} />
       <ClusterViewportTracker onChange={setClusterViewport} />
-      <FlyTo target={flyTo} />
+      <FlyTo target={flyTo} zoom={flyToZoom} />
       {/* zIndexOffset keeps this below cat pins even when a cat is tagged at
           the user's exact location — otherwise the blue dot can fully hide a
           cat pin (and its overlap badge) underneath it. */}

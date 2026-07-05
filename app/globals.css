@@ -129,19 +129,58 @@
   }
 }
 
+/* Dialog / bottom-sheet animations.
+   Uses @starting-style for entry (display:none → visible) and
+   data-ending-style attribute for exit (Base UI keeps element visible
+   until the transition completes, then adds hidden). */
+@media (prefers-reduced-motion: no-preference) {
+  .dialog-backdrop {
+    opacity: 1;
+    transition:
+      opacity 200ms ease,
+      display 200ms ease allow-discrete;
+  }
+  .dialog-backdrop[data-ending-style] {
+    opacity: 0;
+  }
+  .dialog-backdrop[hidden] {
+    opacity: 0;
+  }
+  @starting-style {
+    .dialog-backdrop:not([hidden]) {
+      opacity: 0;
+    }
+  }
+
+  .dialog-popup {
+    translate: 0 0;
+    transition:
+      translate 200ms ease-out,
+      display 200ms ease-out allow-discrete;
+  }
+  .dialog-popup[data-ending-style] {
+    translate: 0 100%;
+  }
+  .dialog-popup[hidden] {
+    translate: 0 100%;
+  }
+  @starting-style {
+    .dialog-popup:not([hidden]) {
+      translate: 0 100%;
+    }
+  }
+}
+
 /* Dark/light switch: crossfade theme colors instead of snapping.
-   Scoped to color properties only (no box-shadow) so it doesn't fight the
-   pulse-ring keyframe animations below. */
+   Uses non-shorthand properties so component-level `transition:` declarations
+   (e.g. Base UI dialog slide-in) can override via the shorthand cascade. */
 @media (prefers-reduced-motion: no-preference) {
   *,
   *::before,
   *::after {
-    transition:
-      background-color 200ms ease,
-      border-color 200ms ease,
-      color 200ms ease,
-      fill 200ms ease,
-      stroke 200ms ease;
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 200ms;
+    transition-timing-function: ease;
   }
 }
 
@@ -243,6 +282,52 @@
   animation: pulse-ring-primary 1.8s ease-out infinite;
 }
 
+/* Marker photo backgrounds: fade in once the image is decoded, preventing
+   the visible right-to-left progressive-JPEG paint artifact. The secondary
+   background-color acts as a placeholder while the image loads. No delay —
+   cached images resolve in a single frame; uncached images smoothly reveal
+   over the 400ms ease-out without a jarring blank-then-appear flicker. */
+.map-marker-photo {
+  background-color: var(--secondary);
+  opacity: 0;
+  animation: marker-photo-reveal 0.4s ease-out forwards;
+}
+
+@keyframes marker-photo-reveal {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Cluster bubble: frosted glass effect that adapts to light/dark mode.
+   The welfare border color is passed via --cluster-color CSS variable.
+   Blur kept at 6px (not 10+) — multiple clusters on-screen at once must
+   not tank frame rates on mid-range mobile GPUs during map panning. */
+.map-cluster-bubble {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 2.5px solid var(--cluster-color, #f97316);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+:is(.dark) .map-cluster-bubble {
+  background: rgba(30, 30, 30, 0.7);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
 .leaflet-tile {
   opacity: 0;
   transition: opacity 200ms ease-out;
@@ -282,5 +367,9 @@
   .leaflet-tile {
     opacity: 1;
     transition: none;
+  }
+  .map-marker-photo {
+    opacity: 1;
+    animation: none;
   }
 }

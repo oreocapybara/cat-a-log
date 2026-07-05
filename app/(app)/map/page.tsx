@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Loader2, MapPin, SlidersHorizontal } from 'lucide-react'
+import { MapPin, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -12,12 +12,14 @@ import { SearchBar, type SearchedCat } from './components/search-bar'
 import { SearchThisAreaPill } from './components/search-this-area-pill'
 import { LocateButton, type LocationMode } from './components/locate-button'
 import { MapAttribution } from './components/map-attribution'
+import { MapSkeleton } from './components/map-skeleton'
 import type { MapMoveEnd } from './components/cat-map'
 import { distanceKm } from '@/lib/geo'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 const CatMap = dynamic(() => import('./components/cat-map').then((mod) => mod.CatMap), {
   ssr: false,
+  loading: () => <MapSkeleton />,
 })
 
 const INITIAL_RADIUS_KM = 2
@@ -39,6 +41,7 @@ export default function MapPage() {
   const [searchStale, setSearchStale] = useState(false)
   const [searchBarResetKey, setSearchBarResetKey] = useState(0)
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null)
+  const [flyToZoom, setFlyToZoom] = useState<number | undefined>(undefined)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [locationMode, setLocationMode] = useState<LocationMode>('idle')
   // Leaflet fires `moveend` once immediately on mount (from the initial setView) —
@@ -136,6 +139,7 @@ export default function MapPage() {
         const next: [number, number] = [position.coords.latitude, position.coords.longitude]
         setUserLocation(next)
         setFlyToTarget(next)
+        setFlyToZoom(undefined)
       },
       () => {
         toast.error('Could not track your location')
@@ -160,6 +164,7 @@ export default function MapPage() {
         const next: [number, number] = [position.coords.latitude, position.coords.longitude]
         setUserLocation(next)
         setFlyToTarget(next)
+        setFlyToZoom(undefined)
         setLocationMode('centered')
       },
       () => toast.error('Could not get your location'),
@@ -196,6 +201,7 @@ export default function MapPage() {
   async function handleSelectSearchedCat(cat: SearchedCat) {
     await fetchCats(cat.lat, cat.lng, INITIAL_RADIUS_KM)
     setFlyToTarget([cat.lat, cat.lng])
+    setFlyToZoom(17)
     setSelectedCatId(cat.id)
   }
 
@@ -239,16 +245,12 @@ export default function MapPage() {
   const selectedCat = filteredCats.find((cat) => cat.id === selectedCatId) ?? null
 
   if (location.status === 'loading') {
-    return (
-      <div className="-mb-28 flex h-screen items-center justify-center">
-        <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-      </div>
-    )
+    return <MapSkeleton />
   }
 
   if (location.status === 'error') {
     return (
-      <div className="-mb-28 flex h-screen flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="-mb-28 flex h-dvh flex-col items-center justify-center gap-3 px-6 text-center">
         <MapPin className="text-muted-foreground h-8 w-8" />
         <p className="text-muted-foreground text-sm">Location unavailable</p>
         <Button type="button" variant="outline" onClick={retryLocation}>
@@ -259,7 +261,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="relative -mb-28 h-screen overflow-hidden">
+    <div className="relative -mb-28 h-dvh overflow-hidden">
       <CatMap
         center={[location.lat, location.lng]}
         userLocation={userLocation ?? [location.lat, location.lng]}
@@ -270,6 +272,7 @@ export default function MapPage() {
         onMoveEnd={handleMoveEnd}
         onUserDrag={handleUserDrag}
         flyTo={flyToTarget}
+        flyToZoom={flyToZoom}
       />
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-center gap-2">
@@ -317,7 +320,10 @@ export default function MapPage() {
         cat={selectedCat}
         tags={selectedCat ? (catTags.get(selectedCat.id) ?? []) : []}
         onClose={() => setSelectedCatId(null)}
-        onViewLocation={(lat, lng) => setFlyToTarget([lat, lng])}
+        onViewLocation={(lat, lng) => {
+          setFlyToTarget([lat, lng])
+          setFlyToZoom(undefined)
+        }}
         onResolveTag={handleResolveTag}
       />
 
