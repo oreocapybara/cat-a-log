@@ -1,11 +1,12 @@
 import Supercluster from 'supercluster'
 import type { LatLngBounds } from 'leaflet'
+import { distanceKm, offsetLatLng } from './geo.ts'
 import type { NearbyCat } from '@/lib/supabase/types'
 
 type CatPointProperties = { cat: NearbyCat }
 
 export type MapPoint =
-  | { type: 'single'; cat: NearbyCat }
+  | { type: 'single'; cat: NearbyCat; lat: number; lng: number }
   | {
       type: 'cluster'
       id: number
@@ -57,6 +58,63 @@ export function getMapPoints(
         expansionZoom: index.getClusterExpansionZoom(props.cluster_id),
       }
     }
-    return { type: 'single', cat: props.cat }
+    return { type: 'single', cat: props.cat, lat, lng }
   })
+}
+
+const OVERLAP_THRESHOLD_KM = 0.001 // 1 meter
+const NUDGE_RADIUS_M = 2
+
+type SinglePoint = Extract<MapPoint, { type: 'single' }>
+
+// Cats tagged at the exact same spot (or within GPS jitter) would otherwise
+// render as pins stacked perfectly on top of each other — no amount of
+// zooming ever separates two geographically identical points, since they
+// have no pixel distance to grow. Fan every point but the first of each
+// overlapping group out around it by a real (not screen-pixel) distance, so
+// separation is invisible when zoomed out and grows naturally as the map
+// zooms in.
+//
+// ponytail: grouping is O(n^2) and single-linkage from the first point found
+// (not transitive union-find) — fine for viewport-sized point counts and the
+// realistic case of a handful of cats stacked at one exact spot. Upgrade to
+// a real spatial index / union-find if viewports start holding thousands of
+// points or long chains of near-duplicates.
+export function separateOverlappingCats(points: MapPoint[]): MapPoint[] {
+  const singleIndices: number[] = []
+  points.forEach((point, index) => {
+    if (point.type === 'single') singleIndices.push(index)
+  })
+
+  const used = new Set<number>()
+  const groups: number[][] = []
+  for (const i of singleIndices) {
+    if (used.has(i)) continue
+    const anchor = points[i] as SinglePoint
+    const group = [i]
+    used.add(i)
+    for (const j of singleIndices) {
+      if (used.has(j)) continue
+      const candidate = points[j] as SinglePoint
+      if (distanceKm(anchor.lat, anchor.lng, candidate.lat, candidate.lng) < OVERLAP_THRESHOLD_KM) {
+        group.push(j)
+        used.add(j)
+      }
+    }
+    if (group.length > 1) groups.push(group)
+  }
+
+  if (groups.length === 0) return points
+
+  const result = [...points]
+  for (const group of groups) {
+    const anchor = result[group[0]] as SinglePoint
+    for (let k = 1; k < group.length; k++) {
+      const bearing = (2 * Math.PI * k) / group.length
+      const [lat, lng] = offsetLatLng(anchor.lat, anchor.lng, bearing, NUDGE_RADIUS_M)
+      const point = result[group[k]] as SinglePoint
+      result[group[k]] = { ...point, lat, lng }
+    }
+  }
+  return result
 }
