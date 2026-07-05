@@ -39,22 +39,26 @@ export default async function ProfilePage({ params }: Props) {
   const { username } = await params
   const supabase = await createClient()
 
-  // Fetch the profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id, username, avatar_url, bio, featured_cat_id')
-    .eq('username', username)
-    .single()
+  // Fetch profile and current user in parallel (both independent)
+  const [
+    { data: profile },
+    {
+      data: { user },
+    },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, username, avatar_url, bio, featured_cat_id')
+      .eq('username', username)
+      .single(),
+    supabase.auth.getUser(),
+  ])
 
   if (!profile) notFound()
 
-  // Determine if the viewer is the owner
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
   const isOwner = user?.id === profile.id
 
-  // Fetch the user's cats
+  // Fetch the user's cats (depends on profile.id)
   const { data: myCats } = await supabase
     .from('cats')
     .select('id, name, primary_photo_url, created_at')
