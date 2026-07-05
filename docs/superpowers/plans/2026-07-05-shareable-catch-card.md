@@ -703,6 +703,8 @@ git commit -m "feat(map): allow unauthenticated access to catch card images"
 
 This task is a pure refactor — `ShareProfileButton`'s behavior must not change. There's no automated test for this (it's browser-API-driven UI code, same as the original), so verification is manual: the existing profile share button must still work exactly as before.
 
+**Note (updated after a rebase onto `origin/main` mid-plan):** an upstream fix (already merged into `main` via `fix/share-image`, before this task runs) changed `handleShareImage` to omit `url` from the `navigator.share()` call entirely and instead append the link into `text` — most browsers reject or silently fail a share when both `files` and `url` are present together. The code below reflects that already-fixed version; extract it as-is, don't reintroduce the old `url:` field.
+
 - [ ] **Step 1: Write `lib/share-image.ts`**
 
 ```ts
@@ -722,8 +724,10 @@ export async function shareCardImage(options: {
   const blob = await res.blob()
   const file = new File([blob], downloadFilename, { type: 'image/png' })
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({ files: [file], title: shareTitle, text: shareText, url: shareUrl })
+  // Note: when sharing files, url must be omitted — most browsers reject
+  // or silently fail when both files and url are present in the same share call.
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title: shareTitle, text: `${shareText}\n${shareUrl}` })
     return
   }
 
@@ -758,12 +762,13 @@ async function handleShareImage() {
     const file = new File([blob], `${username}-cat-a-log.png`, { type: 'image/png' })
 
     // Try native share with image (mobile)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    // Note: when sharing files, url must be omitted — most browsers reject
+    // or silently fail when both files and url are present in the same share call.
+    if (navigator.canShare?.({ files: [file] })) {
       await navigator.share({
         files: [file],
         title: `@${username} on Cat-A-Log`,
-        text: `Check out @${username} on Cat-A-Log 🐾`,
-        url: profileUrl,
+        text: `Check out @${username} on Cat-A-Log 🐾\n${profileUrl}`,
       })
     } else {
       // Desktop fallback: download the image
@@ -1072,7 +1077,7 @@ git commit -m "feat(tag): add catch-complete screen with shareable card for new 
 
 - [ ] **Step 1: Capture the new sighting's id**
 
-Find the sighting insert inside `recordSighting`:
+**Note (updated after a rebase onto `origin/main` mid-plan):** `recordSighting` now also calls an `update_cat_location` RPC between the sightings insert and `setSaving(false)` (an unrelated upstream feature — leave it untouched). Find the sighting insert inside `recordSighting`:
 
 ```ts
 const { error } = await supabase.from('sightings').insert({
@@ -1087,7 +1092,7 @@ if (error) {
   toast.error(error.message)
 }
 
-setSaving(false)
+// Update the cat's location to the latest sighting coordinates
 ```
 
 Replace with:
@@ -1111,8 +1116,10 @@ if (error) {
   setSightingId(sightingRow.id)
 }
 
-setSaving(false)
+// Update the cat's location to the latest sighting coordinates
 ```
+
+(This only changes the insert query and its immediately-following `if` block — the `update_cat_location` RPC call and `setSaving(false)` after it are unchanged.)
 
 - [ ] **Step 2: Add the `sightingId` state**
 
@@ -1143,7 +1150,7 @@ import { CatchCardShareButton } from '@/app/components/catch-card-share-button'
 
 - [ ] **Step 4: Render the card once the sighting is saved**
 
-Find the end of the "Status badges" block, where it closes the staggered-content wrapper `<div>`:
+**Note (updated after a rebase onto `origin/main` mid-plan):** a "Community editing section" (notes/health-flag editing, an unrelated upstream feature) now sits between the status badges and the staggered-content wrapper's closing `</div>`. Insert the catch card between the status badges and that section — not adjacent to the wrapper's closing tag. Find:
 
 ```tsx
             {tags.map((tag) => {
@@ -1159,10 +1166,11 @@ Find the end of the "Status badges" block, where it closes the staggered-content
             })}
           </div>
         )}
-      </div>
+
+        {/* Community editing section — appears after sighting is saved */}
 ```
 
-Replace with (adds the catch card block right after the status badges, still inside the same staggered-content `<div>`):
+Replace with (adds the catch card block right after the status badges, still inside the same staggered-content `<div>`, before the community editing section):
 
 ```tsx
             {tags.map((tag) => {
@@ -1190,7 +1198,8 @@ Replace with (adds the catch card block right after the status badges, still ins
             />
           </div>
         )}
-      </div>
+
+        {/* Community editing section — appears after sighting is saved */}
 ```
 
 - [ ] **Step 5: Add the share button above the existing CTA**
