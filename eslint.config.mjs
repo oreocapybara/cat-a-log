@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Agent worktree artifacts:
     '.claude/**',
     // Third-party skill scripts (CommonJS, not app code):
+    'superpowers/**',
     '.kiro/**',
   ]),
 ])
