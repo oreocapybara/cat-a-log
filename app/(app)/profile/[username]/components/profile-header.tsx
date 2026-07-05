@@ -1,8 +1,10 @@
 'use client'
 
-import { User } from 'lucide-react'
+import { Camera, Loader2, User } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
 import { ShareProfileButton } from './share-profile-button'
+import { useAvatarUpload } from './avatar-upload-provider'
+import { avatarDialogOpen } from './avatar-upload-dialog'
 
 type ProfileHeaderProps = {
   username: string
@@ -36,15 +38,10 @@ export function ProfileHeader({
 
       {/* Avatar */}
       <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-300">
-        {avatarUrl ? (
-          <div className="ring-primary/20 h-24 w-24 overflow-hidden rounded-full ring-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={avatarUrl} alt={username} className="h-full w-full object-cover" />
-          </div>
+        {isOwner ? (
+          <AvatarWithEdit avatarUrl={avatarUrl} username={username} initials={initials} />
         ) : (
-          <div className="bg-primary text-primary-foreground flex h-24 w-24 items-center justify-center rounded-full text-2xl font-semibold">
-            {initials ?? <User className="h-10 w-10" />}
-          </div>
+          <AvatarDisplay avatarUrl={avatarUrl} username={username} initials={initials} />
         )}
       </div>
 
@@ -77,5 +74,88 @@ export function ProfileHeader({
         </div>
       )}
     </>
+  )
+}
+
+/** Avatar display for non-owners (no edit button) */
+function AvatarDisplay({
+  avatarUrl,
+  username,
+  initials,
+}: {
+  avatarUrl: string | null
+  username: string
+  initials: string
+}) {
+  if (avatarUrl) {
+    return (
+      <div className="ring-primary/20 h-24 w-24 overflow-hidden rounded-full ring-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={avatarUrl} alt={username} className="h-full w-full object-cover" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-primary text-primary-foreground flex h-24 w-24 items-center justify-center rounded-full text-2xl font-semibold">
+      {initials ?? <User className="h-10 w-10" />}
+    </div>
+  )
+}
+
+/** Avatar with edit overlay for owner — consumes AvatarUploadProvider context */
+function AvatarWithEdit({
+  avatarUrl,
+  username,
+  initials,
+}: {
+  avatarUrl: string | null
+  username: string
+  initials: string
+}) {
+  const { isUploading, previewUrl } = useAvatarUpload()
+  const displayUrl = previewUrl ?? avatarUrl
+
+  function handleTap() {
+    avatarDialogOpen?.()
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleTap}
+      className="group relative"
+      aria-label="Change profile photo"
+      aria-busy={isUploading}
+    >
+      {/* Avatar circle */}
+      {displayUrl ? (
+        <div className="ring-primary/20 h-24 w-24 overflow-hidden rounded-full ring-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={displayUrl} alt={username} className="h-full w-full object-cover" />
+        </div>
+      ) : (
+        <div className="bg-primary text-primary-foreground flex h-24 w-24 items-center justify-center rounded-full text-2xl font-semibold">
+          {initials ?? <User className="h-10 w-10" />}
+        </div>
+      )}
+
+      {/* Upload spinner overlay */}
+      {isUploading && (
+        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+          <Loader2 className="h-6 w-6 animate-spin text-white" />
+          <span className="sr-only" role="status">
+            Uploading avatar
+          </span>
+        </div>
+      )}
+
+      {/* Edit badge (camera icon) — bottom-right */}
+      {!isUploading && (
+        <div className="bg-primary text-primary-foreground absolute -right-1 -bottom-1 flex h-7 w-7 items-center justify-center rounded-full shadow-md transition-transform group-hover:scale-110">
+          <Camera className="h-3.5 w-3.5" />
+        </div>
+      )}
+    </button>
   )
 }
