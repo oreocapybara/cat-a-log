@@ -6,7 +6,7 @@ import type { NearbyCat } from '@/lib/supabase/types'
 type CatPointProperties = { cat: NearbyCat }
 
 export type MapPoint =
-  | { type: 'single'; cat: NearbyCat; lat: number; lng: number }
+  | { type: 'single'; cat: NearbyCat; lat: number; lng: number; overlapCount?: number }
   | {
       type: 'cluster'
       id: number
@@ -118,6 +118,7 @@ export function separateOverlappingCats(points: MapPoint[]): MapPoint[] {
   const result = [...points]
   for (const group of groups) {
     const anchor = result[group[0]] as SinglePoint
+    result[group[0]] = { ...anchor, overlapCount: group.length }
     for (let k = 1; k < group.length; k++) {
       const bearing = (2 * Math.PI * k) / group.length
       const [lat, lng] = offsetLatLng(anchor.lat, anchor.lng, bearing, NUDGE_RADIUS_M)

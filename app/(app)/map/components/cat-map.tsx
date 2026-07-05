@@ -93,6 +93,32 @@ function welfareBadgeHtml(badge: WelfareStyle['badge'], size: number): string {
   `
 }
 
+// Small orange count badge marking a pin that's the anchor of a fanned-out
+// overlap group — without it, cats tagged at the same spot just look like
+// several coincidentally-close pins instead of "N cats logged right here."
+function overlapBadgeHtml(count: number, size: number): string {
+  return `
+    <div style="
+      position:absolute;
+      bottom:${-(size * 0.15)}px;
+      left:${-(size * 0.15)}px;
+      min-width:${size}px;
+      height:${size}px;
+      padding:0 4px;
+      border-radius:9999px;
+      background:#f97316;
+      color:#fff;
+      font-size:${Math.round(size * 0.55)}px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:2px solid #fff;
+      box-shadow:0 1px 3px rgba(0,0,0,0.3);
+    ">${count}</div>
+  `
+}
+
 // Dot color for the active marker's freshness caption — a fixed palette
 // (not theme-derived) so it reads the same over both light and dark map tiles.
 const STALENESS_DOT_COLOR: Record<StalenessTier, string> = {
@@ -207,7 +233,8 @@ function makeCatIcon(
   cat: NearbyCat,
   selected: boolean,
   index: number,
-  tags: CatTag['tag'][]
+  tags: CatTag['tag'][],
+  overlapCount?: number
 ): L.DivIcon {
   const photoUrl = cat.primary_photo_url
   // Escape quote characters only — encodeURIComponent would mangle the
@@ -246,6 +273,7 @@ function makeCatIcon(
             ${photoFilter}
           "></div>
           ${welfareBadgeHtml(welfare.badge, 22)}
+          ${overlapCount ? overlapBadgeHtml(overlapCount, 20) : ''}
         </div>
         <span style="
           background:#f97316;
@@ -299,6 +327,7 @@ function makeCatIcon(
         ${photoFilter}
       "></div>
       ${welfareBadgeHtml(welfare.badge, 18)}
+      ${overlapCount ? overlapBadgeHtml(overlapCount, 16) : ''}
     </div>
   `
   return L.divIcon({
@@ -373,6 +402,7 @@ function CatMarker({
   index,
   selectedCatId,
   tags,
+  overlapCount,
   onSelectCat,
 }: {
   cat: NearbyCat
@@ -381,10 +411,14 @@ function CatMarker({
   index: number
   selectedCatId: string | null
   tags: CatTag['tag'][]
+  overlapCount?: number
   onSelectCat: (cat: NearbyCat) => void
 }) {
   const selected = cat.id === selectedCatId
-  const icon = useMemo(() => makeCatIcon(cat, selected, index, tags), [cat, selected, index, tags])
+  const icon = useMemo(
+    () => makeCatIcon(cat, selected, index, tags, overlapCount),
+    [cat, selected, index, tags, overlapCount]
+  )
 
   return (
     <Marker
@@ -481,6 +515,7 @@ export function CatMap({
             index={index}
             selectedCatId={selectedCatId}
             tags={catTags.get(point.cat.id) ?? NO_TAGS}
+            overlapCount={point.overlapCount}
             onSelectCat={onSelectCat}
           />
         ) : (

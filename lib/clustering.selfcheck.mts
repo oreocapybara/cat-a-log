@@ -36,6 +36,8 @@ function single(cat: NearbyCat): MapPoint {
   assert.equal(pointA.lng, -74.0, 'anchor longitude unchanged')
   const movedKm = distanceKm(pointA.lat, pointA.lng, pointB.lat, pointB.lng)
   assert.ok(Math.abs(movedKm - 0.024) < 1e-6, `expected ~24m separation, got ${movedKm * 1000}m`)
+  assert.equal(pointA.overlapCount, 2, 'anchor carries the group size')
+  assert.equal(pointB.overlapCount, undefined, 'satellite has no overlap count')
 }
 
 // Three cats stacked at the same spot: two satellites fan 120 degrees apart, both ~24m from anchor.
@@ -47,6 +49,7 @@ function single(cat: NearbyCat): MapPoint {
   >[]
   assert.equal(pointA.lat, 10, 'anchor unmoved')
   assert.equal(pointA.lng, 10, 'anchor unmoved')
+  assert.equal(pointA.overlapCount, 3, 'anchor carries the group size for a 3-way stack')
   const bKm = distanceKm(pointA.lat, pointA.lng, pointB.lat, pointB.lng)
   const cKm = distanceKm(pointA.lat, pointA.lng, pointC.lat, pointC.lng)
   assert.ok(Math.abs(bKm - 0.024) < 1e-6, 'second point ~24m from anchor')
@@ -90,6 +93,8 @@ function single(cat: NearbyCat): MapPoint {
   assert.equal(pointA.lat, a.lat)
   assert.equal(pointB.lat, b.lat)
   assert.equal(pointB.lng, b.lng)
+  assert.equal(pointA.overlapCount, undefined, 'no badge for non-overlapping points')
+  assert.equal(pointB.overlapCount, undefined, 'no badge for non-overlapping points')
 }
 
 console.log('clustering.selfcheck: OK')
