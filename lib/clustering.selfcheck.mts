@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { separateOverlappingCats, type MapPoint } from './clustering.ts'
-import { distanceKm } from './geo.ts'
+import { distanceKm, offsetLatLng } from './geo.ts'
 import type { NearbyCat } from './supabase/types.ts'
 
 function makeCat(id: string, lat: number, lng: number): NearbyCat {
@@ -59,7 +59,27 @@ function single(cat: NearbyCat): MapPoint {
   )
 }
 
-// Two cats far apart (>1m): both pass through untouched.
+// Two taps ~15m apart (a realistic "same spot" mobile tap, not identical
+// coordinates): should still merge into one fanned group, not render as two
+// independent (and potentially colliding) fans.
+{
+  const a = makeCat('a', 40.7, -74.0)
+  const [nearLat, nearLng] = offsetLatLng(a.lat, a.lng, 0, 15)
+  const b = makeCat('b', nearLat, nearLng)
+  const [pointA, pointB] = separateOverlappingCats([single(a), single(b)]) as Extract<
+    MapPoint,
+    { type: 'single' }
+  >[]
+  assert.equal(pointA.lat, a.lat, 'anchor unmoved')
+  assert.equal(pointA.lng, a.lng, 'anchor unmoved')
+  const movedKm = distanceKm(pointA.lat, pointA.lng, pointB.lat, pointB.lng)
+  assert.ok(
+    Math.abs(movedKm - 0.024) < 1e-6,
+    `expected the ~15m-apart pair to merge and fan to ~24m, got ${movedKm * 1000}m`
+  )
+}
+
+// Two cats far apart (>20m): both pass through untouched.
 {
   const a = makeCat('a', 40.7, -74.0)
   const b = makeCat('b', 40.71, -74.0)

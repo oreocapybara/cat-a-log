@@ -62,12 +62,17 @@ export function getMapPoints(
   })
 }
 
-const OVERLAP_THRESHOLD_KM = 0.001 // 1 meter
 // ponytail: real-world distance is fixed regardless of zoom level, so a
 // small radius measures as only a few screen px even at max practical zoom —
 // 24m tuned via manual testing to give clearly separated, independently
 // tappable pins while still reading as "invisible until zoomed in."
 const NUDGE_RADIUS_M = 24
+// A mobile map tap easily lands several meters off even when a user intends
+// "the exact same spot" — 1m was too strict and let two such taps form two
+// separate groups, whose independent 24m fans then visually collided with
+// each other. Widened to match the nudge radius so "roughly the same spot"
+// taps merge into one shared, evenly-spaced fan instead.
+const OVERLAP_THRESHOLD_KM = 0.02 // 20 meters
 
 type SinglePoint = Extract<MapPoint, { type: 'single' }>
 
