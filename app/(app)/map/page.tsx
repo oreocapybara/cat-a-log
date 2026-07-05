@@ -238,6 +238,35 @@ export default function MapPage() {
     }
   }
 
+  async function handleUndoResolveTag(catId: string, tag: CatTag['tag']) {
+    // Restore the tag in local state
+    setCatTags((prev) => {
+      const current = prev.get(catId) ?? []
+      if (current.includes(tag)) return prev
+      return new Map(prev).set(catId, [...current, tag])
+    })
+
+    // Revert the resolve in DB
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('cat_tags')
+      .update({ resolved_at: null, resolved_by: null })
+      .eq('cat_id', catId)
+      .eq('tag', tag)
+
+    if (error) {
+      // Remove tag again if revert failed
+      setCatTags((prev) => {
+        const current = prev.get(catId) ?? []
+        return new Map(prev).set(
+          catId,
+          current.filter((t) => t !== tag)
+        )
+      })
+      toast.error("Couldn't undo — already saved")
+    }
+  }
+
   const filteredCats = useMemo(() => {
     return cats.filter((cat) => matchesFilters(cat, catTags.get(cat.id) ?? [], filters))
   }, [cats, filters, catTags])
@@ -325,6 +354,7 @@ export default function MapPage() {
           setFlyToZoom(undefined)
         }}
         onResolveTag={handleResolveTag}
+        onUndoResolveTag={handleUndoResolveTag}
       />
 
       <FilterSheet
