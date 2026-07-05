@@ -1,5 +1,12 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/lib/supabase/types'
+
+type CookieToSet = {
+  name: string
+  value: string
+  options: CookieOptions
+}
 
 function getSafeReturnTo(returnTo: string | null) {
   if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) {
@@ -7,6 +14,16 @@ function getSafeReturnTo(returnTo: string | null) {
   }
 
   return returnTo
+}
+
+function createRedirectWithCookies(url: string | URL, cookiesToSet: CookieToSet[]) {
+  const response = NextResponse.redirect(url)
+
+  cookiesToSet.forEach(({ name, value, options }) => {
+    response.cookies.set(name, value, options)
+  })
+
+  return response
 }
 
 export async function GET(request: NextRequest) {
@@ -18,7 +35,29 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?oauth_error=1`)
   }
 
-  const supabase = await createClient()
+  const requestCookies = new Map(
+    request.cookies.getAll().map((cookie) => [cookie.name, cookie.value])
+  )
+  const cookiesToSet: CookieToSet[] = []
+
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return Array.from(requestCookies, ([name, value]) => ({ name, value }))
+        },
+        setAll(newCookies) {
+          newCookies.forEach((cookie) => {
+            requestCookies.set(cookie.name, cookie.value)
+            cookiesToSet.push(cookie)
+          })
+        },
+      },
+    }
+  )
+
   const {
     data: { user },
     error,
@@ -31,11 +70,11 @@ export async function GET(request: NextRequest) {
   const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
 
   if (profile) {
-    return NextResponse.redirect(`${origin}${returnTo}`)
+    return createRedirectWithCookies(`${origin}${returnTo}`, cookiesToSet)
   }
 
   const setupProfileUrl = new URL('/setup-profile', origin)
   setupProfileUrl.searchParams.set('returnTo', returnTo)
 
-  return NextResponse.redirect(setupProfileUrl)
+  return createRedirectWithCookies(setupProfileUrl, cookiesToSet)
 }
