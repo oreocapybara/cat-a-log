@@ -170,15 +170,15 @@ export function MatchFoundScreen({
   }
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in relative mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col items-center px-4 pt-16 pb-6 text-center motion-safe:duration-300">
+    <div className="motion-safe:animate-in motion-safe:fade-in relative mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col items-center px-4 pt-20 pb-6 text-center motion-safe:duration-300">
       {/* Back button */}
       <button
         type="button"
         onClick={onBack}
-        className="text-muted-foreground hover:text-foreground absolute top-16 left-0 flex items-center gap-1 text-sm transition-colors"
+        className="text-muted-foreground hover:bg-muted hover:text-foreground absolute top-20 left-4 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+        aria-label="Go back"
       >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back</span>
+        <ArrowLeft className="h-5 w-5" />
       </button>
 
       {/* Celebration burst */}

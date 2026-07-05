@@ -4,15 +4,24 @@ import { useState } from 'react'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Scissors, AlertTriangle, PawPrint, ArrowLeft, Check, Sparkles } from 'lucide-react'
+import {
+  Scissors,
+  AlertTriangle,
+  PawPrint,
+  ArrowLeft,
+  Check,
+  Sparkles,
+  Stethoscope,
+  Skull,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
 const MEDICAL_TAGS = [
-  { value: 'needs_medical', label: 'Needs medical', emoji: '🩺', color: 'amber' },
-  { value: 'possible_rabies', label: 'Possible rabies', emoji: '⚠️', color: 'red' },
-  { value: 'deceased', label: 'Passed away', emoji: '🕊️', color: 'slate' },
+  { value: 'needs_medical', label: 'Needs medical', icon: Stethoscope, color: 'amber' },
+  { value: 'possible_rabies', label: 'Possible rabies', icon: AlertTriangle, color: 'red' },
+  { value: 'deceased', label: 'Passed away', icon: Skull, color: 'slate' },
 ] as const
 
 const detailsSchema = z.object({
@@ -56,15 +65,15 @@ export function DetailsScreen({
   }
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-sm px-4 pt-16 pb-6 motion-safe:duration-300">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-sm px-4 pt-20 pb-6 motion-safe:duration-300">
       {/* Back button */}
       <button
         type="button"
         onClick={onBack}
-        className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 text-sm transition-colors"
+        className="text-muted-foreground hover:bg-muted hover:text-foreground mb-2 -ml-1 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+        aria-label="Go back"
       >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back</span>
+        <ArrowLeft className="h-5 w-5" />
       </button>
 
       {/* Header */}
@@ -193,7 +202,7 @@ export function DetailsScreen({
                           : 'bg-muted/50 text-muted-foreground ring-border hover:bg-muted'
                       )}
                     >
-                      <span className="text-base leading-none">{tag.emoji}</span>
+                      <tag.icon className="h-4 w-4" />
                       <span>{tag.label}</span>
                       {isChecked && <Check className="h-3 w-3" />}
                     </button>

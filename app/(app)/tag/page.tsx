@@ -77,7 +77,7 @@ export default function TagPage() {
       <StepDots currentStep={STEP_INDEX[screen.type]} totalSteps={totalSteps} />
       {screen.type === 'photo' && (
         <PhotoScreen
-          onBack={goBack}
+          onClose={goBack}
           onNext={({ photoUrl, file, lat, lng }) => {
             setPhotoFile(file)
             goTo({ type: 'candidates', photoUrl, lat, lng })

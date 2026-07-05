@@ -96,7 +96,7 @@ export function CandidatesScreen({
   // Loading state with skeleton
   if (displayedCandidates === null) {
     return (
-      <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-sm px-4 pt-16 pb-6 motion-safe:duration-300">
+      <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-sm px-4 pt-20 pb-6 motion-safe:duration-300">
         <div className="mb-6 text-center">
           <div className="bg-primary/10 mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl">
             <Loader2 className="text-primary h-6 w-6 animate-spin" />
@@ -129,15 +129,17 @@ export function CandidatesScreen({
   // Empty state — no candidates found
   if (displayedCandidates.length === 0) {
     return (
-      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 relative mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col items-center justify-center px-4 pt-16 pb-6 text-center motion-safe:duration-300">
+      <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 relative mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col items-center justify-center px-4 pt-20 pb-6 text-center motion-safe:duration-300">
+        {/* Back button */}
         <button
           type="button"
           onClick={onBack}
-          className="text-muted-foreground hover:text-foreground absolute top-16 left-0 flex items-center gap-1 text-sm transition-colors"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground absolute top-20 left-0 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+          aria-label="Go back"
         >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back</span>
+          <ArrowLeft className="h-5 w-5" />
         </button>
+
         <div className="bg-primary/10 mb-4 flex h-20 w-20 items-center justify-center rounded-full">
           <Cat className="text-primary h-10 w-10" />
         </div>
@@ -158,15 +160,15 @@ export function CandidatesScreen({
 
   // Candidates found (max 2 displayed)
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-sm px-4 pt-16 pb-6 motion-safe:duration-300">
+    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-sm px-4 pt-20 pb-6 motion-safe:duration-300">
       {/* Back button */}
       <button
         type="button"
         onClick={onBack}
-        className="text-muted-foreground hover:text-foreground mb-4 flex items-center gap-1 text-sm transition-colors"
+        className="text-muted-foreground hover:bg-muted hover:text-foreground mb-2 -ml-1 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+        aria-label="Go back"
       >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back</span>
+        <ArrowLeft className="h-5 w-5" />
       </button>
 
       <div className="mb-6 text-center">
