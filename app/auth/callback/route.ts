@@ -1,12 +1,7 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/supabase/types'
-
-type CookieToSet = {
-  name: string
-  value: string
-  options: CookieOptions
-}
 
 function getSafeReturnTo(returnTo: string | null) {
   if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) {
@@ -35,10 +30,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?oauth_error=1`)
   }
 
-  const requestCookies = new Map(
-    request.cookies.getAll().map((cookie) => [cookie.name, cookie.value])
-  )
-  const cookiesToSet: CookieToSet[] = []
+  const cookieStore = await cookies()
+
+  // Build a Supabase client that writes cookies onto the final response.
+  // We collect cookies during exchangeCodeForSession and then copy them
+  // onto the redirect response so the browser actually stores the session.
+  const cookiesToSet: { name: string; value: string; options: Record<string, unknown> }[] = []
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,12 +43,11 @@ export async function GET(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return Array.from(requestCookies, ([name, value]) => ({ name, value }))
+          return cookieStore.getAll()
         },
-        setAll(newCookies) {
-          newCookies.forEach((cookie) => {
-            requestCookies.set(cookie.name, cookie.value)
-            cookiesToSet.push(cookie)
+        setAll(cookies) {
+          cookies.forEach(({ name, value, options }) => {
+            cookiesToSet.push({ name, value, options: options as Record<string, unknown> })
           })
         },
       },
@@ -67,14 +63,23 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?oauth_error=1`)
   }
 
+  // Determine where to redirect
   const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
 
+  let redirectUrl: string
   if (profile) {
-    return createRedirectWithCookies(`${origin}${returnTo}`, cookiesToSet)
+    redirectUrl = `${origin}${returnTo}`
+  } else {
+    const setupProfileUrl = new URL('/setup-profile', origin)
+    setupProfileUrl.searchParams.set('returnTo', returnTo)
+    redirectUrl = setupProfileUrl.toString()
   }
 
-  const setupProfileUrl = new URL('/setup-profile', origin)
-  setupProfileUrl.searchParams.set('returnTo', returnTo)
+  // Build the redirect response and copy session cookies onto it
+  const response = NextResponse.redirect(redirectUrl)
+  cookiesToSet.forEach(({ name, value, options }) => {
+    response.cookies.set(name, value, options)
+  })
 
-  return createRedirectWithCookies(setupProfileUrl, cookiesToSet)
+  return response
 }
