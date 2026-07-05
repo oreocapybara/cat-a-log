@@ -11,16 +11,6 @@ function getSafeReturnTo(returnTo: string | null) {
   return returnTo
 }
 
-function createRedirectWithCookies(url: string | URL, cookiesToSet: CookieToSet[]) {
-  const response = NextResponse.redirect(url)
-
-  cookiesToSet.forEach(({ name, value, options }) => {
-    response.cookies.set(name, value, options)
-  })
-
-  return response
-}
-
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl
   const code = searchParams.get('code')
