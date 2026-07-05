@@ -66,8 +66,7 @@ export default function TagFlushPage() {
 
       const { catId } = (await response.json()) as { catId: string }
       await clearPendingTag()
-      toast.success(`${pending.tag.name} was caught! 🐱`)
-      router.replace(`/map?cat=${catId}`)
+      router.replace(`/tag/complete?catId=${catId}&name=${encodeURIComponent(pending.tag.name)}`)
     }
 
     flush()
