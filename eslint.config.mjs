@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     // Agent worktree artifacts:
     '.claude/**',
+    // Third-party skill scripts (CommonJS, not app code):
+    'superpowers/**',
   ]),
 ])
 
