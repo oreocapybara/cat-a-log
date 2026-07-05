@@ -84,9 +84,9 @@ export default function TagPage() {
           }}
         />
       )}
-      {screen.type === 'candidates' && (
+      {screen.type === 'candidates' && photoFile && (
         <CandidatesScreen
-          photoUrl={screen.photoUrl}
+          photoFile={photoFile}
           lat={screen.lat}
           lng={screen.lng}
           onBack={goBack}

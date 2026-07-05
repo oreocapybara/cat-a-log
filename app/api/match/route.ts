@@ -3,8 +3,18 @@ import { createClient } from '@/lib/supabase/server'
 import { getImageEmbedding } from '@/lib/huggingface'
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
-  const { photoUrl, candidateCatIds } = body as { photoUrl: string; candidateCatIds: string[] }
+  const formData = await request.formData()
+  const imageFile = formData.get('image') as File | null
+  const candidateIdsRaw = formData.get('candidateCatIds') as string | null
+
+  if (!imageFile || !candidateIdsRaw) {
+    return NextResponse.json(
+      { error: 'Missing required fields: image (File) and candidateCatIds (JSON array)' },
+      { status: 400 }
+    )
+  }
+
+  const candidateCatIds = JSON.parse(candidateIdsRaw) as string[]
 
   const supabase = await createClient()
 
@@ -17,7 +27,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const embedding = await getImageEmbedding(photoUrl)
+    const imageBytes = await imageFile.arrayBuffer()
+    const embedding = await getImageEmbedding(imageBytes)
 
     const { data, error } = await supabase.rpc('nearby_cats_by_similarity', {
       cat_ids: candidateCatIds,

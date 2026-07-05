@@ -57,6 +57,7 @@ export type Database = {
           is_ear_tipped: boolean
           notes: string | null
           tagged_by: string | null
+          updated_by: string | null
           confidence_score: number
           created_at: string
           photo_embedding: string | null
@@ -70,6 +71,7 @@ export type Database = {
           is_ear_tipped?: boolean
           notes?: string | null
           tagged_by?: string | null
+          updated_by?: string | null
           confidence_score?: number
           created_at?: string
           photo_embedding?: number[] | null
@@ -83,6 +85,7 @@ export type Database = {
           is_ear_tipped?: boolean
           notes?: string | null
           tagged_by?: string | null
+          updated_by?: string | null
           confidence_score?: number
           created_at?: string
           photo_embedding?: number[] | null
