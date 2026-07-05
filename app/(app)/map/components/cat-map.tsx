@@ -425,7 +425,11 @@ function CatMarker({
       position={[lat, lng]}
       icon={icon}
       opacity={selectedCatId && !selected ? 0.55 : 1}
-      zIndexOffset={selected ? 1000 : 0}
+      // Leaflet ranks same-pane markers by screen y-position by default, so a
+      // satellite fanned below/left of its anchor can outrank it and cover
+      // the anchor's overlap badge. Boost the anchor above its own
+      // satellites (but still below the always-on-top selected marker).
+      zIndexOffset={selected ? 1000 : overlapCount ? 500 : 0}
       eventHandlers={{ click: () => onSelectCat(cat) }}
     />
   )
