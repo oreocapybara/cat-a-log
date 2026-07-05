@@ -142,7 +142,6 @@ export function PhotoScreen({
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handlePhotoChange}
             className="hidden"
           />
@@ -197,7 +196,7 @@ export function PhotoScreen({
                   Take or choose a photo
                 </span>
                 <span className="text-muted-foreground mt-0.5 block text-xs">
-                  Tap to open camera
+                  Tap to open camera or gallery
                 </span>
               </div>
             </button>
