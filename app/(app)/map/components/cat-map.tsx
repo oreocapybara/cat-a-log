@@ -5,7 +5,12 @@ import { useTheme } from 'next-themes'
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { buildClusterIndex, getMapPoints, type MapPoint } from '@/lib/clustering'
+import {
+  buildClusterIndex,
+  getMapPoints,
+  separateOverlappingCats,
+  type MapPoint,
+} from '@/lib/clustering'
 import {
   formatLastSeen,
   getStalenessOpacity,
@@ -363,12 +368,16 @@ function ClusterViewportTracker({ onChange }: { onChange: (viewport: ClusterView
 // note on CatMap's previous `catIcons` useMemo for why that mattered.
 function CatMarker({
   cat,
+  lat,
+  lng,
   index,
   selectedCatId,
   tags,
   onSelectCat,
 }: {
   cat: NearbyCat
+  lat: number
+  lng: number
   index: number
   selectedCatId: string | null
   tags: CatTag['tag'][]
@@ -379,7 +388,7 @@ function CatMarker({
 
   return (
     <Marker
-      position={[cat.lat, cat.lng]}
+      position={[lat, lng]}
       icon={icon}
       opacity={selectedCatId && !selected ? 0.55 : 1}
       zIndexOffset={selected ? 1000 : 0}
@@ -440,8 +449,10 @@ export function CatMap({
   const [clusterViewport, setClusterViewport] = useState<ClusterViewport | null>(null)
   const clusterIndex = useMemo(() => buildClusterIndex(cats), [cats])
   const points = useMemo<MapPoint[]>(() => {
-    if (!clusterViewport) return cats.map((cat): MapPoint => ({ type: 'single', cat }))
-    return getMapPoints(clusterIndex, clusterViewport.bounds, clusterViewport.zoom)
+    const raw: MapPoint[] = !clusterViewport
+      ? cats.map((cat): MapPoint => ({ type: 'single', cat, lat: cat.lat, lng: cat.lng }))
+      : getMapPoints(clusterIndex, clusterViewport.bounds, clusterViewport.zoom)
+    return separateOverlappingCats(raw)
   }, [cats, clusterIndex, clusterViewport])
 
   return (
@@ -465,6 +476,8 @@ export function CatMap({
           <CatMarker
             key={point.cat.id}
             cat={point.cat}
+            lat={point.lat}
+            lng={point.lng}
             index={index}
             selectedCatId={selectedCatId}
             tags={catTags.get(point.cat.id) ?? NO_TAGS}
