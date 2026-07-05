@@ -5,6 +5,8 @@ import { ProfileHeader } from './components/profile-header'
 import { FeaturedCatCard } from './components/featured-cat-card'
 import { MyCatsList } from './components/my-cats-list'
 import { SignOutButton } from './components/sign-out-button'
+import { AvatarUploadProvider } from './components/avatar-upload-provider'
+import { AvatarUploadDialog } from './components/avatar-upload-dialog'
 
 type Props = {
   params: Promise<{ username: string }>
@@ -94,14 +96,28 @@ export default async function ProfilePage({ params }: Props) {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col items-center gap-6 px-4 py-6 text-center">
-      <ProfileHeader
-        username={profile.username}
-        avatarUrl={profile.avatar_url}
-        bio={profile.bio}
-        catsCount={cats.length}
-        totalSightings={totalSightings}
-        isOwner={isOwner}
-      />
+      {isOwner ? (
+        <AvatarUploadProvider userId={profile.id}>
+          <ProfileHeader
+            username={profile.username}
+            avatarUrl={profile.avatar_url}
+            bio={profile.bio}
+            catsCount={cats.length}
+            totalSightings={totalSightings}
+            isOwner={isOwner}
+          />
+          <AvatarUploadDialog hasAvatar={!!profile.avatar_url} />
+        </AvatarUploadProvider>
+      ) : (
+        <ProfileHeader
+          username={profile.username}
+          avatarUrl={profile.avatar_url}
+          bio={profile.bio}
+          catsCount={cats.length}
+          totalSightings={totalSightings}
+          isOwner={isOwner}
+        />
+      )}
 
       {/* Featured cat */}
       {featuredCat && <FeaturedCatCard cat={featuredCat} />}
