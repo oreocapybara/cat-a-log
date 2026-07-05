@@ -14,7 +14,6 @@ import { LocateButton, type LocationMode } from './components/locate-button'
 import { MapAttribution } from './components/map-attribution'
 import { MapSkeleton } from './components/map-skeleton'
 import type { MapMoveEnd } from './components/cat-map'
-import { distanceKm } from '@/lib/geo'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 const CatMap = dynamic(() => import('./components/cat-map').then((mod) => mod.CatMap), {
@@ -159,6 +158,7 @@ export default function MapPage() {
       startFollowing()
       return
     }
+    setLocationMode('locating')
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const next: [number, number] = [position.coords.latitude, position.coords.longitude]
@@ -167,7 +167,10 @@ export default function MapPage() {
         setFlyToZoom(undefined)
         setLocationMode('centered')
       },
-      () => toast.error('Could not get your location'),
+      () => {
+        toast.error('Could not get your location')
+        setLocationMode('idle')
+      },
       { enableHighAccuracy: true }
     )
   }
@@ -182,13 +185,7 @@ export default function MapPage() {
       return
     }
     setPendingSearch(move)
-    // Only prompt a re-search if none of the already-loaded cats fall within
-    // the new view — if the loaded batch still covers what's on screen, the
-    // pill would just offer to re-fetch the same data.
-    const stillCovered = cats.some(
-      (cat) => distanceKm(move.lat, move.lng, cat.lat, cat.lng) <= move.radiusKm
-    )
-    setSearchStale(!stillCovered)
+    setSearchStale(true)
   }
 
   function handleSearchThisArea() {
