@@ -15,6 +15,12 @@ const TIERS: SightingTier[] = [
   { tier: 6, name: 'Urban Legend', color: '#fef3c7', bgTint: '#0f0a00', glow: true },
 ]
 
+const TIER_THRESHOLDS = [2, 5, 10, 20, 50]
+
+export function getNextTierThreshold(timesSpotted: number): number | null {
+  return TIER_THRESHOLDS.find((threshold) => timesSpotted < threshold) ?? null
+}
+
 export function getSightingTier(timesSpotted: number): SightingTier {
   if (timesSpotted >= 50) return TIERS[5]
   if (timesSpotted >= 20) return TIERS[4]

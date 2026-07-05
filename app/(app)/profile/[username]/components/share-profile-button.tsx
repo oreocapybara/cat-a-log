@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Image, Link2, Loader2, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { shareCardImage } from '@/lib/share-image'
 
 export function ShareProfileButton({ username }: { username: string }) {
   const [open, setOpen] = useState(false)
@@ -44,36 +45,15 @@ export function ShareProfileButton({ username }: { username: string }) {
   async function handleShareImage() {
     setOpen(false)
     setLoading(true)
-    const cardUrl = `/api/profile-card/${username}`
-    const profileUrl = `${window.location.origin}/profile/${username}`
 
     try {
-      const res = await fetch(cardUrl)
-      if (!res.ok) throw new Error('Failed to generate card')
-      const blob = await res.blob()
-      const file = new File([blob], `${username}-cat-a-log.png`, { type: 'image/png' })
-
-      // Try native share with image (mobile)
-      // Note: when sharing files, url must be omitted — most browsers reject
-      // or silently fail when both files and url are present in the same share call.
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `@${username} on Cat-A-Log`,
-          text: `Check out @${username} on Cat-A-Log 🐾\n${profileUrl}`,
-        })
-      } else {
-        // Desktop fallback: download the image
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${username}-cat-a-log.png`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-        toast.success('Card downloaded!')
-      }
+      await shareCardImage({
+        cardUrl: `/api/profile-card/${username}`,
+        downloadFilename: `${username}-cat-a-log.png`,
+        shareTitle: `@${username} on Cat-A-Log`,
+        shareText: `Check out @${username} on Cat-A-Log 🐾`,
+        shareUrl: `${window.location.origin}/profile/${username}`,
+      })
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         // User cancelled — no-op

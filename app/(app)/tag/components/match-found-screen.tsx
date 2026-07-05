@@ -12,6 +12,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { CatchCardShareButton } from '@/app/components/catch-card-share-button'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -47,6 +48,7 @@ export function MatchFoundScreen({
   const [tags, setTags] = useState<CatTag[]>([])
   const [saving, setSaving] = useState(true)
   const [showContent, setShowContent] = useState(false)
+  const [sightingId, setSightingId] = useState<string | null>(null)
 
   // Community editing state
   const [editExpanded, setEditExpanded] = useState(false)
@@ -78,16 +80,22 @@ export function MatchFoundScreen({
         return
       }
 
-      const { error } = await supabase.from('sightings').insert({
-        cat_id: cat.id,
-        photo_url: photoUrl,
-        lat,
-        lng,
-        spotted_by: user.id,
-      })
+      const { data: sightingRow, error } = await supabase
+        .from('sightings')
+        .insert({
+          cat_id: cat.id,
+          photo_url: photoUrl,
+          lat,
+          lng,
+          spotted_by: user.id,
+        })
+        .select('id')
+        .single()
 
       if (error) {
         toast.error(error.message)
+      } else if (sightingRow) {
+        setSightingId(sightingRow.id)
       }
 
       // Update the cat's location to the latest sighting coordinates
@@ -258,6 +266,18 @@ export function MatchFoundScreen({
           </div>
         )}
 
+        {/* Catch card */}
+        {sightingId && (
+          <div className="mt-6 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/catch-card?sightingId=${sightingId}`}
+              alt={`${cat.name ?? 'This cat'}'s catch card`}
+              className="border-border motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 w-full max-w-[220px] rounded-2xl border shadow-lg motion-safe:duration-500"
+            />
+          </div>
+        )}
+
         {/* Community editing section — appears after sighting is saved */}
         {!saving && !editSaved && (
           <div className="mt-6 w-full text-left">
@@ -378,7 +398,16 @@ export function MatchFoundScreen({
       </div>
 
       {/* CTA */}
-      <div className="mt-8 w-full">
+      <div className="mt-8 w-full space-y-3">
+        {sightingId && (
+          <CatchCardShareButton
+            cardUrl={`/api/catch-card?sightingId=${sightingId}`}
+            downloadFilename={`${cat.name ?? 'cat'}-catch-card.png`}
+            shareTitle={`I spotted ${cat.name ?? 'a cat'} on Cat-A-Log`}
+            shareText={`I just spotted ${cat.name ?? 'a cat'} again on Cat-A-Log 🐾`}
+            sharePath={`/map?cat=${cat.id}`}
+          />
+        )}
         <Button
           type="button"
           className="shadow-primary/20 w-full rounded-xl py-6 text-base font-semibold shadow-lg transition-all disabled:shadow-none"
