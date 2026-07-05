@@ -16,6 +16,7 @@ const eslintConfig = defineConfig([
     '.claude/**',
     // Third-party skill scripts (CommonJS, not app code):
     'superpowers/**',
+    '.kiro/**',
   ]),
 ])
 

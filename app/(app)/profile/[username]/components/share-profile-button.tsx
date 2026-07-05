@@ -54,12 +54,13 @@ export function ShareProfileButton({ username }: { username: string }) {
       const file = new File([blob], `${username}-cat-a-log.png`, { type: 'image/png' })
 
       // Try native share with image (mobile)
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      // Note: when sharing files, url must be omitted — most browsers reject
+      // or silently fail when both files and url are present in the same share call.
+      if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: `@${username} on Cat-A-Log`,
-          text: `Check out @${username} on Cat-A-Log 🐾`,
-          url: profileUrl,
+          text: `Check out @${username} on Cat-A-Log 🐾\n${profileUrl}`,
         })
       } else {
         // Desktop fallback: download the image
