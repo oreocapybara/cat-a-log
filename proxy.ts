@@ -14,6 +14,9 @@ const PUBLIC_ROUTES = [
   '/profile/me',
 ]
 
+// Prefix-based public routes (matches any path starting with these)
+const PUBLIC_PREFIXES = ['/profile/', '/api/profile-card/']
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
@@ -44,7 +47,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Redirect unauthenticated users away from protected routes
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname)
+  const isPublicRoute =
+    PUBLIC_ROUTES.includes(pathname) ||
+    PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   if (!user && !isPublicRoute) {
     if (pathname.startsWith('/api/')) {
