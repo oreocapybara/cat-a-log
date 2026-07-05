@@ -63,10 +63,11 @@ export function getMapPoints(
 }
 
 const OVERLAP_THRESHOLD_KM = 0.001 // 1 meter
-// ponytail: 2m measured as only a few screen px even at max practical zoom
-// (real-world distance is fixed regardless of zoom level) — bumped to 8m
-// after manual testing showed 2m pins still nearly fully overlapping.
-const NUDGE_RADIUS_M = 8
+// ponytail: real-world distance is fixed regardless of zoom level, so a
+// small radius measures as only a few screen px even at max practical zoom —
+// 24m tuned via manual testing to give clearly separated, independently
+// tappable pins while still reading as "invisible until zoomed in."
+const NUDGE_RADIUS_M = 24
 
 type SinglePoint = Extract<MapPoint, { type: 'single' }>
 

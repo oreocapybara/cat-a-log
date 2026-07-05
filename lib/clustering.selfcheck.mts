@@ -24,7 +24,7 @@ function single(cat: NearbyCat): MapPoint {
   return { type: 'single', cat, lat: cat.lat, lng: cat.lng }
 }
 
-// Two identical-coordinate cats: first stays put, second moves ~8m away.
+// Two identical-coordinate cats: first stays put, second moves ~24m away.
 {
   const a = makeCat('a', 40.7, -74.0)
   const b = makeCat('b', 40.7, -74.0)
@@ -35,10 +35,10 @@ function single(cat: NearbyCat): MapPoint {
   assert.equal(pointA.lat, 40.7, 'anchor latitude unchanged')
   assert.equal(pointA.lng, -74.0, 'anchor longitude unchanged')
   const movedKm = distanceKm(pointA.lat, pointA.lng, pointB.lat, pointB.lng)
-  assert.ok(Math.abs(movedKm - 0.008) < 1e-6, `expected ~8m separation, got ${movedKm * 1000}m`)
+  assert.ok(Math.abs(movedKm - 0.024) < 1e-6, `expected ~24m separation, got ${movedKm * 1000}m`)
 }
 
-// Three cats stacked at the same spot: two satellites fan 120 degrees apart, both ~8m from anchor.
+// Three cats stacked at the same spot: two satellites fan 120 degrees apart, both ~24m from anchor.
 {
   const cats = [makeCat('a', 10, 10), makeCat('b', 10, 10), makeCat('c', 10, 10)]
   const [pointA, pointB, pointC] = separateOverlappingCats(cats.map(single)) as Extract<
@@ -49,13 +49,13 @@ function single(cat: NearbyCat): MapPoint {
   assert.equal(pointA.lng, 10, 'anchor unmoved')
   const bKm = distanceKm(pointA.lat, pointA.lng, pointB.lat, pointB.lng)
   const cKm = distanceKm(pointA.lat, pointA.lng, pointC.lat, pointC.lng)
-  assert.ok(Math.abs(bKm - 0.008) < 1e-6, 'second point ~8m from anchor')
-  assert.ok(Math.abs(cKm - 0.008) < 1e-6, 'third point ~8m from anchor')
+  assert.ok(Math.abs(bKm - 0.024) < 1e-6, 'second point ~24m from anchor')
+  assert.ok(Math.abs(cKm - 0.024) < 1e-6, 'third point ~24m from anchor')
   const betweenSatellites = distanceKm(pointB.lat, pointB.lng, pointC.lat, pointC.lng)
-  // Two points each 8m from a shared center, 120 degrees apart, are 8*sqrt(3) ~= 13.86m apart.
+  // Two points each 24m from a shared center, 120 degrees apart, are 24*sqrt(3) ~= 41.57m apart.
   assert.ok(
-    Math.abs(betweenSatellites - 0.013856) < 0.0001,
-    `expected satellites ~13.86m apart (120deg fan), got ${betweenSatellites * 1000}m`
+    Math.abs(betweenSatellites - 0.041569) < 0.0001,
+    `expected satellites ~41.57m apart (120deg fan), got ${betweenSatellites * 1000}m`
   )
 }
 
