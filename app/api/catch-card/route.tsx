@@ -112,11 +112,11 @@ export async function GET(request: NextRequest) {
       foilAngle: foil.angleDeg,
       foilOffset: foil.offsetPercent,
     }
-  } else {
+  } else if (sightingId) {
     const { data: sighting } = await supabase
       .from('sightings')
       .select('id, cat_id, photo_url, spotted_by')
-      .eq('id', sightingId!)
+      .eq('id', sightingId)
       .single()
 
     if (!sighting) {
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
     const catName = cat.name ?? 'This cat'
     const progress = buildProgress(timesSpotted, catName)
 
-    const foil = getCatchCardFoil(sightingId!)
+    const foil = getCatchCardFoil(sightingId)
     data = {
       photoUrl: sighting.photo_url,
       catName,
@@ -176,6 +176,12 @@ export async function GET(request: NextRequest) {
       foilAngle: foil.angleDeg,
       foilOffset: foil.offsetPercent,
     }
+  } else {
+    // Unreachable — guaranteed by validation on line 43
+    return NextResponse.json(
+      { error: 'Either catId or sightingId must be provided' },
+      { status: 400 }
+    )
   }
 
   return new ImageResponse(
