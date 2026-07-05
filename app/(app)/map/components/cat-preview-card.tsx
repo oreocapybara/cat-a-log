@@ -6,7 +6,16 @@ import { formatLastSeen } from '@/lib/geo'
 import { cn } from '@/lib/utils'
 import { DEFAULT_WELFARE_COLOR, getWelfareTier, TAG_META } from '@/lib/welfare-colors'
 import { CatGalleryModal } from './cat-gallery-modal'
+import { toast } from 'sonner'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
+
+const RESOLVE_LABEL: Record<string, string> = {
+  needs_medical: 'Recovered',
+  possible_rabies: 'Cleared',
+}
+
+const TAG_UNDO_TOAST_ID = 'map-tag-undo'
+const TAG_UNDO_DURATION = 5000
 
 // Matches the `duration-200` used on both the enter and exit animation classes below.
 const EXIT_ANIMATION_MS = 200
@@ -22,12 +31,14 @@ export function CatPreviewCard({
   onClose,
   onViewLocation,
   onResolveTag,
+  onUndoResolveTag,
 }: {
   cat: NearbyCat | null
   tags: CatTag['tag'][]
   onClose: () => void
   onViewLocation: (lat: number, lng: number) => void
   onResolveTag: (catId: string, tag: CatTag['tag']) => void
+  onUndoResolveTag?: (catId: string, tag: CatTag['tag']) => void
 }) {
   // The card is always mounted by the parent now — closing it still needs to render
   // for one more animation frame-window so the exit transition can actually play,
@@ -79,7 +90,23 @@ export function CatPreviewCard({
   // reopened, even though the parent's source-of-truth state did update.
   function handleResolve(tag: CatTag['tag']) {
     if (!renderedCat) return
+    const prevTags = [...renderedTags]
     setRenderedTags((prev) => prev.filter((t) => t !== tag))
+
+    const label = RESOLVE_LABEL[tag] ?? tag
+
+    toast(`✓ ${label}`, {
+      id: TAG_UNDO_TOAST_ID,
+      duration: TAG_UNDO_DURATION,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          setRenderedTags(prevTags)
+          onUndoResolveTag?.(renderedCat.id, tag)
+        },
+      },
+    })
+
     onResolveTag(renderedCat.id, tag)
   }
 

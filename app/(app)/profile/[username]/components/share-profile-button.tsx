@@ -99,7 +99,7 @@ export function ShareProfileButton({ username }: { username: string }) {
       </Button>
 
       {open && (
-        <div className="bg-popover text-popover-foreground animate-in fade-in zoom-in-95 absolute top-full right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border shadow-lg">
+        <div className="bg-background text-foreground animate-in fade-in zoom-in-95 absolute top-full right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border shadow-lg">
           <button
             type="button"
             onClick={handleShareLink}
