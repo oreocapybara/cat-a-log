@@ -1,11 +1,24 @@
 const HF_MODEL = 'sentence-transformers/clip-ViT-B-32'
 
-export async function getImageEmbedding(imageUrl: string): Promise<number[]> {
-  const imageResponse = await fetch(imageUrl)
-  if (!imageResponse.ok) {
-    throw new Error(`Could not fetch image: ${imageResponse.status}`)
+/**
+ * Get a CLIP embedding for an image.
+ *
+ * Accepts either:
+ * - A URL string — the image will be fetched server-side first
+ * - An ArrayBuffer / Buffer — raw image bytes sent directly to HF
+ */
+export async function getImageEmbedding(input: string | ArrayBuffer): Promise<number[]> {
+  let imageBytes: ArrayBuffer
+
+  if (typeof input === 'string') {
+    const imageResponse = await fetch(input)
+    if (!imageResponse.ok) {
+      throw new Error(`Could not fetch image: ${imageResponse.status}`)
+    }
+    imageBytes = await imageResponse.arrayBuffer()
+  } else {
+    imageBytes = input
   }
-  const imageBytes = await imageResponse.arrayBuffer()
 
   const response = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
     method: 'POST',

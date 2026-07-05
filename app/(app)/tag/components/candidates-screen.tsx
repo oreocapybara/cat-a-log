@@ -10,22 +10,32 @@ import type { NearbyCat } from '@/lib/supabase/types'
 
 const SEARCH_RADIUS_KM = 0.5
 
+/**
+ * Hick's Law: decision time increases logarithmically with the number of
+ * choices. 2 candidates + "None of these" = 3 total options — fast, low
+ * cognitive load, and enough to surface a likely match.
+ */
+const MAX_DISPLAYED_CANDIDATES = 2
+
 export function CandidatesScreen({
-  photoUrl,
+  photoFile,
   lat,
   lng,
   onBack,
   onMatch,
   onNoMatch,
 }: {
-  photoUrl: string
+  photoFile: File
   lat: number
   lng: number
   onBack: () => void
   onMatch: (cat: NearbyCat) => void
   onNoMatch: () => void
 }) {
-  const [candidates, setCandidates] = useState<NearbyCat[] | null>(null)
+  // All nearby cats fetched from DB (used for AI re-ranking)
+  const [allCandidates, setAllCandidates] = useState<NearbyCat[] | null>(null)
+  // The displayed subset (max 2)
+  const [displayedCandidates, setDisplayedCandidates] = useState<NearbyCat[] | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
 
   useEffect(() => {
@@ -39,47 +49,52 @@ export function CandidatesScreen({
 
       if (error) {
         toast.error('Could not check for nearby cats')
-        setCandidates([])
+        setAllCandidates([])
+        setDisplayedCandidates([])
         return
       }
 
-      setCandidates(data ?? [])
+      const cats = data ?? []
+      setAllCandidates(cats)
+      setDisplayedCandidates(cats.slice(0, MAX_DISPLAYED_CANDIDATES))
     }
 
     loadCandidates()
   }, [lat, lng])
 
   async function handleNotSure() {
-    if (!candidates || candidates.length === 0) return
+    if (!allCandidates || allCandidates.length === 0) return
     setAnalyzing(true)
+
+    const formData = new FormData()
+    formData.append('image', photoFile)
+    formData.append('candidateCatIds', JSON.stringify(allCandidates.map((c) => c.id)))
 
     const response = await fetch('/api/match', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        photoUrl,
-        candidateCatIds: candidates.map((c) => c.id),
-      }),
+      body: formData,
     })
 
     setAnalyzing(false)
 
     if (!response.ok) {
-      toast.error("Couldn't analyze the photo, showing nearby cats instead")
+      toast.error("Couldn't analyze the photo, showing nearest cats instead")
       return
     }
 
     const { rankedIds } = (await response.json()) as { rankedIds: string[] }
     const ranked = rankedIds
-      .map((id) => candidates.find((c) => c.id === id))
+      .map((id) => allCandidates.find((c) => c.id === id))
       .filter((c): c is NearbyCat => !!c)
-    const unranked = candidates.filter((c) => !rankedIds.includes(c.id))
+    const unranked = allCandidates.filter((c) => !rankedIds.includes(c.id))
 
-    setCandidates([...ranked, ...unranked])
+    const reordered = [...ranked, ...unranked]
+    setAllCandidates(reordered)
+    setDisplayedCandidates(reordered.slice(0, MAX_DISPLAYED_CANDIDATES))
   }
 
   // Loading state with skeleton
-  if (candidates === null) {
+  if (displayedCandidates === null) {
     return (
       <div className="motion-safe:animate-in motion-safe:fade-in mx-auto max-w-sm px-4 pt-16 pb-6 motion-safe:duration-300">
         <div className="mb-6 text-center">
@@ -94,7 +109,7 @@ export function CandidatesScreen({
 
         {/* Skeleton cards */}
         <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
+          {[1, 2].map((i) => (
             <div
               key={i}
               className="bg-card ring-foreground/5 flex items-center gap-3 rounded-xl p-3 ring-1"
@@ -112,7 +127,7 @@ export function CandidatesScreen({
   }
 
   // Empty state — no candidates found
-  if (candidates.length === 0) {
+  if (displayedCandidates.length === 0) {
     return (
       <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 relative mx-auto flex min-h-[calc(100vh-8rem)] max-w-sm flex-col items-center justify-center px-4 pt-16 pb-6 text-center motion-safe:duration-300">
         <button
@@ -141,7 +156,7 @@ export function CandidatesScreen({
     )
   }
 
-  // Candidates found
+  // Candidates found (max 2 displayed)
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 mx-auto max-w-sm px-4 pt-16 pb-6 motion-safe:duration-300">
       {/* Back button */}
@@ -157,14 +172,15 @@ export function CandidatesScreen({
       <div className="mb-6 text-center">
         <h1 className="font-heading text-xl font-bold tracking-tight">Recognize anyone?</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          {candidates.length} {candidates.length === 1 ? 'cat' : 'cats'} spotted nearby — tap if you
-          see a match
+          {displayedCandidates.length === 1
+            ? 'We found a cat nearby — is this the one you spotted?'
+            : 'Here are the closest matches — tap if you see yours'}
         </p>
       </div>
 
       {/* Cat listing */}
       <div className="space-y-2.5">
-        {candidates.map((cat, index) => (
+        {displayedCandidates.map((cat, index) => (
           <button
             key={cat.id}
             type="button"
@@ -224,18 +240,16 @@ export function CandidatesScreen({
 
       {/* Actions */}
       <div className="mt-6 space-y-2.5">
-        {candidates.length > 0 && !photoUrl.startsWith('blob:') && (
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full rounded-xl py-5"
-            onClick={handleNotSure}
-            disabled={analyzing}
-          >
-            <Sparkles className="h-4 w-4" />
-            {analyzing ? 'Analyzing photo…' : 'Help me decide (AI match)'}
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full rounded-xl py-5"
+          onClick={handleNotSure}
+          disabled={analyzing}
+        >
+          <Sparkles className="h-4 w-4" />
+          {analyzing ? 'Analyzing photo…' : 'Not sure? Let AI help'}
+        </Button>
 
         <Button
           type="button"
