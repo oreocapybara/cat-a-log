@@ -1,20 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Scissors, AlertTriangle, PawPrint, ArrowLeft } from 'lucide-react'
+import { Scissors, AlertTriangle, PawPrint, ArrowLeft, Check, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 
 const MEDICAL_TAGS = [
-  { value: 'needs_medical', label: 'Needs medical attention', emoji: '🩺' },
-  { value: 'possible_rabies', label: 'Possible rabies', emoji: '⚠️' },
-  { value: 'deceased', label: 'Passed away', emoji: '🕊️' },
+  { value: 'needs_medical', label: 'Needs medical', emoji: '🩺', color: 'amber' },
+  { value: 'possible_rabies', label: 'Possible rabies', emoji: '⚠️', color: 'red' },
+  { value: 'deceased', label: 'Passed away', emoji: '🕊️', color: 'slate' },
 ] as const
 
 const detailsSchema = z.object({
@@ -43,8 +41,13 @@ export function DetailsScreen({
     formState: { errors },
   } = useForm<DetailsFormValues>({
     resolver: zodResolver(detailsSchema),
-    defaultValues: { isEarTipped: false, tags: [] },
+    defaultValues: { isEarTipped: false, notes: '', tags: [] },
   })
+
+  const notes = useWatch({ control, name: 'notes' })
+  const selectedTags = useWatch({ control, name: 'tags' })
+  const isEarTipped = useWatch({ control, name: 'isEarTipped' })
+  const notesLength = notes?.length ?? 0
 
   async function onSubmit(data: DetailsFormValues) {
     setSubmitting(true)
@@ -66,17 +69,17 @@ export function DetailsScreen({
 
       {/* Header */}
       <div className="mb-6 text-center">
-        <div className="bg-primary/10 mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl">
-          <PawPrint className="text-primary h-6 w-6" />
+        <div className="bg-primary/10 mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl">
+          <PawPrint className="text-primary h-7 w-7" />
         </div>
         <h1 className="font-heading text-xl font-bold tracking-tight">Almost done!</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          A few details about <span className="text-foreground font-medium">{name}</span>
+          A few details about <span className="text-foreground font-semibold">{name}</span>
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* TNR Status */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* TNR Status — Toggle Card */}
         <Controller
           control={control}
           name="isEarTipped"
@@ -85,62 +88,87 @@ export function DetailsScreen({
               type="button"
               onClick={() => field.onChange(!field.value)}
               className={cn(
-                'flex w-full items-center gap-3 rounded-xl p-4 text-left ring-1 transition-all',
+                'bg-card/80 group relative flex w-full items-center gap-4 rounded-2xl p-4 text-left ring-1 backdrop-blur-sm transition-all duration-200',
                 field.value
-                  ? 'bg-primary/5 ring-primary/30'
-                  : 'bg-card ring-foreground/5 hover:ring-foreground/10'
+                  ? 'ring-primary/40 shadow-primary/5 shadow-md'
+                  : 'ring-border hover:ring-foreground/15'
               )}
             >
               <div
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
-                  field.value ? 'bg-primary/15' : 'bg-muted'
+                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-200',
+                  field.value ? 'bg-primary/15 scale-105' : 'bg-muted group-hover:bg-muted/80'
                 )}
               >
                 <Scissors
-                  className={cn('h-5 w-5', field.value ? 'text-primary' : 'text-muted-foreground')}
+                  className={cn(
+                    'h-5 w-5 transition-colors duration-200',
+                    field.value ? 'text-primary' : 'text-muted-foreground'
+                  )}
                 />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium">Ear-tipped</p>
-                <p className="text-muted-foreground text-xs">Already trapped, neutered, returned</p>
+                <p className="text-sm font-semibold">Ear-tipped</p>
+                <p className="text-muted-foreground text-xs">
+                  Trapped, neutered &amp; returned (TNR)
+                </p>
               </div>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                tabIndex={-1}
-                aria-hidden
-              />
+              {/* Custom toggle switch */}
+              <div
+                className={cn(
+                  'relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200',
+                  field.value ? 'bg-primary' : 'bg-muted'
+                )}
+              >
+                <div
+                  className={cn(
+                    'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200',
+                    field.value ? 'left-[22px] scale-110' : 'left-0.5'
+                  )}
+                />
+              </div>
             </button>
           )}
         />
 
-        {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="text-sm font-medium">
-            Notes
-          </Label>
+        {/* Notes — Glass Card */}
+        <div className="bg-card/80 ring-border space-y-2 rounded-2xl p-4 ring-1 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <label htmlFor="notes" className="text-sm font-semibold">
+              Notes
+            </label>
+            <span
+              className={cn(
+                'text-xs tabular-nums transition-colors',
+                notesLength > 450
+                  ? 'font-medium text-amber-500 dark:text-amber-400'
+                  : 'text-muted-foreground'
+              )}
+            >
+              {notesLength}/500
+            </span>
+          </div>
           <Textarea
             id="notes"
             placeholder="Friendly orange tabby, hangs out near the blue dumpster on 5th…"
             maxLength={500}
-            className="min-h-[100px] rounded-xl"
+            className="border-border/50 bg-muted/30 focus:border-primary/50 min-h-[100px] resize-none rounded-xl border"
             {...register('notes')}
           />
           {errors.notes && <p className="text-destructive text-xs">{errors.notes.message}</p>}
         </div>
 
-        {/* Medical tags */}
-        <div className="space-y-2">
+        {/* Medical tags — Pill selectors */}
+        <div className="bg-card/80 ring-border space-y-3 rounded-2xl p-4 ring-1 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <AlertTriangle className="text-muted-foreground h-3.5 w-3.5" />
-            <Label className="text-sm font-medium">Health flags</Label>
+            <span className="text-sm font-semibold">Health flags</span>
           </div>
           <Controller
             control={control}
             name="tags"
             render={({ field }) => (
-              <div className="divide-foreground/5 ring-foreground/5 divide-y overflow-hidden rounded-xl ring-1">
+              <div className="flex flex-wrap gap-2">
                 {MEDICAL_TAGS.map((tag) => {
                   const isChecked = field.value.includes(tag.value)
                   return (
@@ -155,24 +183,19 @@ export function DetailsScreen({
                         )
                       }}
                       className={cn(
-                        'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors',
-                        isChecked ? 'bg-destructive/5' : 'bg-card hover:bg-muted/50'
+                        'flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium ring-1 transition-all duration-200 active:scale-95',
+                        isChecked
+                          ? tag.color === 'amber'
+                            ? 'bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:ring-amber-700/50'
+                            : tag.color === 'red'
+                              ? 'bg-red-50 text-red-700 ring-red-200 dark:bg-red-950/30 dark:text-red-300 dark:ring-red-700/50'
+                              : 'bg-slate-100 text-slate-700 ring-slate-300 dark:bg-slate-800/30 dark:text-slate-300 dark:ring-slate-600/50'
+                          : 'bg-muted/50 text-muted-foreground ring-border hover:bg-muted'
                       )}
                     >
-                      <span className="text-base">{tag.emoji}</span>
-                      <span className="flex-1 text-sm">{tag.label}</span>
-                      <Checkbox
-                        checked={isChecked}
-                        onCheckedChange={(checked) => {
-                          field.onChange(
-                            checked
-                              ? [...field.value, tag.value]
-                              : field.value.filter((v) => v !== tag.value)
-                          )
-                        }}
-                        tabIndex={-1}
-                        aria-hidden
-                      />
+                      <span className="text-base leading-none">{tag.emoji}</span>
+                      <span>{tag.label}</span>
+                      {isChecked && <Check className="h-3 w-3" />}
                     </button>
                   )
                 })}
@@ -184,10 +207,41 @@ export function DetailsScreen({
           </p>
         </div>
 
+        {/* Summary preview */}
+        {(isEarTipped || selectedTags.length > 0 || (notes && notes.length > 0)) && (
+          <div className="bg-primary/5 ring-primary/20 rounded-2xl p-4 ring-1">
+            <div className="mb-2 flex items-center gap-2">
+              <Sparkles className="text-primary h-3.5 w-3.5" />
+              <span className="text-xs font-semibold">Summary</span>
+            </div>
+            <div className="text-muted-foreground space-y-1 text-xs">
+              {isEarTipped && (
+                <p className="flex items-center gap-1.5">
+                  <Scissors className="h-3 w-3" />
+                  <span>Ear-tipped (TNR)</span>
+                </p>
+              )}
+              {selectedTags.length > 0 && (
+                <p className="flex items-center gap-1.5">
+                  <AlertTriangle className="h-3 w-3" />
+                  <span>
+                    {selectedTags
+                      .map((t) => MEDICAL_TAGS.find((mt) => mt.value === t)?.label ?? t)
+                      .join(', ')}
+                  </span>
+                </p>
+              )}
+              {notes && notes.length > 0 && (
+                <p className="line-clamp-2 italic">&ldquo;{notes}&rdquo;</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Submit */}
         <Button
           type="submit"
-          className="shadow-primary/20 w-full rounded-xl py-6 text-base font-semibold shadow-lg transition-all disabled:shadow-none"
+          className="shadow-primary/20 w-full rounded-xl py-6 text-base font-semibold shadow-lg transition-all active:scale-[0.98] disabled:shadow-none"
           disabled={submitting}
         >
           {submitting ? 'Catching…' : 'Catch this cat! 🎉'}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -10,8 +10,12 @@ import { toast } from 'sonner'
 export default function TagFlushPage() {
   const router = useRouter()
   const [catName, setCatName] = useState<string | null>(null)
+  const hasStarted = useRef(false)
 
   useEffect(() => {
+    if (hasStarted.current) return
+    hasStarted.current = true
+
     async function flush() {
       const pending = await readPendingTag()
       if (!pending) {
