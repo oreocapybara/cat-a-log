@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { CatPreviewCard } from './components/cat-preview-card'
+import { WelcomeSheet } from './components/welcome-sheet'
 import { FilterSheet, type CatFilters, matchesFilters } from './components/filter-sheet'
 import { SearchBar, type SearchedCat } from './components/search-bar'
 import { SearchThisAreaPill } from './components/search-this-area-pill'
@@ -300,6 +301,8 @@ export default function MapPage() {
         flyTo={flyToTarget}
         flyToZoom={flyToZoom}
       />
+
+      <WelcomeSheet />
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-center gap-2">
         <SearchBar

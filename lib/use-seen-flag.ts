@@ -10,6 +10,7 @@ export function useSeenFlag(key: string): [boolean, () => void] {
   const [seen, setSeen] = useState(true)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/hydration guard: localStorage only exists client-side
     setSeen(localStorage.getItem(key) === '1')
   }, [key])
 
