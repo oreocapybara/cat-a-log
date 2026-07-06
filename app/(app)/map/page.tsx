@@ -342,7 +342,7 @@ export default function MapPage() {
         onSearch={handleSearchThisArea}
       />
 
-      <LocateButton mode={locationMode} visible={!selectedCat} onClick={handleLocateClick} />
+      <LocateButton mode={locationMode} elevated={!!selectedCat} onClick={handleLocateClick} />
       <MapAttribution />
 
       <CatPreviewCard
