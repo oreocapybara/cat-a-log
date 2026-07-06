@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, Clock, Eye, Images, MapPin, Scissors, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -30,6 +30,7 @@ export function CatPreviewCard({
   onViewLocation,
   onResolveTag,
   onUndoResolveTag,
+  onHeightChange,
 }: {
   cat: NearbyCat | null
   tags: CatTag['tag'][]
@@ -37,6 +38,8 @@ export function CatPreviewCard({
   onViewLocation: (lat: number, lng: number) => void
   onResolveTag: (catId: string, tag: CatTag['tag']) => void
   onUndoResolveTag?: (catId: string, tag: CatTag['tag']) => void
+  /** Reports the card's rendered height (px) so sibling overlays can avoid it. */
+  onHeightChange?: (height: number) => void
 }) {
   // The card is always mounted by the parent now — closing it still needs to render
   // for one more animation frame-window so the exit transition can actually play,
@@ -55,6 +58,27 @@ export function CatPreviewCard({
   const [isTruncated, setIsTruncated] = useState(false)
   const nameRef = useRef<HTMLParagraphElement>(null)
   const notesRef = useRef<HTMLParagraphElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+
+  // Report height changes so the locate button can stay above the card.
+  const stableOnHeightChange = useCallback(
+    (height: number) => onHeightChange?.(height),
+    [onHeightChange]
+  )
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) {
+      stableOnHeightChange(0)
+      return
+    }
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        stableOnHeightChange(entry.borderBoxSize[0]?.blockSize ?? entry.target.clientHeight)
+      }
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [renderedCat, stableOnHeightChange])
 
   // React's documented pattern for "adjust state when a prop changes" without an
   // effect: compare against the previous prop value during render itself, rather
@@ -134,6 +158,7 @@ export function CatPreviewCard({
 
   return (
     <div
+      ref={wrapperRef}
       className={cn(
         'absolute inset-x-4 bottom-24 z-10',
         closing

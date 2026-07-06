@@ -44,6 +44,7 @@ export default function MapPage() {
   const [flyToZoom, setFlyToZoom] = useState<number | undefined>(undefined)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
   const [locationMode, setLocationMode] = useState<LocationMode>('idle')
+  const [cardHeight, setCardHeight] = useState(0)
   // Leaflet fires `moveend` once immediately on mount (from the initial setView) —
   // ignore that first event so the pill doesn't flip to "stale" before the user has panned.
   const firstMoveEndRef = useRef(true)
@@ -342,7 +343,7 @@ export default function MapPage() {
         onSearch={handleSearchThisArea}
       />
 
-      <LocateButton mode={locationMode} elevated={!!selectedCat} onClick={handleLocateClick} />
+      <LocateButton mode={locationMode} cardHeight={cardHeight} onClick={handleLocateClick} />
       <MapAttribution />
 
       <CatPreviewCard
@@ -355,6 +356,7 @@ export default function MapPage() {
         }}
         onResolveTag={handleResolveTag}
         onUndoResolveTag={handleUndoResolveTag}
+        onHeightChange={setCardHeight}
       />
 
       <FilterSheet
