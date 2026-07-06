@@ -89,12 +89,12 @@ The server client is already typed with `Database`. Do not pass env vars directl
 ```
 NEXT_PUBLIC_SUPABASE_URL      # Supabase project URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY # Supabase anon/publishable key
-HUGGINGFACE_API_TOKEN         # Server-only — Hugging Face Inference API token for CLIP photo embeddings
+VOYAGE_API_KEY                # Server-only — Voyage AI API key for voyage-multimodal-3 photo embeddings
 ```
 
 Both Supabase vars are referenced as `process.env.NEXT_PUBLIC_SUPABASE_URL` and `process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-`HUGGINGFACE_API_TOKEN` has no `NEXT_PUBLIC_` prefix and must only be read from server-side code (Route Handlers) — never from a Client Component.
+`VOYAGE_API_KEY` has no `NEXT_PUBLIC_` prefix and must only be read from server-side code (Route Handlers) — never from a Client Component.
 
 ## Database schema summary
 
@@ -212,8 +212,3 @@ The build step requires two repository secrets (Settings → Secrets and variabl
 - **pre-push** — runs `type-check → lint → build` in sequence; push is blocked if any step fails
 
 Run `npm run format` to format all files at once. Run `npm run format:check` to verify without writing.
-
-## Pages still to be built
-
-- `/map` — interactive map showing tagged cats nearby (planned: Day 3)
-- `/profile/me` — user's own profile and their tagged cats (planned: Day 4)

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getImageEmbedding } from '@/lib/huggingface'
+import { getImageEmbedding } from '@/lib/embeddings'
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const imageBytes = await imageFile.arrayBuffer()
-    const embedding = await getImageEmbedding(imageBytes)
+    const embedding = await getImageEmbedding(imageBytes, imageFile.type || 'image/jpeg')
 
     const { data, error } = await supabase.rpc('nearby_cats_by_similarity', {
       cat_ids: candidateCatIds,

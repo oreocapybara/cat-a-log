@@ -95,6 +95,12 @@ export function MatchFoundScreen({
         data: { publicUrl },
       } = supabase.storage.from('cat-photos').getPublicUrl(path)
 
+      fetch('/api/refresh-cat-embedding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ catId: cat.id, photoUrl: publicUrl }),
+      }).catch(() => {})
+
       const { data: sightingRow, error } = await supabase
         .from('sightings')
         .insert({

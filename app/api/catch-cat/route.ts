@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getImageEmbedding } from '@/lib/huggingface'
+import { getImageEmbedding } from '@/lib/embeddings'
 
 const ALLOWED_TAGS = ['needs_medical', 'possible_rabies', 'deceased'] as const
 type CatTagValue = (typeof ALLOWED_TAGS)[number]
