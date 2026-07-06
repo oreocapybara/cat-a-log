@@ -163,7 +163,11 @@ export function AvatarUploadProvider({
     try {
       // Delete from storage
       const supabase = createClient()
-      await supabase.storage.from('avatars').remove([`${userId}/avatar.jpg`])
+      const filePath = `${userId}/avatar.jpg`
+      if (filePath.includes('..')) {
+        throw new Error('Invalid file path')
+      }
+      await supabase.storage.from('avatars').remove([filePath])
 
       // Update profile
       const result = await updateAvatar(null)
