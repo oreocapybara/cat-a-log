@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Clock, Eye, HandHeart, Star, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Clock, Eye, HandHeart, Star, Trash2 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
@@ -72,6 +72,60 @@ export function MyCatsList({
 
   // Track pending insert promises so undo can await them
   const pendingInserts = useRef<Map<string, PromiseLike<unknown>>>(new Map())
+
+  // --- Name overflow expand/collapse ---
+  const [expandedNames, setExpandedNames] = useState<Set<string>>(new Set())
+  const [overflowingNames, setOverflowingNames] = useState<Set<string>>(new Set())
+  const nameRefs = useRef<Map<string, HTMLElement>>(new Map())
+
+  const nameRefCallback = useCallback(
+    (catId: string) => (el: HTMLElement | null) => {
+      if (el) {
+        nameRefs.current.set(catId, el)
+      } else {
+        nameRefs.current.delete(catId)
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      const newOverflowing = new Set<string>()
+      for (const [catId, el] of nameRefs.current) {
+        if (!expandedNames.has(catId) && el.scrollWidth > el.clientWidth) {
+          newOverflowing.add(catId)
+        } else if (expandedNames.has(catId) && overflowingNames.has(catId)) {
+          // Preserve the flag while expanded so the chevron stays visible
+          newOverflowing.add(catId)
+        }
+      }
+      setOverflowingNames((prev) => {
+        if (prev.size === newOverflowing.size && [...prev].every((id) => newOverflowing.has(id))) {
+          return prev
+        }
+        return newOverflowing
+      })
+    })
+
+    for (const el of nameRefs.current.values()) {
+      observer.observe(el)
+    }
+
+    return () => observer.disconnect()
+  }, [cats, expandedNames, overflowingNames])
+
+  function toggleNameExpanded(catId: string) {
+    setExpandedNames((prev) => {
+      const next = new Set(prev)
+      if (next.has(catId)) {
+        next.delete(catId)
+      } else {
+        next.add(catId)
+      }
+      return next
+    })
+  }
 
   function setCatTags(catId: string, tags: CatTag[]) {
     setTagsByCat((prev) => new Map(prev).set(catId, tags))
@@ -358,7 +412,7 @@ export function MyCatsList({
           return (
             <Card key={cat.id} size="sm" className="gap-0 py-0">
               {/* Row 1: Identity */}
-              <div className="flex items-center gap-3 px-3 pt-3">
+              <div className="flex items-start gap-3 px-3 pt-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={cat.primary_photo_url}
@@ -366,9 +420,46 @@ export function MyCatsList({
                   className="h-14 w-14 shrink-0 rounded-xl object-cover"
                 />
                 <div className="min-w-0 flex-1 text-left">
-                  <p className="font-heading truncate text-base font-bold">
-                    {cat.name ?? 'Unnamed cat'}
-                  </p>
+                  {overflowingNames.has(cat.id) ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleNameExpanded(cat.id)}
+                      aria-expanded={expandedNames.has(cat.id)}
+                      aria-label={
+                        expandedNames.has(cat.id)
+                          ? `Collapse name, ${cat.name ?? 'Unnamed cat'}`
+                          : `Show full name, ${cat.name ?? 'Unnamed cat'}`
+                      }
+                      className={cn(
+                        'max-w-full min-w-0 text-left',
+                        expandedNames.has(cat.id)
+                          ? 'flex flex-col items-start'
+                          : 'flex items-baseline gap-1'
+                      )}
+                    >
+                      <span
+                        ref={nameRefCallback(cat.id)}
+                        className={cn(
+                          'font-heading text-base font-bold',
+                          expandedNames.has(cat.id) ? 'break-words whitespace-normal' : 'truncate'
+                        )}
+                      >
+                        {cat.name ?? 'Unnamed cat'}
+                      </span>
+                      {expandedNames.has(cat.id) ? (
+                        <ChevronUp className="text-muted-foreground mt-0.5 h-3 w-3 shrink-0" />
+                      ) : (
+                        <ChevronDown className="text-muted-foreground h-3 w-3 shrink-0" />
+                      )}
+                    </button>
+                  ) : (
+                    <p
+                      ref={nameRefCallback(cat.id)}
+                      className="font-heading truncate text-base font-bold"
+                    >
+                      {cat.name ?? 'Unnamed cat'}
+                    </p>
+                  )}
                   <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
                     <span className="inline-flex items-center gap-1">
                       <Eye className="h-3 w-3" />
