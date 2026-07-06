@@ -5,6 +5,7 @@ import { MapPin, Sparkles, Eye, Cat, Loader2, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { notify } from '@/lib/toast'
+import { resizeImageFit } from '@/lib/image-utils'
 
 import type { NearbyCat } from '@/lib/supabase/types'
 
@@ -69,8 +70,10 @@ export function CandidatesScreen({
     if (!allCandidates || allCandidates.length === 0) return
     setAnalyzing(true)
 
+    const resized = await resizeImageFit(photoFile)
+
     const formData = new FormData()
-    formData.append('image', photoFile)
+    formData.append('image', resized, 'photo.jpg')
     formData.append('candidateCatIds', JSON.stringify(allCandidates.map((c) => c.id)))
 
     const response = await fetch('/api/match', {
