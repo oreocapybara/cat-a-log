@@ -5,8 +5,6 @@ import { ThemeToggle } from './theme-toggle'
 import { ShareProfileButton } from './share-profile-button'
 import { useAvatarUpload } from './avatar-upload-provider'
 import { avatarDialogOpen } from './avatar-upload-dialog'
-import { useSeenFlag } from '@/lib/use-seen-flag'
-import { CoachMark } from '@/app/(app)/components/coach-mark'
 
 type ProfileHeaderProps = {
   username: string
@@ -27,13 +25,6 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   const initials = username.slice(0, 2).toUpperCase()
 
-  const [hasSeenAvatarHint, markAvatarHintSeen] = useSeenFlag('hasSeenAvatarHint')
-  const [hasSeenShareHint, markShareHintSeen] = useSeenFlag('hasSeenShareHint')
-  // Two-step waterfall, owner-only: personalizing your own profile (avatar)
-  // comes before wanting to share it.
-  const showAvatarHint = isOwner && !hasSeenAvatarHint
-  const showShareHint = isOwner && hasSeenAvatarHint && !hasSeenShareHint
-
   return (
     <>
       {/* Top bar */}
@@ -41,27 +32,14 @@ export function ProfileHeader({
         <div>{/* spacer */}</div>
         <div className="relative flex items-center gap-2">
           {isOwner && <ThemeToggle />}
-          <ShareProfileButton username={username} onOpen={markShareHintSeen} />
-          {showShareHint && (
-            <CoachMark
-              text="Share your profile."
-              arrow="top"
-              className="absolute top-full right-0 mt-2"
-            />
-          )}
+          <ShareProfileButton username={username} />
         </div>
       </div>
 
       {/* Avatar */}
       <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-300">
         {isOwner ? (
-          <AvatarWithEdit
-            avatarUrl={avatarUrl}
-            username={username}
-            initials={initials}
-            showHint={showAvatarHint}
-            onOpen={markAvatarHintSeen}
-          />
+          <AvatarWithEdit avatarUrl={avatarUrl} username={username} initials={initials} />
         ) : (
           <AvatarDisplay avatarUrl={avatarUrl} username={username} initials={initials} />
         )}
@@ -130,27 +108,18 @@ function AvatarWithEdit({
   avatarUrl,
   username,
   initials,
-  showHint,
-  onOpen,
 }: {
   avatarUrl: string | null
   username: string
   initials: string
-  showHint: boolean
-  onOpen: () => void
 }) {
   const { isUploading, previewUrl } = useAvatarUpload()
   const displayUrl = previewUrl ?? avatarUrl
 
-  function handleTap() {
-    onOpen()
-    avatarDialogOpen?.()
-  }
-
   return (
     <button
       type="button"
-      onClick={handleTap}
+      onClick={() => avatarDialogOpen?.()}
       className="group relative"
       aria-label="Change profile photo"
       aria-busy={isUploading}
@@ -162,7 +131,7 @@ function AvatarWithEdit({
           <img src={displayUrl} alt={username} className="h-full w-full object-cover" />
         </div>
       ) : (
-        <div className="bg-primary text-primary-foreground flex h-24 w-24 items-center justify-center rounded-full text-2xl font-semibold">
+        <div className="border-primary/40 text-muted-foreground flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed text-2xl font-semibold">
           {initials ?? <User className="h-10 w-10" />}
         </div>
       )}
@@ -182,14 +151,6 @@ function AvatarWithEdit({
         <div className="bg-primary text-primary-foreground absolute -right-1 -bottom-1 flex h-7 w-7 items-center justify-center rounded-full shadow-md transition-transform group-hover:scale-110">
           <Camera className="h-3.5 w-3.5" />
         </div>
-      )}
-
-      {showHint && (
-        <CoachMark
-          text="Add a profile photo."
-          arrow="top"
-          className="absolute top-full left-1/2 mt-2 -translate-x-1/2"
-        />
       )}
     </button>
   )

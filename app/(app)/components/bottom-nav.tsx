@@ -1,9 +1,11 @@
 'use client'
 
+import { useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Map, Plus, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useSeenFlag } from '@/lib/use-seen-flag'
 
 const NAV_ITEMS = [
   { href: '/map', label: 'Map', icon: Map },
@@ -13,6 +15,16 @@ const NAV_ITEMS = [
 
 export default function BottomNav() {
   const pathname = usePathname()
+  const [hasSeenPulse, markPulseSeen] = useSeenFlag('hasSeenFabPulse')
+  const fabRef = useRef<HTMLAnchorElement>(null)
+
+  const handleAnimationEnd = useCallback(() => {
+    markPulseSeen()
+  }, [markPulseSeen])
+
+  const handleFabClick = useCallback(() => {
+    markPulseSeen()
+  }, [markPulseSeen])
 
   // Hide the nav bar during the tagging flow for a full-screen experience
   if (pathname.startsWith('/tag')) return null
@@ -28,8 +40,12 @@ export default function BottomNav() {
             return (
               <Link
                 key={href}
+                ref={fabRef}
                 href={href}
                 aria-label={label}
+                data-fab-pulse={!hasSeenPulse ? '' : undefined}
+                onAnimationEnd={!hasSeenPulse ? handleAnimationEnd : undefined}
+                onClick={handleFabClick}
                 className="bg-primary text-primary-foreground shadow-primary/30 relative -top-4 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform active:scale-95"
               >
                 <Icon className="h-6 w-6" strokeWidth={2.5} />

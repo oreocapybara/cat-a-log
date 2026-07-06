@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { CatPreviewCard } from './components/cat-preview-card'
-import { TagFabHint } from './components/tag-fab-hint'
-import { FilterHint } from './components/filter-hint'
 import { FilterSheet, type CatFilters, matchesFilters } from './components/filter-sheet'
 import { SearchBar, type SearchedCat } from './components/search-bar'
 import { SearchThisAreaPill } from './components/search-this-area-pill'
@@ -17,7 +15,6 @@ import { MapAttribution } from './components/map-attribution'
 import { MapSkeleton } from './components/map-skeleton'
 import type { MapMoveEnd } from './components/cat-map'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
-import { useSeenFlag } from '@/lib/use-seen-flag'
 
 const CatMap = dynamic(() => import('./components/cat-map').then((mod) => mod.CatMap), {
   ssr: false,
@@ -42,6 +39,7 @@ export default function MapPage() {
   const [pendingSearch, setPendingSearch] = useState<MapMoveEnd | null>(null)
   const [searchStale, setSearchStale] = useState(false)
   const [searchBarResetKey, setSearchBarResetKey] = useState(0)
+  const [searchBarExpanded, setSearchBarExpanded] = useState(false)
   const [flyToTarget, setFlyToTarget] = useState<[number, number] | null>(null)
   const [flyToZoom, setFlyToZoom] = useState<number | undefined>(undefined)
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null)
@@ -273,29 +271,6 @@ export default function MapPage() {
 
   const selectedCat = filteredCats.find((cat) => cat.id === selectedCatId) ?? null
 
-  const [hasSeenPinHint, markPinHintSeen] = useSeenFlag('hasSeenPinHint')
-  const [hasSeenTagHint] = useSeenFlag('hasSeenTagHint')
-  const [hasSeenFilterHint, markFilterHintSeen] = useSeenFlag('hasSeenFilterHint')
-
-  // Nearest loaded marker — a one-line min, not a re-sort of the whole list.
-  const nearestCat = useMemo(() => {
-    if (filteredCats.length === 0) return null
-    return filteredCats.reduce((closest, cat) =>
-      cat.distance_km < closest.distance_km ? cat : closest
-    )
-  }, [filteredCats])
-
-  // Only one hint is ever active at a time, in priority order: browsing (pin)
-  // before contributing (tag) before power-user features (filter).
-  const activeMapHint =
-    !hasSeenPinHint && nearestCat
-      ? 'pin'
-      : !hasSeenTagHint
-        ? 'tag'
-        : !hasSeenFilterHint
-          ? 'filter'
-          : null
-
   if (location.status === 'loading') {
     return <MapSkeleton />
   }
@@ -321,24 +296,20 @@ export default function MapPage() {
         catTags={catTags}
         selectedCatId={selectedCatId}
         onSelectCat={(cat) => {
-          markPinHintSeen()
           setSelectedCatId(cat.id)
         }}
         onMoveEnd={handleMoveEnd}
         onUserDrag={handleUserDrag}
         flyTo={flyToTarget}
         flyToZoom={flyToZoom}
-        pinHintCatId={activeMapHint === 'pin' && nearestCat ? nearestCat.id : null}
       />
-
-      {activeMapHint === 'tag' && <TagFabHint />}
-      {activeMapHint === 'filter' && <FilterHint />}
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-center gap-2">
         <SearchBar
           resetSignal={searchBarResetKey}
           userLocation={{ lat: location.lat, lng: location.lng }}
           onSelectCat={handleSelectSearchedCat}
+          onExpandChange={setSearchBarExpanded}
           displayContent={
             loadingCats
               ? 'Searching…'
@@ -358,7 +329,6 @@ export default function MapPage() {
               : 'Filter cats'
           }
           onClick={() => {
-            markFilterHintSeen()
             setFilterSheetOpen(true)
           }}
         >
@@ -370,7 +340,7 @@ export default function MapPage() {
       </div>
 
       <SearchThisAreaPill
-        visible={searchStale}
+        visible={searchStale && !searchBarExpanded}
         loading={loadingCats}
         onSearch={handleSearchThisArea}
       />

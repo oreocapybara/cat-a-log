@@ -242,20 +242,33 @@
   animation: pulse-ring-primary 1.8s ease-out infinite;
 }
 
-/* Coach-mark pin hint: restyles Leaflet's default white tooltip box to match
-   the orange bubble used by the other onboarding coach marks. */
-.coach-mark-tooltip.leaflet-tooltip {
-  background: var(--primary);
-  color: var(--primary-foreground);
-  border: none;
-  border-radius: 0.75rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+/* FAB pulse: draws peripheral attention on first session */
+@keyframes fab-pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
 }
-.coach-mark-tooltip.leaflet-tooltip-top::before {
-  border-top-color: var(--primary);
+
+[data-fab-pulse]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--primary);
+  animation: fab-pulse-ring 1.3s ease-out 3;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-fab-pulse]::before {
+    animation: none;
+    display: none;
+  }
 }
 
 /* Marker photo backgrounds: fade in once the image is decoded, preventing

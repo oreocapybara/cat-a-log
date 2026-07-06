@@ -41,7 +41,7 @@ export function SearchThisAreaPill({
   if (!rendered) return null
 
   return (
-    <div className="absolute inset-x-4 top-16 z-10 flex justify-center">
+    <div className="absolute inset-x-4 top-[4.75rem] z-10 flex justify-center">
       <button
         type="button"
         onClick={onSearch}
