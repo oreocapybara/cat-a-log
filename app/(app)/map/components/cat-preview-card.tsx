@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check, Clock, Eye, Images, MapPin, Scissors, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -52,6 +52,7 @@ export function CatPreviewCard({
   const [closing, setClosing] = useState(false)
   const [prevCat, setPrevCat] = useState(cat)
   const [galleryOpen, setGalleryOpen] = useState(false)
+  const thumbnailRef = useRef<HTMLButtonElement>(null)
 
   // React's documented pattern for "adjust state when a prop changes" without an
   // effect: compare against the previous prop value during render itself, rather
@@ -121,6 +122,7 @@ export function CatPreviewCard({
     >
       <div className="relative shrink-0">
         <button
+          ref={thumbnailRef}
           type="button"
           onClick={() => setGalleryOpen(true)}
           aria-label="View photos of this cat"
@@ -251,6 +253,7 @@ export function CatPreviewCard({
         open={galleryOpen}
         onOpenChange={setGalleryOpen}
         onViewLocation={handleViewLocation}
+        originRef={thumbnailRef}
       />
     </Card>
   )
