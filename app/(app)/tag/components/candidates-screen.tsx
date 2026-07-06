@@ -37,6 +37,8 @@ export function CandidatesScreen({
   // The displayed subset (max 2)
   const [displayedCandidates, setDisplayedCandidates] = useState<NearbyCat[] | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
+  // Whether the AI actually returned a ranking (not just the untouched fallback order)
+  const [hasAiPick, setHasAiPick] = useState(false)
 
   useEffect(() => {
     async function loadCandidates() {
@@ -57,6 +59,7 @@ export function CandidatesScreen({
       const cats = data ?? []
       setAllCandidates(cats)
       setDisplayedCandidates(cats.slice(0, MAX_DISPLAYED_CANDIDATES))
+      setHasAiPick(false)
     }
 
     loadCandidates()
@@ -91,6 +94,7 @@ export function CandidatesScreen({
     const reordered = [...ranked, ...unranked]
     setAllCandidates(reordered)
     setDisplayedCandidates(reordered.slice(0, MAX_DISPLAYED_CANDIDATES))
+    setHasAiPick(ranked.length > 0)
   }
 
   // Loading state with skeleton
@@ -182,62 +186,75 @@ export function CandidatesScreen({
 
       {/* Cat listing */}
       <div className="space-y-2.5">
-        {displayedCandidates.map((cat, index) => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => onMatch(cat)}
-            className="motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 group bg-card ring-foreground/5 hover:ring-primary/40 flex w-full items-center gap-3 rounded-xl p-3 text-left ring-1 transition-all hover:shadow-md active:scale-[0.98] motion-safe:duration-200"
-            style={{ animationDelay: `${index * 75}ms` }}
-          >
-            {/* Cat photo */}
-            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={cat.primary_photo_url}
-                alt={cat.name ?? 'Unnamed cat'}
-                className="h-full w-full object-cover transition-transform group-hover:scale-105"
-              />
-              {cat.is_ear_tipped && (
-                <div className="bg-secondary text-secondary-foreground absolute top-0.5 left-0.5 rounded-sm px-1 py-0.5 text-[9px] font-bold">
-                  TNR
-                </div>
-              )}
-            </div>
-
-            {/* Cat info */}
-            <div className="min-w-0 flex-1">
-              <p className="truncate leading-tight font-medium">{cat.name ?? 'Unnamed kitty'}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                  <MapPin className="h-3 w-3" />
-                  {cat.distance_km < 0.1
-                    ? `${(cat.distance_km * 1000).toFixed(0)}m`
-                    : `${cat.distance_km.toFixed(1)}km`}
-                </span>
-                {cat.times_spotted > 1 && (
-                  <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                    <Eye className="h-3 w-3" />
-                    Seen {cat.times_spotted}×
-                  </span>
+        {displayedCandidates.map((cat, index) => {
+          const isAiPick = hasAiPick && index === 0
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => onMatch(cat)}
+              className={`motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 group bg-card hover:ring-primary/40 relative flex w-full items-center gap-3 rounded-xl p-3 text-left ring-1 transition-all hover:shadow-md active:scale-[0.98] motion-safe:duration-200 ${
+                isAiPick ? 'ring-primary/40 shadow-primary/10 shadow-md' : 'ring-foreground/5'
+              }`}
+              style={{ animationDelay: `${index * 75}ms` }}
+            >
+              {/* Cat photo */}
+              <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={cat.primary_photo_url}
+                  alt={cat.name ?? 'Unnamed cat'}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
+                {cat.is_ear_tipped && (
+                  <div className="bg-secondary text-secondary-foreground absolute top-0.5 left-0.5 rounded-sm px-1 py-0.5 text-[9px] font-bold">
+                    TNR
+                  </div>
                 )}
               </div>
-            </div>
 
-            {/* Tap hint chevron */}
-            <div className="text-muted-foreground transition-transform group-hover:translate-x-0.5">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="opacity-40">
-                <path
-                  d="M6 4L10 8L6 12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-          </button>
-        ))}
+              {/* AI pick — corner tag on the card itself, clear of the name/meta text */}
+              {isAiPick && (
+                <div className="bg-primary text-primary-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 absolute -top-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold shadow-md motion-safe:duration-300">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  AI pick
+                </div>
+              )}
+
+              {/* Cat info */}
+              <div className="min-w-0 flex-1">
+                <p className="truncate leading-tight font-medium">{cat.name ?? 'Unnamed kitty'}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                  <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                    <MapPin className="h-3 w-3" />
+                    {cat.distance_km < 0.1
+                      ? `${(cat.distance_km * 1000).toFixed(0)}m`
+                      : `${cat.distance_km.toFixed(1)}km`}
+                  </span>
+                  {cat.times_spotted > 1 && (
+                    <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                      <Eye className="h-3 w-3" />
+                      Seen {cat.times_spotted}×
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Tap hint chevron */}
+              <div className="text-muted-foreground transition-transform group-hover:translate-x-0.5">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="opacity-40">
+                  <path
+                    d="M6 4L10 8L6 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {/* Actions */}
