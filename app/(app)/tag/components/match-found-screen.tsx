@@ -81,6 +81,9 @@ export function MatchFoundScreen({
       }
 
       const path = `${user.id}/${crypto.randomUUID()}-photo.jpg`
+      if (path.includes('..')) {
+        throw new Error('Invalid path')
+      }
       const { error: uploadError } = await supabase.storage
         .from('cat-photos')
         .upload(path, photoFile)
