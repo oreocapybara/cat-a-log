@@ -112,6 +112,10 @@ export function AvatarUploadProvider({
         const supabase = createClient()
         const path = `${userId}/avatar.jpg`
 
+        if (path.includes('..')) {
+          throw new Error('Invalid path')
+        }
+
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(path, resizedBlob, {
