@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { CatchCardShareButton } from '@/app/components/catch-card-share-button'
+import { InvasiveVoteCallout } from '@/app/(app)/components/invasive-vote-callout'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -62,6 +63,7 @@ export function MatchFoundScreen({
   const [selectedNewTags, setSelectedNewTags] = useState<string[]>([])
   const [savingEdit, setSavingEdit] = useState(false)
   const [editSaved, setEditSaved] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setShowContent(true), 300)
@@ -85,6 +87,8 @@ export function MatchFoundScreen({
         router.push('/login')
         return
       }
+
+      setCurrentUserId(user.id)
 
       const path = `${user.id}/${crypto.randomUUID()}-photo.jpg`
       const { error: uploadError } = await supabase.storage
@@ -485,6 +489,26 @@ export function MatchFoundScreen({
             <span>Info updated</span>
           </div>
         )}
+
+        {/* Invasive risk verification prompt — shown after sighting saved */}
+        {!saving &&
+          currentUserId &&
+          (() => {
+            const pendingInvasive = tags.find(
+              (t) => t.tag === 'invasive_risk' && t.verification_status === 'pending'
+            )
+            if (!pendingInvasive) return null
+            if (pendingInvasive.added_by === currentUserId) return null
+            return (
+              <div className="mt-4 w-full">
+                <InvasiveVoteCallout
+                  catTagId={pendingInvasive.id}
+                  currentUserId={currentUserId}
+                  verificationStatus="pending"
+                />
+              </div>
+            )
+          })()}
       </div>
 
       {/* CTA */}
