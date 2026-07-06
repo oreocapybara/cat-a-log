@@ -1,47 +1,29 @@
-const HF_MODEL = 'sentence-transformers/clip-ViT-B-32'
+import { pipeline, type ImageFeatureExtractionPipeline } from '@huggingface/transformers'
+
+const MODEL = 'Xenova/clip-vit-base-patch32'
+
+let extractorPromise: Promise<ImageFeatureExtractionPipeline> | null = null
+
+function getExtractor() {
+  if (!extractorPromise) {
+    extractorPromise = pipeline('image-feature-extraction', MODEL)
+  }
+  return extractorPromise
+}
 
 /**
- * Get a CLIP embedding for an image.
+ * Get a CLIP embedding for an image, run locally via transformers.js —
+ * Hugging Face's hosted Inference API no longer serves image-embedding models.
  *
  * Accepts either:
- * - A URL string — the image will be fetched server-side first
- * - An ArrayBuffer / Buffer — raw image bytes sent directly to HF
+ * - A URL string
+ * - An ArrayBuffer / Buffer — raw image bytes
  */
 export async function getImageEmbedding(input: string | ArrayBuffer): Promise<number[]> {
-  let imageBytes: ArrayBuffer
+  const extractor = await getExtractor()
+  const image = typeof input === 'string' ? input : new Blob([input])
 
-  if (typeof input === 'string') {
-    const imageResponse = await fetch(input)
-    if (!imageResponse.ok) {
-      throw new Error(`Could not fetch image: ${imageResponse.status}`)
-    }
-    imageBytes = await imageResponse.arrayBuffer()
-  } else {
-    imageBytes = input
-  }
+  const output = await extractor(image)
 
-  const response = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.HUGGINGFACE_API_TOKEN}`,
-      'Content-Type': 'application/octet-stream',
-    },
-    body: imageBytes,
-  })
-
-  if (!response.ok) {
-    throw new Error(`Hugging Face request failed: ${response.status}`)
-  }
-
-  const result = (await response.json()) as unknown
-
-  // The feature-extraction pipeline can return either a flat vector or a
-  // batch-shaped nested array depending on the model — normalize to flat.
-  const embedding = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : result
-
-  if (!Array.isArray(embedding) || typeof embedding[0] !== 'number') {
-    throw new Error('Unexpected embedding response shape from Hugging Face')
-  }
-
-  return embedding as number[]
+  return Array.from(output.data as Float32Array)
 }
