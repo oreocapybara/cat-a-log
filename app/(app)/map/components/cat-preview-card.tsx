@@ -141,11 +141,11 @@ export function CatPreviewCard({
           : 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-200'
       )}
     >
-      {/* Tier badge — centered above the card */}
+      {/* Tier badge — overlaps the card's top edge to feel attached */}
       {renderedCat.times_spotted > 1 && (
-        <div className="mb-1.5 flex justify-center">
+        <div className="relative z-10 flex justify-center">
           <span
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/70 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase shadow-md backdrop-blur-sm"
+            className="inline-flex translate-y-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-black/80 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase shadow-md backdrop-blur-md"
             style={{ color: sightingTier.color }}
           >
             <Eye className="h-3 w-3" />
