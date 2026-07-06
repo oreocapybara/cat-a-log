@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { MapContainer, TileLayer, Marker, Tooltip, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
@@ -395,7 +395,6 @@ function CatMarker({
   selectedCatId,
   tags,
   overlapCount,
-  showPinHint,
   onSelectCat,
 }: {
   cat: NearbyCat
@@ -405,7 +404,6 @@ function CatMarker({
   selectedCatId: string | null
   tags: CatTag['tag'][]
   overlapCount?: number
-  showPinHint: boolean
   onSelectCat: (cat: NearbyCat) => void
 }) {
   const selected = cat.id === selectedCatId
@@ -425,13 +423,7 @@ function CatMarker({
       // satellites (but still below the always-on-top selected marker).
       zIndexOffset={selected ? 1000 : overlapCount ? 500 : 0}
       eventHandlers={{ click: () => onSelectCat(cat) }}
-    >
-      {showPinHint && (
-        <Tooltip permanent direction="top" className="coach-mark-tooltip">
-          Tap a pin to see this cat&apos;s story.
-        </Tooltip>
-      )}
-    </Marker>
+    />
   )
 }
 
@@ -472,7 +464,6 @@ export function CatMap({
   onUserDrag,
   flyTo = null,
   flyToZoom,
-  pinHintCatId = null,
 }: {
   center: [number, number]
   userLocation: [number, number]
@@ -484,7 +475,6 @@ export function CatMap({
   onUserDrag?: () => void
   flyTo?: [number, number] | null
   flyToZoom?: number
-  pinHintCatId?: string | null
 }) {
   const { resolvedTheme } = useTheme()
 
@@ -527,7 +517,6 @@ export function CatMap({
             selectedCatId={selectedCatId}
             tags={catTags.get(point.cat.id) ?? NO_TAGS}
             overlapCount={point.overlapCount}
-            showPinHint={point.cat.id === pinHintCatId}
             onSelectCat={onSelectCat}
           />
         ) : (

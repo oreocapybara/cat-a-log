@@ -27,17 +27,20 @@ export function SearchBar({
   displayContent,
   onSelectCat,
   resetSignal,
+  onExpandChange,
 }: {
   userLocation: { lat: number; lng: number }
   displayContent: React.ReactNode
   onSelectCat: (cat: SearchedCat) => void
   resetSignal?: number
+  onExpandChange?: (expanded: boolean) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<SearchedCat[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (resetSignal === undefined) return
@@ -67,10 +70,33 @@ export function SearchBar({
     return () => clearTimeout(timeout)
   }, [query])
 
+  // Auto-collapse when user taps outside the search bar while query is empty.
+  // This avoids forcing the user to hit the back arrow to dismiss an unused search.
+  useEffect(() => {
+    if (!expanded) return
+
+    function handlePointerDown(e: PointerEvent) {
+      if (query.trim()) return
+      if (containerRef.current?.contains(e.target as Node)) return
+      collapse()
+    }
+
+    // Slight delay before attaching so the expand-tap itself doesn't immediately trigger.
+    const raf = requestAnimationFrame(() => {
+      document.addEventListener('pointerdown', handlePointerDown)
+    })
+
+    return () => {
+      cancelAnimationFrame(raf)
+      document.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [expanded, query])
+
   function collapse() {
     setExpanded(false)
     setQuery('')
     setResults([])
+    onExpandChange?.(false)
   }
 
   function clearText() {
@@ -92,11 +118,25 @@ export function SearchBar({
     }
   }
 
+  function handleBlur() {
+    // Auto-collapse when focus leaves the search bar and no query is typed.
+    // Timeout lets click events on sibling buttons (back, clear) fire first.
+    if (query.trim()) return
+    setTimeout(() => {
+      if (!containerRef.current?.contains(document.activeElement)) {
+        collapse()
+      }
+    }, 150)
+  }
+
   if (!expanded) {
     return (
       <button
         type="button"
-        onClick={() => setExpanded(true)}
+        onClick={() => {
+          setExpanded(true)
+          onExpandChange?.(true)
+        }}
         className="bg-card/70 dark:bg-card/90 text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 flex flex-1 cursor-pointer items-center gap-2 rounded-full border border-white/40 px-4 py-2.5 text-left shadow-sm backdrop-blur-md duration-150 dark:border-white/10"
       >
         <Search className="h-4 w-4 shrink-0" />
@@ -106,7 +146,10 @@ export function SearchBar({
   }
 
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 relative flex-1 duration-150">
+    <div
+      ref={containerRef}
+      className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 relative flex-1 duration-150"
+    >
       <div className="bg-card/70 dark:bg-card/90 focus-within:ring-primary/40 flex items-center gap-2 rounded-full border border-white/40 py-1 pr-2 pl-1 shadow-sm backdrop-blur-md transition-shadow focus-within:ring-2 dark:border-white/10">
         <button
           type="button"
@@ -122,6 +165,7 @@ export function SearchBar({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
           placeholder="Search cats by name…"
           className="h-7 border-none bg-transparent px-0 shadow-none focus-visible:ring-0"
         />
@@ -146,7 +190,7 @@ export function SearchBar({
             </div>
           ) : results.length === 0 ? (
             <p className="text-muted-foreground px-4 py-4 text-center text-sm">
-              No cats named “{query.trim()}”
+              No cats named &ldquo;{query.trim()}&rdquo;
             </p>
           ) : (
             results.map((cat) => (
