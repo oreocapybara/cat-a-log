@@ -22,6 +22,19 @@ import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 export type MapMoveEnd = { lat: number; lng: number; radiusKm: number }
 
+/**
+ * Escapes HTML special characters to prevent XSS when interpolating
+ * user-controlled strings into HTML passed to Leaflet's divIcon.
+ */
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 // CARTO's dark_all basemap is near-black — legible indoors, but this app is
 // used outdoors on a phone where reading streets/labels matters more than
 // matching the app chrome. Dark mode reuses the light basemap and tones it to
@@ -243,7 +256,7 @@ function makeCatIcon(
   const stalenessOpacity = getStalenessOpacity(cat.created_at)
 
   if (selected) {
-    const label = cat.name ?? 'Unknown'
+    const label = escapeHtml(cat.name ?? 'Unknown')
     const tier = getStalenessTier(cat.created_at)
     const lastSeen = formatLastSeen(cat.created_at)
     // Photo stays fully opaque even when stale — staleness on the active pin
