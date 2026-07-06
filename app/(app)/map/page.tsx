@@ -76,6 +76,7 @@ export default function MapPage() {
           nearbyCats.map((cat: NearbyCat) => cat.id)
         )
         .is('resolved_at', null)
+        .or('verification_status.is.null,verification_status.neq.dismissed')
 
       if (tagError) {
         toast.error('Could not load cat tags')
