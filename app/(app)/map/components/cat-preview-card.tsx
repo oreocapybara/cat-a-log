@@ -89,7 +89,7 @@ export function CatPreviewCard({
     checkTruncation()
     window.addEventListener('resize', checkTruncation)
     return () => window.removeEventListener('resize', checkTruncation)
-  }, [renderedCat])
+  }, [renderedCat?.id])
 
   if (!renderedCat) return null
 
@@ -133,11 +133,11 @@ export function CatPreviewCard({
   return (
     <Card
       className={cn(
-        'bg-card/70 dark:bg-card/90 absolute inset-x-4 bottom-24 z-10 max-h-[50vh] flex-row items-start gap-3 p-3 shadow-lg ring-white/40 backdrop-blur-md transition-[max-height] duration-200 ease-out dark:ring-white/10',
+        'bg-card/70 dark:bg-card/90 absolute inset-x-4 bottom-24 z-10 max-h-[50vh] flex-row items-start gap-3 p-3 shadow-lg ring-white/40 backdrop-blur-md duration-200 ease-out dark:ring-white/10',
         closing
           ? 'motion-safe:animate-out motion-safe:fade-out motion-safe:slide-out-to-bottom-2'
           : 'motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2',
-        isTruncated && !expanded && 'cursor-pointer'
+        isTruncated && 'cursor-pointer'
       )}
       onClick={handleCardBodyClick}
     >
