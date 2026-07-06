@@ -23,19 +23,17 @@ type MyCat = {
   timesSpotted: number
 }
 
-const TAG_ORDER: CatTag['tag'][] = ['needs_medical', 'possible_rabies', 'invasive_risk', 'deceased']
+const TAG_ORDER: CatTag['tag'][] = ['needs_medical', 'possible_rabies', 'deceased']
 
 const RESOLVE_LABEL: Record<CatTag['tag'], string> = {
   needs_medical: 'Recovered',
   possible_rabies: 'Cleared',
-  invasive_risk: '',
   deceased: '',
 }
 
 const TAG_TOAST_LABEL: Record<CatTag['tag'], string> = {
   needs_medical: 'Needs medical',
   possible_rabies: 'Possible rabies',
-  invasive_risk: 'Invasive risk',
   deceased: 'Passed away',
 }
 
@@ -126,7 +124,6 @@ export function MyCatsList({
         created_at: new Date().toISOString(),
         resolved_at: null,
         resolved_by: null,
-        verification_status: tag === 'invasive_risk' ? 'pending' : null,
       },
     ])
 
@@ -208,7 +205,6 @@ export function MyCatsList({
         created_at: new Date().toISOString(),
         resolved_at: null,
         resolved_by: null,
-        verification_status: null,
       },
     ])
 
@@ -458,10 +454,6 @@ export function MyCatsList({
                           tag === 'deceased'
                             ? `${meta.label} · ${formatRelativeTime(row.created_at)}`
                             : meta.label
-                        const isVerifiedInvasive =
-                          tag === 'invasive_risk' && row.verification_status === 'verified'
-                        const isResolvable =
-                          !isVerifiedInvasive && tag !== 'invasive_risk' && tag !== 'deceased'
                         return (
                           <button
                             key={tag}
@@ -469,27 +461,15 @@ export function MyCatsList({
                             onClick={() =>
                               tag === 'deceased'
                                 ? handleDeleteTag(cat.id, tag)
-                                : isResolvable
-                                  ? handleResolveTag(cat.id, tag)
-                                  : undefined
+                                : handleResolveTag(cat.id, tag)
                             }
-                            disabled={!isResolvable && tag !== 'deceased'}
                             className={cn(
-                              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase transition-opacity',
-                              isResolvable || tag === 'deceased'
-                                ? 'cursor-pointer hover:opacity-70'
-                                : 'cursor-default',
+                              'inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase transition-opacity hover:opacity-70',
                               meta.className
                             )}
                           >
                             {Icon && <Icon className="h-2.5 w-2.5" />}
                             {label}
-                            {tag === 'invasive_risk' && row.verification_status === 'pending' && (
-                              <span className="ml-0.5 text-[9px] opacity-60">⏳</span>
-                            )}
-                            {tag === 'invasive_risk' && row.verification_status === 'verified' && (
-                              <span className="ml-0.5 text-[9px]">✓</span>
-                            )}
                           </button>
                         )
                       }

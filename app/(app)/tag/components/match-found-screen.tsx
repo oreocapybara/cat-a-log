@@ -10,11 +10,9 @@ import {
   AlertTriangle,
   Sparkles,
   Loader2,
-  Leaf,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { CatchCardShareButton } from '@/app/components/catch-card-share-button'
-import { InvasiveVoteCallout } from '@/app/(app)/components/invasive-vote-callout'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -25,17 +23,12 @@ const TAG_LABELS: Record<string, { label: string; emoji: string }> = {
   needs_medical: { label: 'Needs medical', emoji: '🩺' },
   possible_rabies: { label: 'Possible rabies', emoji: '⚠️' },
   deceased: { label: 'Passed away', emoji: '🕊️' },
-  invasive_risk: { label: 'Invasive risk', emoji: '🌿' },
 }
 
 const MEDICAL_TAGS = [
   { value: 'needs_medical', label: 'Needs medical', emoji: '🩺', color: 'amber' },
   { value: 'possible_rabies', label: 'Possible rabies', emoji: '⚠️', color: 'red' },
   { value: 'deceased', label: 'Passed away', emoji: '🕊️', color: 'slate' },
-] as const
-
-const ECOLOGICAL_TAGS = [
-  { value: 'invasive_risk', label: 'Invasive risk', emoji: '🌿', color: 'green' },
 ] as const
 
 export function MatchFoundScreen({
@@ -63,7 +56,6 @@ export function MatchFoundScreen({
   const [selectedNewTags, setSelectedNewTags] = useState<string[]>([])
   const [savingEdit, setSavingEdit] = useState(false)
   const [editSaved, setEditSaved] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => setShowContent(true), 300)
@@ -87,8 +79,6 @@ export function MatchFoundScreen({
         router.push('/login')
         return
       }
-
-      setCurrentUserId(user.id)
 
       const path = `${user.id}/${crypto.randomUUID()}-photo.jpg`
       const { error: uploadError } = await supabase.storage
@@ -143,7 +133,6 @@ export function MatchFoundScreen({
   // Tags already active on this cat — don't let user add duplicates
   const activeTagValues = tags.map((t) => t.tag)
   const availableTags = MEDICAL_TAGS.filter((t) => !activeTagValues.includes(t.value))
-  const availableEcoTags = ECOLOGICAL_TAGS.filter((t) => !activeTagValues.includes(t.value))
 
   function toggleNewTag(value: string) {
     setSelectedNewTags((prev) =>
@@ -188,7 +177,6 @@ export function MatchFoundScreen({
           cat_id: cat.id,
           tag,
           added_by: user.id,
-          ...(tag === 'invasive_risk' ? { verification_status: 'pending' as const } : {}),
         }))
       )
 
@@ -196,25 +184,6 @@ export function MatchFoundScreen({
         toast.error('Could not add tags.')
         setSavingEdit(false)
         return
-      }
-
-      // Auto-insert first confirm vote for invasive_risk
-      if (selectedNewTags.includes('invasive_risk')) {
-        const { data: tagRow } = await supabase
-          .from('cat_tags')
-          .select('id')
-          .eq('cat_id', cat.id)
-          .eq('tag', 'invasive_risk')
-          .is('resolved_at', null)
-          .single()
-
-        if (tagRow) {
-          await supabase.from('invasive_risk_votes').insert({
-            cat_tag_id: tagRow.id,
-            voted_by: user.id,
-            vote: 'confirm',
-          })
-        }
       }
     }
 
@@ -300,24 +269,12 @@ export function MatchFoundScreen({
             )}
             {tags.map((tag) => {
               const info = TAG_LABELS[tag.tag] ?? { label: tag.tag, emoji: '🏷️' }
-              const isInvasive = tag.tag === 'invasive_risk'
               return (
                 <span
                   key={tag.id}
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium',
-                    isInvasive
-                      ? 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-400'
-                      : 'bg-destructive/10 text-destructive'
-                  )}
+                  className="bg-destructive/10 text-destructive inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
                 >
                   {info.emoji} {info.label}
-                  {isInvasive && tag.verification_status === 'pending' && (
-                    <span className="ml-0.5 opacity-60">⏳</span>
-                  )}
-                  {isInvasive && tag.verification_status === 'verified' && (
-                    <span className="ml-0.5">✓</span>
-                  )}
                 </span>
               )
             })}
@@ -422,42 +379,6 @@ export function MatchFoundScreen({
                   </div>
                 )}
 
-                {/* Ecological flags */}
-                {availableEcoTags.length > 0 && (
-                  <div className="bg-card/80 ring-border space-y-3 rounded-2xl p-4 ring-1 backdrop-blur-sm">
-                    <div className="flex items-center gap-2">
-                      <Leaf className="text-muted-foreground h-3.5 w-3.5" />
-                      <span className="text-sm font-semibold">Ecological flags</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {availableEcoTags.map((tag) => {
-                        const isChecked = selectedNewTags.includes(tag.value)
-                        return (
-                          <button
-                            key={tag.value}
-                            type="button"
-                            onClick={() => toggleNewTag(tag.value)}
-                            className={cn(
-                              'flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium ring-1 transition-all duration-200 active:scale-95',
-                              isChecked
-                                ? 'bg-green-50 text-green-700 ring-green-200 dark:bg-green-950/30 dark:text-green-300 dark:ring-green-700/50'
-                                : 'bg-muted/50 text-muted-foreground ring-border hover:bg-muted'
-                            )}
-                          >
-                            <span className="text-base leading-none">{tag.emoji}</span>
-                            <span>{tag.label}</span>
-                            {isChecked && <Check className="h-3 w-3" />}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      Flag if this cat is hunting native wildlife or frequenting a sensitive
-                      habitat.
-                    </p>
-                  </div>
-                )}
-
                 {/* Save edits button */}
                 {hasEdits && (
                   <Button
@@ -489,26 +410,6 @@ export function MatchFoundScreen({
             <span>Info updated</span>
           </div>
         )}
-
-        {/* Invasive risk verification prompt — shown after sighting saved */}
-        {!saving &&
-          currentUserId &&
-          (() => {
-            const pendingInvasive = tags.find(
-              (t) => t.tag === 'invasive_risk' && t.verification_status === 'pending'
-            )
-            if (!pendingInvasive) return null
-            if (pendingInvasive.added_by === currentUserId) return null
-            return (
-              <div className="mt-4 w-full">
-                <InvasiveVoteCallout
-                  catTagId={pendingInvasive.id}
-                  currentUserId={currentUserId}
-                  verificationStatus="pending"
-                />
-              </div>
-            )
-          })()}
       </div>
 
       {/* CTA */}

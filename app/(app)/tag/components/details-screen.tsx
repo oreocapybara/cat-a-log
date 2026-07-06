@@ -13,7 +13,6 @@ import {
   Sparkles,
   Stethoscope,
   Skull,
-  Leaf,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,10 +22,6 @@ const MEDICAL_TAGS = [
   { value: 'needs_medical', label: 'Needs medical', icon: Stethoscope, color: 'amber' },
   { value: 'possible_rabies', label: 'Possible rabies', icon: AlertTriangle, color: 'red' },
   { value: 'deceased', label: 'Passed away', icon: Skull, color: 'slate' },
-] as const
-
-const ECOLOGICAL_TAGS = [
-  { value: 'invasive_risk', label: 'Invasive risk', icon: Leaf, color: 'green' },
 ] as const
 
 const detailsSchema = z.object({
@@ -221,51 +216,6 @@ export function DetailsScreen({
           </p>
         </div>
 
-        {/* Ecological flags — Pill selectors */}
-        <div className="bg-card/80 ring-border space-y-3 rounded-2xl p-4 ring-1 backdrop-blur-sm">
-          <div className="flex items-center gap-2">
-            <Leaf className="text-muted-foreground h-3.5 w-3.5" />
-            <span className="text-sm font-semibold">Ecological flags</span>
-          </div>
-          <Controller
-            control={control}
-            name="tags"
-            render={({ field }) => (
-              <div className="flex flex-wrap gap-2">
-                {ECOLOGICAL_TAGS.map((tag) => {
-                  const isChecked = field.value.includes(tag.value)
-                  return (
-                    <button
-                      key={tag.value}
-                      type="button"
-                      onClick={() => {
-                        field.onChange(
-                          isChecked
-                            ? field.value.filter((v) => v !== tag.value)
-                            : [...field.value, tag.value]
-                        )
-                      }}
-                      className={cn(
-                        'flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium ring-1 transition-all duration-200 active:scale-95',
-                        isChecked
-                          ? 'bg-green-50 text-green-700 ring-green-200 dark:bg-green-950/30 dark:text-green-300 dark:ring-green-700/50'
-                          : 'bg-muted/50 text-muted-foreground ring-border hover:bg-muted'
-                      )}
-                    >
-                      <tag.icon className="h-4 w-4" />
-                      <span>{tag.label}</span>
-                      {isChecked && <Check className="h-3 w-3" />}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          />
-          <p className="text-muted-foreground text-xs">
-            Flag if this cat is hunting native wildlife or frequenting a sensitive habitat.
-          </p>
-        </div>
-
         {/* Summary preview */}
         {(isEarTipped || selectedTags.length > 0 || (notes && notes.length > 0)) && (
           <div className="bg-primary/5 ring-primary/20 rounded-2xl p-4 ring-1">
@@ -285,12 +235,7 @@ export function DetailsScreen({
                   <AlertTriangle className="h-3 w-3" />
                   <span>
                     {selectedTags
-                      .map(
-                        (t) =>
-                          MEDICAL_TAGS.find((mt) => mt.value === t)?.label ??
-                          ECOLOGICAL_TAGS.find((et) => et.value === t)?.label ??
-                          t
-                      )
+                      .map((t) => MEDICAL_TAGS.find((mt) => mt.value === t)?.label ?? t)
                       .join(', ')}
                   </span>
                 </p>
