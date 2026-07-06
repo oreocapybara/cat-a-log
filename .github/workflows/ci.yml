@@ -4,7 +4,8 @@ on:
   pull_request:
   push:
     branches-ignore:
-      - main # main only receives PRs; direct pushes skipped
+      - main # production — only receives PRs from dev
+      - dev # integration — only receives PRs from feature branches
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -18,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
