@@ -179,29 +179,55 @@ export type Database = {
         Row: {
           id: string
           cat_id: string
-          tag: 'needs_medical' | 'possible_rabies' | 'deceased'
+          tag: 'needs_medical' | 'possible_rabies' | 'deceased' | 'invasive_risk'
           added_by: string | null
           created_at: string
           resolved_at: string | null
           resolved_by: string | null
+          verification_status: 'pending' | 'verified' | 'dismissed' | null
         }
         Insert: {
           id?: string
           cat_id: string
-          tag: 'needs_medical' | 'possible_rabies' | 'deceased'
+          tag: 'needs_medical' | 'possible_rabies' | 'deceased' | 'invasive_risk'
           added_by?: string | null
           created_at?: string
           resolved_at?: string | null
           resolved_by?: string | null
+          verification_status?: 'pending' | 'verified' | 'dismissed' | null
         }
         Update: {
           id?: string
           cat_id?: string
-          tag?: 'needs_medical' | 'possible_rabies' | 'deceased'
+          tag?: 'needs_medical' | 'possible_rabies' | 'deceased' | 'invasive_risk'
           added_by?: string | null
           created_at?: string
           resolved_at?: string | null
           resolved_by?: string | null
+          verification_status?: 'pending' | 'verified' | 'dismissed' | null
+        }
+      }
+      invasive_risk_votes: {
+        Row: {
+          id: string
+          cat_tag_id: string
+          voted_by: string
+          vote: 'confirm' | 'deny'
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          cat_tag_id: string
+          voted_by: string
+          vote: 'confirm' | 'deny'
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          cat_tag_id?: string
+          voted_by?: string
+          vote?: 'confirm' | 'deny'
+          created_at?: string
         }
       }
     }
@@ -227,3 +253,4 @@ export type Sighting = Database['public']['Tables']['sightings']['Row']
 export type MatchVote = Database['public']['Tables']['match_votes']['Row']
 export type MatchVoteEntry = Database['public']['Tables']['match_vote_entries']['Row']
 export type CatTag = Database['public']['Tables']['cat_tags']['Row']
+export type InvasiveRiskVote = Database['public']['Tables']['invasive_risk_votes']['Row']

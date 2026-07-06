@@ -70,7 +70,7 @@ export default function MapPage() {
     if (nearbyCats.length > 0) {
       const { data: tagRows, error: tagError } = await supabase
         .from('cat_tags')
-        .select('cat_id, tag')
+        .select('cat_id, tag, verification_status')
         .in(
           'cat_id',
           nearbyCats.map((cat: NearbyCat) => cat.id)
@@ -82,6 +82,7 @@ export default function MapPage() {
       } else {
         const tagMap = new Map<string, CatTag['tag'][]>()
         for (const row of tagRows ?? []) {
+          if (row.verification_status === 'dismissed') continue
           tagMap.set(row.cat_id, [...(tagMap.get(row.cat_id) ?? []), row.tag])
         }
         setCatTags(tagMap)
