@@ -6,18 +6,21 @@ import type { NextConfig } from 'next'
 // The SW registration script in layout.tsx uses dangerouslySetInnerHTML,
 // requiring 'unsafe-inline' for script-src (or a nonce — Next.js 16 doesn't
 // yet support per-request nonces in the App Router static shell).
+const isDev = process.env.NODE_ENV === 'development'
+
 const cspDirectives = [
   "default-src 'self'",
   // Scripts: self + inline for the SW registration snippet
-  "script-src 'self' 'unsafe-inline'",
+  // In dev, React requires unsafe-eval for callstack reconstruction
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   // Styles: self + inline (Tailwind injects styles, shadcn uses style attrs)
   "style-src 'self' 'unsafe-inline'",
   // Images: self, Supabase storage (cat photos, avatars), CARTO tiles, blob previews, data URIs
   "img-src 'self' blob: data: https://*.supabase.co https://*.basemaps.cartocdn.com",
   // Fonts: self-hosted by next/font
   "font-src 'self'",
-  // Connect: self, Supabase (auth + realtime + storage), CARTO tiles (fetched by Leaflet)
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.basemaps.cartocdn.com",
+  // Connect: self, blob (canvas/image exports), Supabase (auth + realtime + storage), CARTO tiles (fetched by Leaflet)
+  "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.basemaps.cartocdn.com",
   // Frames: none needed
   "frame-src 'none'",
   // Objects: disallow plugins
