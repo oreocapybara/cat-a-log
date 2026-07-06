@@ -412,7 +412,7 @@ export function MyCatsList({
           return (
             <Card key={cat.id} size="sm" className="gap-0 py-0">
               {/* Row 1: Identity */}
-              <div className="flex items-center gap-3 px-3 pt-3">
+              <div className="flex items-start gap-3 px-3 pt-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={cat.primary_photo_url}
@@ -430,7 +430,7 @@ export function MyCatsList({
                           ? `Collapse name, ${cat.name ?? 'Unnamed cat'}`
                           : `Show full name, ${cat.name ?? 'Unnamed cat'}`
                       }
-                      className="flex min-w-0 items-baseline gap-1 text-left"
+                      className="flex max-w-full min-w-0 items-baseline gap-1 text-left"
                     >
                       <span
                         ref={nameRefCallback(cat.id)}
