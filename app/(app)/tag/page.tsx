@@ -15,7 +15,7 @@ import type { NearbyCat } from '@/lib/supabase/types'
 type Screen =
   | { type: 'photo' }
   | { type: 'candidates'; photoUrl: string; lat: number; lng: number }
-  | { type: 'match-found'; cat: NearbyCat; photoUrl: string; lat: number; lng: number }
+  | { type: 'match-found'; cat: NearbyCat; lat: number; lng: number }
   | { type: 'name'; photoUrl: string; lat: number; lng: number }
   | { type: 'details'; lat: number; lng: number; catName: string }
 
@@ -94,7 +94,6 @@ export default function TagPage() {
             goTo({
               type: 'match-found',
               cat,
-              photoUrl: screen.photoUrl,
               lat: screen.lat,
               lng: screen.lng,
             })
@@ -104,10 +103,10 @@ export default function TagPage() {
           }
         />
       )}
-      {screen.type === 'match-found' && (
+      {screen.type === 'match-found' && photoFile && (
         <MatchFoundScreen
           cat={screen.cat}
-          photoUrl={screen.photoUrl}
+          photoFile={photoFile}
           lat={screen.lat}
           lng={screen.lng}
           onBack={goBack}
