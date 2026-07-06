@@ -3,6 +3,7 @@
 import { Camera, Loader2, User } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
 import { ShareProfileButton } from './share-profile-button'
+import { EditProfileDialog } from './edit-profile-dialog'
 import { useAvatarUpload } from './avatar-upload-provider'
 import { avatarDialogOpen } from './avatar-upload-dialog'
 
@@ -53,6 +54,7 @@ export function ProfileHeader({
             {bio}
           </p>
         )}
+        {isOwner && <EditProfileDialog username={username} bio={bio} />}
       </div>
 
       {/* Stats strip */}
