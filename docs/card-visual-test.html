@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cat-A-Log — Card Redesign Visual Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a1f; color: #fff; font-family: 'Nunito', sans-serif; padding: 24px; }
+    h1 { font-family: 'Fredoka', sans-serif; font-size: 28px; margin-bottom: 8px; }
+    .subtitle { color: #a0a0a0; font-size: 14px; margin-bottom: 32px; }
+    .section-title { font-family: 'Fredoka', sans-serif; font-size: 18px; margin: 32px 0 16px; color: #f97316; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+    .card-wrapper { display: flex; flex-direction: column; gap: 6px; }
+    .card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #888; }
+
+    /* Card at 240×426 (scaled from 1080×1920 by ~4.5x) */
+    .card {
+      width: 240px;
+      height: 426px;
+      border-radius: 22px;
+      padding: 9px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .card-outer { background: #fdf4e7; }
+    .card-inner {
+      flex: 1;
+      border-radius: 16px;
+      background: #fffdf9;
+      display: flex;
+      flex-direction: column;
+      overflow: visible;
+      position: relative;
+    }
+
+    /* Header */
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 11px 6px; position: relative; }
+    .tier-chip { display: inline-flex; align-items: center; gap: 3px; padding: 3px 7px; border-radius: 999px; font-family: 'Fredoka', sans-serif; font-size: 7px; font-weight: 700; }
+    .dots { display: flex; gap: 2px; }
+    .dot { width: 5px; height: 5px; border-radius: 999px; }
+    .dot-empty { background: #e0dbd4; }
+
+    /* Photo */
+    .photo-block { position: relative; margin: 0 9px; border-radius: 11px; overflow: visible; flex: 1 1 0; min-height: 0; }
+    .photo-frame { width: 100%; height: 100%; border-radius: 11px; overflow: hidden; border: 4px solid #fff; }
+    .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Badges */
+    .badge-new {
+      position: absolute; top: -6px; left: -4px;
+      padding: 4px 8px; border-radius: 6px; border: 2px solid #fff;
+      font-family: 'Fredoka', sans-serif; font-size: 8px; font-weight: 700;
+      color: #fff; transform: rotate(-8deg); z-index: 10;
+      box-shadow: 0 4px 8px rgba(0,0,0,.2);
+    }
+    .badge-stamp {
+      position: absolute; bottom: 6px; right: 3px;
+      padding: 2px 5px; border-radius: 4px;
+      font-family: 'Fredoka', sans-serif; font-size: 6px; font-weight: 800;
+      letter-spacing: .08em; background: #fffdf9dd;
+      transform: rotate(6deg);
+    }
+
+    /* Name */
+    .name-block { padding: 5px 11px 0; }
+    .cat-name { font-family: 'Fredoka', sans-serif; font-size: 16px; font-weight: 800; color: #2a2117; line-height: 1.1; }
+    .subline { font-size: 7px; font-weight: 600; margin-top: 1px; }
+
+    /* Stats */
+    .stats-row { display: flex; gap: 4px; padding: 5px 11px 0; }
+    .stat-pill { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 4px 3px; background: #fbf1e2; border-radius: 7px; }
+    .stat-value { font-family: 'Fredoka', sans-serif; font-size: 8px; font-weight: 700; color: #2a2117; }
+    .stat-label { font-size: 5px; font-weight: 700; text-transform: uppercase; color: #6b6259; letter-spacing: .04em; margin-top: 1px; }
+
+    /* Progress */
+    .progress-block { padding: 5px 11px 0; }
+    .progress-bar { height: 7px; background: #f0e8db; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; }
+    .progress-caption { font-size: 5.5px; color: #a17a4a; font-weight: 600; margin-top: 1px; }
+
+    /* Footer */
+    .card-footer {
+      margin-top: auto; padding: 6px 11px 9px;
+      border-top: 1px dashed #d6c9b8; margin-left: 11px; margin-right: 11px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .footer-left { display: flex; align-items: center; gap: 4px; }
+    .avatar-circle { width: 14px; height: 14px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka'; font-size: 5px; font-weight: 700; color: #fff; }
+    .footer-handle { font-size: 6px; font-weight: 700; color: #6b6259; }
+    .footer-brand { font-size: 6px; font-weight: 700; color: #a17a4a; }
+
+    /* Motifs */
+    .motif { position: absolute; font-family: 'Fredoka', sans-serif; font-weight: 700; line-height: 1; pointer-events: none; }
+
+    /* Confetti */
+    .confetti { position: absolute; border-radius: 50%; opacity: .7; pointer-events: none; }
+
+    /* Collection strip (profile) */
+    .collection { padding: 6px 11px 5px; }
+    .collection-label { font-size: 5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #6b6259; margin-bottom: 3px; }
+    .collection-row { display: flex; gap: 3px; }
+    .collection-thumb { width: 25px; height: 25px; border-radius: 5px; overflow: hidden; border: 1px solid rgba(0,0,0,.1); }
+    .collection-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .collection-overflow { width: 25px; height: 25px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka'; font-size: 7px; font-weight: 700; color: #6b6259; }
+
+    /* Special borders */
+    .border-dashed { border-style: dashed !important; }
+    .border-double { border-style: double !important; }
+
+    /* Urban Legend glow */
+    .glow-gold { box-shadow: 0 0 20px #fbbf2455; }
+    .dot-glow { box-shadow: 0 0 3px #fbbf24aa; }
+  </style>
+</head>
+<body>
+  <h1>🐾 Card Redesign — Visual Test</h1>
+  <p class="subtitle">All 6 tier variants × Catch Card (new + existing) + Profile Card. Scaled to 240×426px for preview.</p>
+
+  <h2 class="section-title">Catch Cards — New Discovery</h2>
+  <div class="grid" id="catch-new"></div>
+
+  <h2 class="section-title">Catch Cards — Existing Sighting</h2>
+  <div class="grid" id="catch-existing"></div>
+
+  <h2 class="section-title">Profile Cards</h2>
+  <div class="grid" id="profile-cards"></div>
+
+  <script>
+    const TIERS = [
+      { key: 'stray', label: 'Stray', accent: '#8b93a0', chipBg: '#e4e7eb', dots: 1, rankColor: '#6b6259', borderStyle: 'dashed' },
+      { key: 'lurker', label: 'Lurker', accent: '#8b8378', chipBg: '#e5e1db', dots: 2, rankColor: '#6b6259', borderStyle: 'double' },
+      { key: 'regular', label: 'Regular', accent: '#cf9f1f', chipBg: '#fdf1d6', dots: 3, rankColor: '#cf9f1f', borderStyle: 'solid' },
+      { key: 'localCelebrity', label: 'Local Celebrity', accent: '#f97316', chipBg: '#fde3d0', dots: 4, rankColor: '#f97316', borderStyle: 'solid', chipGlyph: '★' },
+      { key: 'streetRoyalty', label: 'Street Royalty', accent: '#ef4444', chipBg: '#fbdad9', dots: 5, rankColor: '#ef4444', borderStyle: 'solid', chipGlyph: '♛', chipBorder: true },
+      { key: 'urbanLegend', label: 'Urban Legend', accent: '#fbbf24', chipBg: 'linear-gradient(135deg,#fdf1d6,#fde68a)', dots: 6, rankColor: '#d97706', borderStyle: 'solid', chipGlyph: '✦', glow: true, gradientBorder: true },
+    ]
+
+    // Placeholder cat photo
+    const catPhoto = 'https://placecats.com/millie/400/300'
+    const catPhotos = [
+      'https://placecats.com/millie/100/100',
+      'https://placecats.com/neo/100/100',
+      'https://placecats.com/bella/100/100',
+      'https://placecats.com/100/100',
+    ]
+
+    function buildDots(tier) {
+      let html = '<div class="dots">'
+      for (let i = 1; i <= 6; i++) {
+        const filled = i <= tier.dots
+        const cls = filled ? '' : 'dot-empty'
+        const style = filled ? `background:${tier.accent};${tier.glow ? 'box-shadow:0 0 3px '+tier.accent+'aa;' : ''}` : ''
+        html += `<div class="dot ${cls}" style="${style}"></div>`
+      }
+      html += '</div>'
+      return html
+    }
+
+    function buildChip(tier) {
+      const bgStyle = tier.chipBg.startsWith('linear') ? `background:${tier.chipBg}` : `background:${tier.chipBg}`
+      const border = tier.chipBorder ? `border:1px solid ${tier.accent}54;` : ''
+      const radius = tier.key === 'stray' ? 'border-radius:4px;' : ''
+      let glyph = ''
+      if (tier.chipGlyph) {
+        glyph = `<span style="color:${tier.key === 'urbanLegend' ? '#d97706' : tier.accent};font-size:6px;">${tier.chipGlyph}</span>`
+      }
+      return `<div class="tier-chip" style="${bgStyle};${border}${radius}">
+        ${glyph}<span style="color:${tier.rankColor}">${tier.label}</span>
+      </div>`
+    }
+
+    function buildBorder(tier) {
+      if (tier.gradientBorder) {
+        return 'border:3px solid transparent;background:linear-gradient(#fffdf9,#fffdf9) padding-box, linear-gradient(135deg,#fbbf24,#fde68a,#d97706,#fbbf24) border-box;'
+      }
+      return `border:3px ${tier.borderStyle} ${tier.accent};`
+    }
+
+    function buildMotifs(tier) {
+      let html = ''
+      switch (tier.key) {
+        case 'lurker':
+          html += '<div style="position:absolute;inset:4px;border-radius:8px;background:linear-gradient(to top,#3a352fcc 0%,transparent 38%);pointer-events:none;"></div>'
+          break
+        case 'regular':
+          html += `<div style="position:absolute;top:-5px;right:-2px;width:23px;height:23px;border-radius:999px;background:${tier.accent};border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 6px rgba(0,0,0,.18);z-index:5;"><span style="color:#fff;font-family:Fredoka;font-size:11px;font-weight:700;">★</span></div>`
+          break
+        case 'localCelebrity':
+          html += `<span class="motif" style="top:-5px;left:-3px;color:${tier.accent};font-size:16px;text-shadow:0 1px 0 #fff;">★</span>`
+          html += `<span class="motif" style="bottom:-3px;right:-3px;color:${tier.accent};font-size:12px;text-shadow:0 1px 0 #fff;">★</span>`
+          break
+        case 'streetRoyalty':
+          html += `<span class="motif" style="top:-13px;left:50%;transform:translateX(-50%);color:${tier.accent};font-size:20px;text-shadow:0 1px 0 #fff;">♛</span>`
+          break
+        case 'urbanLegend':
+          html += `<span class="motif" style="top:-6px;left:-4px;color:#d97706;font-size:13px;text-shadow:0 1px 0 #fff;">✦</span>`
+          html += `<span class="motif" style="top:12px;right:-4px;color:#fbbf24;font-size:10px;text-shadow:0 1px 0 #fff;">✦</span>`
+          html += `<span class="motif" style="bottom:-4px;left:14px;color:#fbbf24;font-size:10px;text-shadow:0 1px 0 #fff;">✦</span>`
+          break
+      }
+      return html
+    }
+
+    function buildConfetti() {
+      return `
+        <div class="confetti" style="top:4px;left:27px;width:5px;height:5px;background:#f97316;transform:rotate(15deg);"></div>
+        <div class="confetti" style="top:3px;left:58px;width:4px;height:4px;background:#ef4444;border-radius:0;transform:rotate(40deg);"></div>
+        <div class="confetti" style="top:6px;right:36px;width:5px;height:5px;background:#cf9f1f;transform:rotate(-10deg);"></div>
+        <div class="confetti" style="top:4px;right:63px;width:4px;height:4px;background:#f97316;border-radius:0;transform:rotate(25deg);"></div>
+        <div class="confetti" style="top:5px;left:89px;width:6px;height:6px;background:#ef4444;transform:rotate(-20deg);"></div>
+      `
+    }
+
+    function renderCatchCard(tier, isNew) {
+      const outerGlow = tier.glow ? 'glow-gold' : ''
+      const extraTop = tier.key === 'streetRoyalty' ? 'margin-top:13px;' : ''
+      const photoOutline = tier.key === 'urbanLegend'
+        ? `outline:1.5px solid #d97706;box-shadow:0 0 10px #fbbf2477;`
+        : tier.key === 'stray'
+          ? `outline:1.5px solid ${tier.accent};opacity:.53;`
+          : `outline:1.5px solid ${tier.accent};`
+
+      return `
+        <div class="card-wrapper">
+          <span class="card-label">${tier.label}${isNew ? ' — New' : ' — Existing'}</span>
+          <div class="card card-outer ${outerGlow}">
+            <div class="card-inner" style="${buildBorder(tier)}">
+              <div class="card-header">
+                ${buildChip(tier)}
+                ${buildDots(tier)}
+                ${isNew ? buildConfetti() : ''}
+              </div>
+              <div class="photo-block" style="${extraTop}">
+                <div class="photo-frame" style="${photoOutline}">
+                  <img src="${catPhoto}" alt="Cat" />
+                </div>
+                ${buildMotifs(tier)}
+                ${isNew
+                  ? `<div class="badge-new" style="background:${tier.accent};">NEW CATCH</div>`
+                  : `<div class="badge-stamp" style="color:${tier.accent};border:1.5px solid ${tier.accent}aa;">SIGHTING №3</div>`
+                }
+              </div>
+              <div class="name-block">
+                <div class="cat-name">Whiskers</div>
+                <div class="subline" style="color:${isNew ? tier.rankColor : '#6b6259'};">
+                  ${isNew ? 'First-ever sighting — added to the log' : '3rd confirmed sighting'}
+                </div>
+              </div>
+              <div class="stats-row">
+                <div class="stat-pill"><span class="stat-value">${isNew ? '1' : '7'}</span><span class="stat-label">Sightings</span></div>
+                <div class="stat-pill"><span class="stat-value">Jun 28</span><span class="stat-label">Discovered</span></div>
+                <div class="stat-pill"><span class="stat-value" style="color:${tier.rankColor};font-size:6px;">${tier.label}</span><span class="stat-label">Tier Rank</span></div>
+              </div>
+              <div class="progress-block">
+                <div class="progress-bar"><div class="progress-fill" style="width:${isNew ? '18' : '60'}%;background:${tier.accent};"></div></div>
+                <div class="progress-caption">${isNew ? '1 more sighting to level up' : '3 more sightings to level up'}</div>
+              </div>
+              <div class="card-footer">
+                <div class="footer-left">
+                  <div class="avatar-circle" style="background:${tier.accent};">CA</div>
+                  <span class="footer-handle">@calyx spotted this</span>
+                </div>
+                <span class="footer-brand">🐾 cat-a-log.app</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    }
+
+    function renderProfileCard(tier) {
+      const outerGlow = tier.glow ? 'glow-gold' : ''
+      const extraTop = tier.key === 'streetRoyalty' ? 'margin-top:13px;' : ''
+      const photoOutline = tier.key === 'urbanLegend'
+        ? `outline:1.5px solid #d97706;box-shadow:0 0 10px #fbbf2477;`
+        : tier.key === 'stray'
+          ? `outline:1.5px solid ${tier.accent};opacity:.53;`
+          : `outline:1.5px solid ${tier.accent};`
+
+      return `
+        <div class="card-wrapper">
+          <span class="card-label">${tier.label}</span>
+          <div class="card card-outer ${outerGlow}">
+            <div class="card-inner" style="${buildBorder(tier)}">
+              <div class="card-header">
+                ${buildChip(tier)}
+                ${buildDots(tier)}
+              </div>
+              <div class="photo-block" style="${extraTop}">
+                <div class="photo-frame" style="${photoOutline}">
+                  <img src="${catPhoto}" alt="Cat" />
+                </div>
+                ${buildMotifs(tier)}
+              </div>
+              <div class="name-block">
+                <div class="cat-name">Whiskers</div>
+                <div class="subline" style="color:#6b6259;">@calyx's top catch</div>
+              </div>
+              <div class="stats-row">
+                <div class="stat-pill"><span class="stat-value">12</span><span class="stat-label">Discovered</span></div>
+                <div class="stat-pill"><span class="stat-value">47</span><span class="stat-label">Sightings</span></div>
+                <div class="stat-pill"><span class="stat-value" style="color:${tier.rankColor};font-size:6px;">${tier.label}</span><span class="stat-label">Tier</span></div>
+              </div>
+              <div class="collection">
+                <div class="collection-label">Collection</div>
+                <div class="collection-row">
+                  ${catPhotos.map(p => `<div class="collection-thumb"><img src="${p}" /></div>`).join('')}
+                  <div class="collection-overflow" style="background:${tier.chipBg.startsWith('linear') ? '#fdf1d6' : tier.chipBg};">+8</div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="footer-left">
+                  <div class="avatar-circle" style="background:${tier.accent};">CA</div>
+                  <span class="footer-handle">@calyx</span>
+                </div>
+                <span class="footer-brand">🐾 cat-a-log.app</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+    }
+
+    // Render all
+    const catchNewGrid = document.getElementById('catch-new')
+    const catchExistingGrid = document.getElementById('catch-existing')
+    const profileGrid = document.getElementById('profile-cards')
+
+    TIERS.forEach(tier => {
+      catchNewGrid.innerHTML += renderCatchCard(tier, true)
+      catchExistingGrid.innerHTML += renderCatchCard(tier, false)
+      profileGrid.innerHTML += renderProfileCard(tier)
+    })
+  </script>
+</body>
+</html>
