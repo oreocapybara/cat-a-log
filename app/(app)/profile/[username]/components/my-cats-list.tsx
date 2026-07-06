@@ -430,7 +430,12 @@ export function MyCatsList({
                           ? `Collapse name, ${cat.name ?? 'Unnamed cat'}`
                           : `Show full name, ${cat.name ?? 'Unnamed cat'}`
                       }
-                      className="flex max-w-full min-w-0 items-baseline gap-1 text-left"
+                      className={cn(
+                        'max-w-full min-w-0 text-left',
+                        expandedNames.has(cat.id)
+                          ? 'flex flex-col items-start'
+                          : 'flex items-baseline gap-1'
+                      )}
                     >
                       <span
                         ref={nameRefCallback(cat.id)}
@@ -442,7 +447,7 @@ export function MyCatsList({
                         {cat.name ?? 'Unnamed cat'}
                       </span>
                       {expandedNames.has(cat.id) ? (
-                        <ChevronUp className="text-muted-foreground h-3 w-3 shrink-0" />
+                        <ChevronUp className="text-muted-foreground mt-0.5 h-3 w-3 shrink-0" />
                       ) : (
                         <ChevronDown className="text-muted-foreground h-3 w-3 shrink-0" />
                       )}
