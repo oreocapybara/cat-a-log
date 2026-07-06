@@ -70,19 +70,19 @@ export default function MapPage() {
     if (nearbyCats.length > 0) {
       const { data: tagRows, error: tagError } = await supabase
         .from('cat_tags')
-        .select('cat_id, tag')
+        .select('cat_id, tag, verification_status')
         .in(
           'cat_id',
           nearbyCats.map((cat: NearbyCat) => cat.id)
         )
         .is('resolved_at', null)
-        .or('verification_status.is.null,verification_status.neq.dismissed')
 
       if (tagError) {
         toast.error('Could not load cat tags')
       } else {
         const tagMap = new Map<string, CatTag['tag'][]>()
         for (const row of tagRows ?? []) {
+          if (row.verification_status === 'dismissed') continue
           tagMap.set(row.cat_id, [...(tagMap.get(row.cat_id) ?? []), row.tag])
         }
         setCatTags(tagMap)
