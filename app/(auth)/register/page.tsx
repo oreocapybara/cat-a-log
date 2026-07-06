@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GoogleButton } from '@/app/components/google-button'
 import { useReturnTo } from '@/lib/use-return-to'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 const registerSchema = z
   .object({
@@ -98,12 +98,12 @@ export default function RegisterPage() {
     })
 
     if (error) {
-      toast.error(error.message)
+      notify.error('unknown-error')
       setLoading(false)
       return
     }
 
-    toast.success("You're in! Let's set up your profile.")
+    notify.success('registered')
     router.push(`/setup-profile${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`)
   }
 
