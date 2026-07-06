@@ -6,7 +6,13 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { shareCardImage } from '@/lib/share-image'
 
-export function ShareProfileButton({ username }: { username: string }) {
+export function ShareProfileButton({
+  username,
+  onOpen,
+}: {
+  username: string
+  onOpen?: () => void
+}) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -73,7 +79,13 @@ export function ShareProfileButton({ username }: { username: string }) {
         size="icon"
         aria-label="Share profile"
         disabled={loading}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() =>
+          setOpen((prev) => {
+            const next = !prev
+            if (next) onOpen?.()
+            return next
+          })
+        }
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
       </Button>

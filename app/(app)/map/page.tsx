@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { CatPreviewCard } from './components/cat-preview-card'
+import { WelcomeSheet } from './components/welcome-sheet'
+import { TagFabHint } from './components/tag-fab-hint'
+import { FilterHint } from './components/filter-hint'
 import { FilterSheet, type CatFilters, matchesFilters } from './components/filter-sheet'
 import { SearchBar, type SearchedCat } from './components/search-bar'
 import { SearchThisAreaPill } from './components/search-this-area-pill'
@@ -15,6 +18,7 @@ import { MapAttribution } from './components/map-attribution'
 import { MapSkeleton } from './components/map-skeleton'
 import type { MapMoveEnd } from './components/cat-map'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
+import { useSeenFlag } from '@/lib/use-seen-flag'
 
 const CatMap = dynamic(() => import('./components/cat-map').then((mod) => mod.CatMap), {
   ssr: false,
@@ -270,6 +274,29 @@ export default function MapPage() {
 
   const selectedCat = filteredCats.find((cat) => cat.id === selectedCatId) ?? null
 
+  const [hasSeenPinHint, markPinHintSeen] = useSeenFlag('hasSeenPinHint')
+  const [hasSeenTagHint] = useSeenFlag('hasSeenTagHint')
+  const [hasSeenFilterHint, markFilterHintSeen] = useSeenFlag('hasSeenFilterHint')
+
+  // Nearest loaded marker — a one-line min, not a re-sort of the whole list.
+  const nearestCat = useMemo(() => {
+    if (filteredCats.length === 0) return null
+    return filteredCats.reduce((closest, cat) =>
+      cat.distance_km < closest.distance_km ? cat : closest
+    )
+  }, [filteredCats])
+
+  // Only one hint is ever active at a time, in priority order: browsing (pin)
+  // before contributing (tag) before power-user features (filter).
+  const activeMapHint =
+    !hasSeenPinHint && nearestCat
+      ? 'pin'
+      : !hasSeenTagHint
+        ? 'tag'
+        : !hasSeenFilterHint
+          ? 'filter'
+          : null
+
   if (location.status === 'loading') {
     return <MapSkeleton />
   }
@@ -294,12 +321,21 @@ export default function MapPage() {
         cats={filteredCats}
         catTags={catTags}
         selectedCatId={selectedCatId}
-        onSelectCat={(cat) => setSelectedCatId(cat.id)}
+        onSelectCat={(cat) => {
+          markPinHintSeen()
+          setSelectedCatId(cat.id)
+        }}
         onMoveEnd={handleMoveEnd}
         onUserDrag={handleUserDrag}
         flyTo={flyToTarget}
         flyToZoom={flyToZoom}
+        pinHintCatId={activeMapHint === 'pin' && nearestCat ? nearestCat.id : null}
       />
+
+      <WelcomeSheet />
+
+      {activeMapHint === 'tag' && <TagFabHint />}
+      {activeMapHint === 'filter' && <FilterHint />}
 
       <div className="absolute inset-x-4 top-4 z-10 flex items-center gap-2">
         <SearchBar
@@ -324,7 +360,10 @@ export default function MapPage() {
               ? 'Filter cats (filters active)'
               : 'Filter cats'
           }
-          onClick={() => setFilterSheetOpen(true)}
+          onClick={() => {
+            markFilterHintSeen()
+            setFilterSheetOpen(true)
+          }}
         >
           <SlidersHorizontal />
           {(filters.earTippedOnly || filters.tags.length > 0) && (
