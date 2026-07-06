@@ -5,6 +5,10 @@ export type SightingTier = {
   textColor: string
   bgTint: string
   glow: boolean
+  // Card-specific visual properties (cream-toned shareable cards)
+  cardAccent: string
+  cardChipBg: string
+  cardRankNameColor: string
 }
 
 const TIERS: SightingTier[] = [
@@ -15,6 +19,9 @@ const TIERS: SightingTier[] = [
     textColor: '#ffffff',
     bgTint: '#1e293b',
     glow: false,
+    cardAccent: '#8b93a0',
+    cardChipBg: '#e4e7eb',
+    cardRankNameColor: '#6b6259',
   },
   {
     tier: 2,
@@ -23,6 +30,9 @@ const TIERS: SightingTier[] = [
     textColor: '#ffffff',
     bgTint: '#292524',
     glow: false,
+    cardAccent: '#8b8378',
+    cardChipBg: '#e5e1db',
+    cardRankNameColor: '#6b6259',
   },
   {
     tier: 3,
@@ -31,6 +41,9 @@ const TIERS: SightingTier[] = [
     textColor: '#1a1500',
     bgTint: '#1c1709',
     glow: false,
+    cardAccent: '#cf9f1f',
+    cardChipBg: '#fdf1d6',
+    cardRankNameColor: '#cf9f1f',
   },
   {
     tier: 4,
@@ -39,6 +52,9 @@ const TIERS: SightingTier[] = [
     textColor: '#ffffff',
     bgTint: '#1a0a00',
     glow: false,
+    cardAccent: '#f97316',
+    cardChipBg: '#fde3d0',
+    cardRankNameColor: '#f97316',
   },
   {
     tier: 5,
@@ -47,6 +63,9 @@ const TIERS: SightingTier[] = [
     textColor: '#ffffff',
     bgTint: '#1a0800',
     glow: false,
+    cardAccent: '#ef4444',
+    cardChipBg: '#fbdad9',
+    cardRankNameColor: '#ef4444',
   },
   {
     tier: 6,
@@ -55,6 +74,9 @@ const TIERS: SightingTier[] = [
     textColor: '#1a1500',
     bgTint: '#0f0a00',
     glow: true,
+    cardAccent: '#fbbf24',
+    cardChipBg: '#fdf1d6',
+    cardRankNameColor: '#d97706',
   },
 ]
 
