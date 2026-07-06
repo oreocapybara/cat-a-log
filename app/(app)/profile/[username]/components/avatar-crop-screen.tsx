@@ -12,6 +12,30 @@ type AvatarCropScreenProps = {
   onCancel: () => void
 }
 
+function buildValidatedUrl(baseUrl: string): string {
+  try {
+    // Minimal path validation
+    if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
+      throw new Error('Invalid path');
+    }
+    
+    const url = new URL(baseUrl);
+    
+    // Protocol + host checks
+    const allowedDomains = ['example.com']; // add your allowed domains here
+    if (!allowedDomains.includes(url.hostname)) {
+      throw new Error('Invalid host');
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error('Invalid protocol');
+    }
+    
+    return url.href;
+  } catch {
+    throw new Error('Invalid URL');
+  }
+}
+
 export function AvatarCropScreen({ imageUrl, onDone, onCancel }: AvatarCropScreenProps) {
   const imgRef = useRef<HTMLImageElement>(null)
   const [crop, setCrop] = useState<Crop>()
@@ -72,7 +96,8 @@ export function AvatarCropScreen({ imageUrl, onDone, onCancel }: AvatarCropScree
       onDone(new File([blob], 'avatar-cropped.jpg', { type: 'image/jpeg' }))
     } catch {
       // Fallback: pass original image as-is
-      const response = await fetch(imageUrl)
+      const validatedUrl = buildValidatedUrl(imageUrl)
+      const response = await fetch(validatedUrl)
       const blob = await response.blob()
       onDone(new File([blob], 'avatar.jpg', { type: blob.type }))
     } finally {

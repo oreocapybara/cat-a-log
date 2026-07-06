@@ -1,5 +1,29 @@
 import { notify } from '@/lib/toast'
 
+function buildValidatedUrl(baseUrl: string): string {
+  try {
+    // Minimal path validation
+    if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
+      throw new Error('Invalid path')
+    }
+    
+    const url = new URL(baseUrl)
+    
+    // Protocol + host checks
+    const allowedDomains = ['example.com'] // add your allowed domains here
+    if (!allowedDomains.includes(url.hostname)) {
+      throw new Error('Invalid host')
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error('Invalid protocol')
+    }
+    
+    return url.href
+  } catch {
+    throw new Error('Invalid URL')
+  }
+}
+
 export async function shareCardImage(options: {
   cardUrl: string
   downloadFilename: string
@@ -9,7 +33,8 @@ export async function shareCardImage(options: {
 }): Promise<void> {
   const { cardUrl, downloadFilename, shareTitle, shareText, shareUrl } = options
 
-  const res = await fetch(cardUrl)
+  const validatedUrl = buildValidatedUrl(cardUrl)
+  const res = await fetch(validatedUrl)
   if (!res.ok) throw new Error('Failed to generate card')
   const blob = await res.blob()
   const file = new File([blob], downloadFilename, { type: 'image/png' })
