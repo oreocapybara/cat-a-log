@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 function GoogleLogo() {
   return (
@@ -59,7 +59,7 @@ export function GoogleButton({ label, returnTo }: { label: string; returnTo?: st
     })
 
     if (error) {
-      toast.error(error.message)
+      notify.error('google-sign-in-failed')
       setLoading(false)
     }
   }

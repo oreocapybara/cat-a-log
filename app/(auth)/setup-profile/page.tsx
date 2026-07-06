@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useReturnTo } from '@/lib/use-return-to'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 const profileSchema = z.object({
   username: z
@@ -51,7 +51,7 @@ export default function SetupProfilePage() {
       error: userError,
     } = await supabase.auth.getUser()
     if (userError || !user) {
-      toast.error('Session expired. Please sign in again.')
+      notify.error('session-expired')
       router.push('/login')
       return
     }
@@ -64,7 +64,7 @@ export default function SetupProfilePage() {
       .single()
 
     if (existing) {
-      toast.error('That username is already taken. Try another.')
+      notify.error('username-taken')
       setLoading(false)
       return
     }
@@ -76,12 +76,12 @@ export default function SetupProfilePage() {
     })
 
     if (error) {
-      toast.error(error.message)
+      notify.error('unknown-error')
       setLoading(false)
       return
     }
 
-    toast.success(`Welcome to Cat-A-Log, @${data.username}! 🐱`)
+    notify.success('welcome', { values: { username: data.username } })
     router.push(returnTo || '/map')
   }
 

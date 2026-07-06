@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { MapPin, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { CatPreviewCard } from './components/cat-preview-card'
 import { FilterSheet, type CatFilters, matchesFilters } from './components/filter-sheet'
 import { SearchBar, type SearchedCat } from './components/search-bar'
@@ -59,7 +59,7 @@ export default function MapPage() {
     })
 
     if (error) {
-      toast.error('Could not load nearby cats')
+      notify.error('load-nearby-failed')
       setLoadingCats(false)
       return
     }
@@ -78,9 +78,7 @@ export default function MapPage() {
         )
         .is('resolved_at', null)
 
-      if (tagError) {
-        toast.error('Could not load cat tags')
-      } else {
+      if (!tagError) {
         const tagMap = new Map<string, CatTag['tag'][]>()
         for (const row of tagRows ?? []) {
           tagMap.set(row.cat_id, [...(tagMap.get(row.cat_id) ?? []), row.tag])
@@ -142,7 +140,6 @@ export default function MapPage() {
         setFlyToZoom(undefined)
       },
       () => {
-        toast.error('Could not track your location')
         stopFollowing()
       },
       { enableHighAccuracy: true }
@@ -169,7 +166,7 @@ export default function MapPage() {
         setLocationMode('centered')
       },
       () => {
-        toast.error('Could not get your location')
+        notify.error('location-unavailable')
         setLocationMode('idle')
       },
       { enableHighAccuracy: true }
@@ -232,7 +229,7 @@ export default function MapPage() {
 
     if (error) {
       setCatTags((prev) => new Map(prev).set(catId, prevTags))
-      toast.error(error.message)
+      notify.error('unknown-error')
     }
   }
 
@@ -261,7 +258,7 @@ export default function MapPage() {
           current.filter((t) => t !== tag)
         )
       })
-      toast.error("Couldn't undo — already saved")
+      notify.error('undo-expired')
     }
   }
 

@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GoogleButton } from '@/app/components/google-button'
 import { useReturnTo } from '@/lib/use-return-to'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -59,7 +59,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('oauth_error')) {
-      toast.error('Google sign-in failed. Try again.')
+      notify.error('google-sign-in-failed')
     }
   }, [])
 
@@ -73,7 +73,7 @@ export default function LoginPage() {
     })
 
     if (error) {
-      toast.error(error.message)
+      notify.error('unknown-error')
       setLoading(false)
       return
     }
