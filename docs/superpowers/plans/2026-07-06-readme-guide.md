@@ -1,3 +1,76 @@
+# README & Installation Guide Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace the boilerplate README with a beginner-friendly installation guide, add a `.env.example` file, and create a `CONTRIBUTING.md`.
+
+**Architecture:** Three standalone Markdown/text files. No code changes, no dependency changes. The README is a linear walkthrough of setup steps. `.env.example` provides a copyable template. `CONTRIBUTING.md` covers dev workflow.
+
+**Tech Stack:** Markdown, plaintext
+
+## Global Constraints
+
+- Tone: neutral-professional (no emojis, no puns, no cutesy language)
+- No badges or images
+- `<repo-url>` left as placeholder in clone command (no GitHub URL confirmed)
+- License line is "TBD"
+- All Supabase CLI commands use `npx supabase` (no global install required)
+
+---
+
+### Task 1: Create `.env.example`
+
+**Files:**
+
+- Create: `.env.example`
+
+**Interfaces:**
+
+- Consumes: nothing
+- Produces: `.env.example` at project root — referenced by README Section 5 (`cp .env.example .env.local`)
+
+- [ ] **Step 1: Create the file**
+
+```
+# Supabase — Project Settings → API
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+# Voyage AI — optional, powers photo similarity search
+# Sign up at https://voyageai.com and create an API key
+VOYAGE_API_KEY=
+```
+
+- [ ] **Step 2: Verify it won't be gitignored**
+
+Run: `grep "\.env\.example" .gitignore`
+Expected: No match (`.env.example` is NOT ignored — only `.env*.local` is in .gitignore)
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add .env.example
+git commit -m "chore: add .env.example template"
+```
+
+---
+
+### Task 2: Write README.md
+
+**Files:**
+
+- Modify: `README.md` (replace entire contents)
+
+**Interfaces:**
+
+- Consumes: `.env.example` (references `cp .env.example .env.local`)
+- Produces: `README.md` — links to `CONTRIBUTING.md`
+
+- [ ] **Step 1: Write the full README**
+
+Replace the entire contents of `README.md` with:
+
+````markdown
 # Cat-A-Log
 
 A crowdsourced stray cat registry. Tag cats you spot with a photo and GPS location, view them on a map, and vote on whether two records are the same animal. Built as a mobile-first progressive web app.
@@ -19,6 +92,7 @@ git clone <repo-url>
 cd Cat-A-Log
 npm ci
 ```
+````
 
 `npm ci` installs dependencies from the lockfile. It also sets up Git hooks (via Husky) that lint and format your code on commit.
 
@@ -137,4 +211,123 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development workflow, commit conven
 
 ## License
 
-[MIT](./LICENSE)
+TBD
+
+````
+
+- [ ] **Step 2: Verify formatting**
+
+Run: `npx prettier --check README.md`
+Expected: Pass (or run `npx prettier --write README.md` to fix)
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add README.md
+git commit -m "docs: replace boilerplate README with installation guide"
+````
+
+---
+
+### Task 3: Write CONTRIBUTING.md
+
+**Files:**
+
+- Create: `CONTRIBUTING.md`
+
+**Interfaces:**
+
+- Consumes: nothing
+- Produces: `CONTRIBUTING.md` at project root — linked from README footer
+
+- [ ] **Step 1: Create the file**
+
+```markdown
+# Contributing to Cat-A-Log
+
+## Development Setup
+
+Follow the [README](./README.md) to get the project running locally.
+
+## Commit Conventions
+
+All commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+```
+
+<type>(<scope>): <short summary>
+
+```
+
+**Types:** `feat`, `fix`, `chore`, `refactor`, `docs`, `style`, `test`, `ci`
+
+**Scopes:** `auth`, `shell`, `map`, `tag`, `profile`, `db`, `ci`
+
+**Rules:**
+- Subject line is lowercase after the colon, no trailing period
+- Keep the subject under 72 characters
+- Use the body to explain what and why, not how
+- Breaking changes add `!` after the scope: `feat(db)!: rename column`
+
+**Examples:**
+
+```
+
+feat(tag): add photo crop before upload
+fix(proxy): handle missing session cookie on first load
+docs: update README setup instructions
+
+````
+
+## Code Quality
+
+The project enforces consistent code quality through automated tooling:
+
+```bash
+npm run lint          # ESLint — catches bugs and enforces patterns
+npm run format        # Prettier — formats all files
+npm run format:check  # Check formatting without writing changes
+npm run type-check    # TypeScript strict mode — no type errors allowed
+````
+
+## Git Hooks
+
+[Husky](https://typicode.github.io/husky/) runs checks automatically:
+
+- **Pre-commit:** `lint-staged` runs ESLint (with --fix) and Prettier on staged `.ts`/`.tsx` files. Other file types (`.js`, `.json`, `.md`, `.css`) get Prettier formatting only.
+- **Pre-push:** Runs `type-check → lint → build` in sequence. The push is blocked if any step fails.
+
+You don't need to configure these — they're set up automatically when you run `npm ci`.
+
+## CI Pipeline
+
+GitHub Actions runs on every pull request:
+
+1. Install dependencies (`npm ci`)
+2. Check formatting (`npm run format:check`)
+3. Lint (`npm run lint`)
+4. Type-check (`npm run type-check`)
+5. Build (`npm run build`)
+
+All steps must pass for a PR to be mergeable.
+
+## Branch Workflow
+
+- Don't push directly to `main` — create a branch and open a pull request
+- Keep PRs focused on a single change
+- Make sure CI passes before requesting review
+
+````
+
+- [ ] **Step 2: Verify formatting**
+
+Run: `npx prettier --check CONTRIBUTING.md`
+Expected: Pass (or run `npx prettier --write CONTRIBUTING.md` to fix)
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add CONTRIBUTING.md
+git commit -m "docs: add CONTRIBUTING.md with dev workflow guide"
+````
+
+---
