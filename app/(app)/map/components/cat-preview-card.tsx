@@ -145,8 +145,11 @@ export function CatPreviewCard({
       {renderedCat.times_spotted > 1 && (
         <div className="relative z-10 flex justify-center">
           <span
-            className="inline-flex translate-y-1/2 items-center gap-1.5 rounded-full border border-white/10 bg-black/80 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase shadow-md backdrop-blur-md"
-            style={{ color: sightingTier.color }}
+            className="inline-flex translate-y-1/2 items-center gap-1.5 rounded-full border border-white/15 bg-black/85 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase shadow-lg backdrop-blur-md"
+            style={{
+              color: sightingTier.color,
+              textShadow: sightingTier.glow ? `0 0 8px ${sightingTier.color}60` : undefined,
+            }}
           >
             <Eye className="h-3 w-3" />
             {sightingTier.name} · {renderedCat.times_spotted}×
