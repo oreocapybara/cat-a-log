@@ -28,12 +28,14 @@ const TAG_ORDER: CatTag['tag'][] = ['needs_medical', 'possible_rabies', 'decease
 const RESOLVE_LABEL: Record<CatTag['tag'], string> = {
   needs_medical: 'Recovered',
   possible_rabies: 'Cleared',
+  invasive_risk: '',
   deceased: '',
 }
 
 const TAG_TOAST_LABEL: Record<CatTag['tag'], string> = {
   needs_medical: 'Needs medical',
   possible_rabies: 'Possible rabies',
+  invasive_risk: 'Invasive risk',
   deceased: 'Passed away',
 }
 
@@ -124,6 +126,7 @@ export function MyCatsList({
         created_at: new Date().toISOString(),
         resolved_at: null,
         resolved_by: null,
+        verification_status: tag === 'invasive_risk' ? 'pending' : null,
       },
     ])
 
@@ -205,6 +208,7 @@ export function MyCatsList({
         created_at: new Date().toISOString(),
         resolved_at: null,
         resolved_by: null,
+        verification_status: null,
       },
     ])
 

@@ -1,4 +1,4 @@
-import { Cross, TriangleAlert } from 'lucide-react'
+import { Cross, Leaf, TriangleAlert } from 'lucide-react'
 import type { CatTag } from './supabase/types'
 
 export type WelfareTier = {
@@ -14,6 +14,7 @@ export type WelfareTier = {
 const WELFARE_TIERS: WelfareTier[] = [
   { tag: 'needs_medical', color: '#dc2626', glyph: '+', desaturate: false },
   { tag: 'possible_rabies', color: '#b45309', glyph: '!', desaturate: false },
+  { tag: 'invasive_risk', color: '#16a34a', glyph: '🌿', desaturate: false },
   { tag: 'deceased', color: '#9ca3af', glyph: '', desaturate: true },
 ]
 
@@ -47,5 +48,10 @@ export const TAG_META: Record<
     label: 'Passed away',
     icon: null,
     className: 'bg-secondary text-secondary-foreground',
+  },
+  invasive_risk: {
+    label: 'Invasive risk',
+    icon: Leaf,
+    className: 'bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-400',
   },
 }
