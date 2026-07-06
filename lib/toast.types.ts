@@ -31,6 +31,7 @@ export type MessageId =
   | 'cat-released'
   | 'cat-removed'
   | 'info-updated'
+  | 'profile-updated'
   // Undo
   | 'tag-added'
   | 'tag-resolved'

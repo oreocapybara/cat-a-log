@@ -18,6 +18,22 @@ const eslintConfig = defineConfig([
     'superpowers/**',
     '.kiro/**',
   ]),
+  {
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'sonner',
+              importNames: ['toast'],
+              message: "Use `notify` from '@/lib/toast' instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ])
 
 export default eslintConfig

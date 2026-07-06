@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { toast } from 'sonner'
 import type {
   MessageId,
@@ -40,6 +41,7 @@ const MESSAGES: Record<MessageId, string | null> = {
   'cat-released': "Released {name} — it's still on the map",
   'cat-removed': 'Removed {name} completely',
   'info-updated': 'Info updated',
+  'profile-updated': 'Profile updated',
   // Undo
   'tag-added': 'Tagged: {label}',
   'tag-resolved': '✓ {label}',
