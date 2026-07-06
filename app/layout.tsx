@@ -55,7 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geist.className} bg-background text-foreground antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
-          <Toaster position="bottom-center" offset={104} />
+          <Toaster position="bottom-center" offset={104} mobileOffset={104} />
         </ThemeProvider>
       </body>
     </html>
