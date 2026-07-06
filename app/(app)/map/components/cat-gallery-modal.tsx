@@ -138,8 +138,9 @@ export function CatGalleryModal({
   }, [open])
 
   // Fetch photos when gallery becomes visible
+  const isVisible = phase !== 'idle'
   useEffect(() => {
-    if (phase === 'idle' || !cat) return
+    if (!isVisible || !cat) return
     let cancelled = false
     fetchGalleryPhotos(cat).then((result) => {
       if (!cancelled) setPhotos(result)
@@ -147,7 +148,7 @@ export function CatGalleryModal({
     return () => {
       cancelled = true
     }
-  }, [phase !== 'idle', cat])
+  }, [isVisible, cat])
 
   // Scroll header blur via IntersectionObserver
   useEffect(() => {
@@ -231,7 +232,6 @@ export function CatGalleryModal({
     el.scrollBy({ left: direction * el.clientWidth })
   }
 
-  const isVisible = phase !== 'idle'
   const loading = isVisible && photos === null
   const activePhoto = lightboxIndex !== null && photos ? (photos[lightboxIndex] ?? null) : null
 
