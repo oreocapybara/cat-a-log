@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { PhotoScreen } from './components/photo-screen'
@@ -11,6 +11,7 @@ import { DetailsScreen, type DetailsFormValues } from './components/details-scre
 import { StepDots } from './components/step-dots'
 import { writePendingTag, type PendingTag } from '@/lib/pending-tag'
 import type { NearbyCat } from '@/lib/supabase/types'
+import { useSeenFlag } from '@/lib/use-seen-flag'
 
 type Screen =
   | { type: 'photo' }
@@ -33,6 +34,11 @@ export default function TagPage() {
   const [history, setHistory] = useState<Screen[]>([])
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const totalSteps = screen.type === 'match-found' ? 3 : 4
+
+  const [, markTagHintSeen] = useSeenFlag('hasSeenTagHint')
+  useEffect(() => {
+    markTagHintSeen()
+  }, [markTagHintSeen])
 
   function goTo(next: Screen) {
     setHistory((prev) => [...prev, screen])
