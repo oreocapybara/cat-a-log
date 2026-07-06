@@ -10,11 +10,12 @@ const SPINNER_DELAY_MS = 300
 
 export function LocateButton({
   mode,
-  visible,
+  elevated,
   onClick,
 }: {
   mode: LocationMode
-  visible: boolean
+  /** When true, shifts the button up to sit above the cat preview card. */
+  elevated: boolean
   onClick: () => void
 }) {
   const [showSpinner, setShowSpinner] = useState(false)
@@ -35,8 +36,6 @@ export function LocateButton({
     return () => clearTimeout(timeout)
   }, [mode])
 
-  if (!visible) return null
-
   const pulsing = mode === 'following' || mode === 'locating'
 
   return (
@@ -53,7 +52,8 @@ export function LocateButton({
       }
       aria-pressed={mode === 'following'}
       className={cn(
-        'absolute right-4 bottom-28 z-10 flex h-11 w-11 items-center justify-center rounded-full border shadow-sm backdrop-blur-md transition-colors',
+        'absolute right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border shadow-sm backdrop-blur-md transition-all duration-200',
+        elevated ? 'bottom-52' : 'bottom-28',
         pulsing
           ? 'map-locate-pulse bg-primary text-primary-foreground border-transparent'
           : 'bg-card/70 dark:bg-card/90 border-white/40 dark:border-white/10'

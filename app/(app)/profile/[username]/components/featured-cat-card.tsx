@@ -45,8 +45,12 @@ export function FeaturedCatCard({ cat }: FeaturedCatCardProps) {
       <div className="absolute inset-x-0 bottom-0 p-4">
         {/* Tier badge */}
         <span
-          className="mb-2 inline-flex items-center rounded-full border border-white/10 bg-black/60 px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase backdrop-blur-sm"
-          style={{ color: tier.color }}
+          className="mb-2 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold tracking-wide uppercase"
+          style={{
+            backgroundColor: tier.color,
+            color: tier.textColor,
+            boxShadow: tier.glow ? `0 0 12px ${tier.color}60` : undefined,
+          }}
         >
           {tier.name}
         </span>
