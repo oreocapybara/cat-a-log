@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { createClient } from '@/lib/supabase/client'
 import { resizeImageToJpeg } from '@/lib/image-utils'
 import { updateAvatar } from '../actions'
@@ -41,13 +41,13 @@ export function AvatarUploadProvider({
 
   const handleFileSelected = useCallback((file: File) => {
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be under 5 MB')
+      notify.error('upload-too-large')
       return
     }
 
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic']
     if (!validTypes.includes(file.type)) {
-      toast.error('Must be a JPEG, PNG, WebP, or HEIC image')
+      notify.error('upload-bad-format')
       return
     }
 
@@ -136,9 +136,9 @@ export function AvatarUploadProvider({
           throw new Error(result.error)
         }
 
-        toast.success('Avatar updated! 🐱')
+        notify.success('avatar-updated')
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to upload avatar')
+        notify.error('avatar-upload-failed')
         setPreviewUrl(null)
       } finally {
         setIsUploading(false)
@@ -167,9 +167,9 @@ export function AvatarUploadProvider({
         throw new Error(result.error)
       }
 
-      toast.success('Avatar removed')
+      notify.success('avatar-removed')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to remove avatar')
+      notify.error('avatar-upload-failed')
     } finally {
       setIsUploading(false)
     }

@@ -15,7 +15,7 @@ import { createClient } from '@/lib/supabase/client'
 import { CatchCardShareButton } from '@/app/components/catch-card-share-button'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import type { NearbyCat, CatTag } from '@/lib/supabase/types'
 
@@ -75,7 +75,7 @@ export function MatchFoundScreen({
 
       const user = userData.user
       if (!user) {
-        toast.error('Session expired. Please sign in again.')
+        notify.error('session-expired')
         router.push('/login')
         return
       }
@@ -86,7 +86,7 @@ export function MatchFoundScreen({
         .upload(path, photoFile)
 
       if (uploadError) {
-        toast.error(uploadError.message)
+        notify.error('upload-failed')
         setSaving(false)
         return
       }
@@ -114,7 +114,7 @@ export function MatchFoundScreen({
         .single()
 
       if (error) {
-        toast.error(error.message)
+        notify.error('unknown-error')
       } else if (sightingRow) {
         setSightingId(sightingRow.id)
       }
@@ -134,7 +134,7 @@ export function MatchFoundScreen({
       p_lng: lng,
     })
     if (error) {
-      toast.error('Could not update cat location.')
+      notify.error('cat-location-update-failed')
     }
     router.push('/map')
   }
@@ -169,7 +169,7 @@ export function MatchFoundScreen({
     } = await supabase.auth.getUser()
 
     if (!user) {
-      toast.error('Session expired.')
+      notify.error('session-expired')
       setSavingEdit(false)
       return
     }
@@ -182,7 +182,7 @@ export function MatchFoundScreen({
         .eq('id', cat.id)
 
       if (error) {
-        toast.error('Could not update notes.')
+        notify.error('unknown-error')
         setSavingEdit(false)
         return
       }
@@ -199,7 +199,7 @@ export function MatchFoundScreen({
       )
 
       if (error) {
-        toast.error('Could not add tags.')
+        notify.error('save-tag-failed')
         setSavingEdit(false)
         return
       }
@@ -207,7 +207,7 @@ export function MatchFoundScreen({
 
     setSavingEdit(false)
     setEditSaved(true)
-    toast.success('Info updated!')
+    notify.success('info-updated')
   }
 
   return (

@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import { formatLastSeen, formatRelativeTime } from '@/lib/geo'
 import { TAG_META } from '@/lib/welfare-colors'
@@ -39,8 +39,6 @@ const TAG_TOAST_LABEL: Record<CatTag['tag'], string> = {
 
 /** Grace period: 5 minutes after tagging, full undo (hard delete) is allowed. */
 const UNDO_GRACE_MS = 5 * 60 * 1000
-const TAG_UNDO_TOAST_ID = 'tag-undo'
-const TAG_UNDO_DURATION = 5000
 
 function isWithinGracePeriod(createdAt: string): boolean {
   return Date.now() - new Date(createdAt).getTime() < UNDO_GRACE_MS
@@ -139,23 +137,21 @@ export function MyCatsList({
     const catName = cats.find((c) => c.id === catId)?.name ?? 'cat'
 
     if (newId) {
-      toast.success(`⭐ ${catName} is now your featured cat`, {
-        action: {
-          label: 'Undo',
-          onClick: () => {
-            setOptimisticFeaturedId(prevId)
-            setFeaturedCat(prevId)
-          },
+      notify.undo('featured-set', {
+        values: { name: catName },
+        onUndo: () => {
+          setOptimisticFeaturedId(prevId)
+          setFeaturedCat(prevId)
         },
       })
     } else {
-      toast.success('Featured cat reset — showing your top cat')
+      notify.success('featured-reset')
     }
 
     const result = await setFeaturedCat(newId)
     if (result.error) {
       setOptimisticFeaturedId(prevId)
-      toast.error(result.error)
+      notify.error('unknown-error')
     }
   }
 
@@ -193,13 +189,9 @@ export function MyCatsList({
     pendingInserts.current.set(insertKey, insertPromise)
 
     // Show undo toast
-    toast(`Tagged: ${TAG_TOAST_LABEL[tag]}`, {
-      id: TAG_UNDO_TOAST_ID,
-      duration: TAG_UNDO_DURATION,
-      action: {
-        label: 'Undo',
-        onClick: () => handleUndoInsert(catId, tag, prevTags, insertKey),
-      },
+    notify.undo('tag-added', {
+      values: { label: TAG_TOAST_LABEL[tag] },
+      onUndo: () => handleUndoInsert(catId, tag, prevTags, insertKey),
     })
 
     const { data, error } = await insertPromise
@@ -207,7 +199,7 @@ export function MyCatsList({
 
     if (error || !data) {
       setCatTags(catId, prevTags)
-      toast.error(error?.message ?? 'Could not add tag')
+      notify.error('save-tag-failed')
       return
     }
 
@@ -241,7 +233,7 @@ export function MyCatsList({
     const { error } = await supabase.from('cat_tags').delete().eq('cat_id', catId).eq('tag', tag)
 
     if (error) {
-      toast.error("Couldn't undo — already saved")
+      notify.error('undo-expired')
     }
   }
 
@@ -271,7 +263,7 @@ export function MyCatsList({
 
     if (error || !data) {
       setCatTags(catId, prevTags)
-      toast.error(error?.message ?? 'Could not add tag')
+      notify.error('save-tag-failed')
       return
     }
 
@@ -303,20 +295,16 @@ export function MyCatsList({
       .is('resolved_at', null)
 
     // Show undo toast
-    toast(`✓ ${RESOLVE_LABEL[tag]}`, {
-      id: TAG_UNDO_TOAST_ID,
-      duration: TAG_UNDO_DURATION,
-      action: {
-        label: 'Undo',
-        onClick: () => handleUndoResolve(catId, tag, prevTags),
-      },
+    notify.undo('tag-resolved', {
+      values: { label: RESOLVE_LABEL[tag] },
+      onUndo: () => handleUndoResolve(catId, tag, prevTags),
     })
 
     const { error } = await resolvePromise
 
     if (error) {
       setCatTags(catId, prevTags)
-      toast.error(error.message)
+      notify.error('unknown-error')
     }
   }
 
@@ -333,7 +321,7 @@ export function MyCatsList({
       .eq('tag', tag)
 
     if (error) {
-      toast.error("Couldn't undo — already saved")
+      notify.error('undo-expired')
     }
   }
 
@@ -349,7 +337,7 @@ export function MyCatsList({
 
     if (error) {
       setCatTags(catId, prevTags)
-      toast.error(error.message)
+      notify.error('unknown-error')
     }
   }
 
@@ -362,11 +350,11 @@ export function MyCatsList({
     setConfirmTarget(null)
 
     if (error) {
-      toast.error(error.message)
+      notify.error('unknown-error')
       return
     }
 
-    toast.success(`Released ${cat.name ?? 'cat'} — it's still on the map`)
+    notify.success('cat-released', { values: { name: cat.name ?? 'cat' } })
     router.refresh()
   }
 
@@ -379,11 +367,11 @@ export function MyCatsList({
     setConfirmTarget(null)
 
     if (error) {
-      toast.error(error.message)
+      notify.error('unknown-error')
       return
     }
 
-    toast.success(`Removed ${cat.name ?? 'cat'} completely`)
+    notify.success('cat-removed', { values: { name: cat.name ?? 'cat' } })
     router.refresh()
   }
 

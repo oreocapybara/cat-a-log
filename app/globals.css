@@ -131,13 +131,19 @@
 
 /* Dark/light switch: crossfade theme colors instead of snapping.
    Inside @layer base so Tailwind utility-layer classes (like transition-transform)
-   can override these longhands via layer precedence. */
+   can override these longhands via layer precedence.
+
+   Excludes img/video/canvas (no themed colors, avoids decode flicker),
+   and SVG elements (icons already use fill/stroke that inherit from parent color).
+   Includes outline-color + box-shadow so Tailwind ring-* and shadow-* utilities
+   also transition smoothly alongside background-color. */
 @layer base {
   @media (prefers-reduced-motion: no-preference) {
-    *,
+    *:not(img, video, canvas, svg, path, circle, rect, line, polyline, polygon, ellipse),
     *::before,
     *::after {
-      transition-property: background-color, border-color, color, fill, stroke;
+      transition-property:
+        background-color, border-color, color, fill, stroke, outline-color, box-shadow;
       transition-duration: 200ms;
       transition-timing-function: ease;
     }

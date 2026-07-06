@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { PhotoScreen } from './components/photo-screen'
 import { CandidatesScreen } from './components/candidates-screen'
 import { MatchFoundScreen } from './components/match-found-screen'
@@ -65,7 +65,7 @@ export default function TagPage() {
     try {
       await writePendingTag(pendingTag, photoFile)
     } catch {
-      toast.error('Could not save your tag. Try again.')
+      notify.error('save-tag-failed')
       return
     }
 

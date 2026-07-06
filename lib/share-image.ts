@@ -1,4 +1,4 @@
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 export async function shareCardImage(options: {
   cardUrl: string
@@ -30,5 +30,5 @@ export async function shareCardImage(options: {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
-  toast.success('Card downloaded!')
+  notify.success('card-downloaded')
 }

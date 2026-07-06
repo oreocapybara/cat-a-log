@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Pencil } from 'lucide-react'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -67,12 +67,12 @@ export function EditProfileDialog({ username, bio }: EditProfileDialogProps) {
     })
 
     if (result?.error) {
-      toast.error(result.error)
+      notify.error('unknown-error')
       setSaving(false)
       return
     }
 
-    toast.success('Profile updated!')
+    notify.success('profile-updated')
     setSaving(false)
     setOpen(false)
 

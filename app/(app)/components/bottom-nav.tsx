@@ -30,7 +30,7 @@ export default function BottomNav() {
   if (pathname.startsWith('/tag')) return null
 
   return (
-    <nav className="bg-card/70 dark:bg-card/90 fixed inset-x-4 bottom-4 z-50 rounded-full border border-white/40 shadow-lg backdrop-blur-md dark:border-white/10">
+    <nav className="bg-card/70 dark:bg-card/90 fixed inset-x-4 bottom-4 z-50 rounded-full border border-white/40 shadow-lg backdrop-blur-md transition-[background-color,border-color,box-shadow] duration-100 dark:border-white/10">
       <div className="pb-safe flex items-center justify-around px-4">
         {NAV_ITEMS.map(({ href, label, icon: Icon, isFab }) => {
           const isActive =
