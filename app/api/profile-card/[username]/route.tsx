@@ -2,6 +2,33 @@ import { ImageResponse } from 'next/og'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSightingTier } from '@/lib/sighting-tiers'
+import { CARD_TIERS, CARD_NEUTRALS, tierKeyFromNumber, type CardTier } from '@/lib/card-tiers'
+import {
+  tierFrameStyle,
+  tierChipStyle,
+  tierPhotoOutline,
+  tierPhotoDecorations,
+  outerFrameShadow,
+  rarityDotShadow,
+  photoBlockExtraTopMargin,
+} from '@/lib/card-motifs'
+
+// Scale factor: mockup 480px → production 1080px
+const S = 2.25
+
+// Load a Google Font binary for Satori (next/og ImageResponse)
+async function loadGoogleFont(font: string, weight: number): Promise<ArrayBuffer> {
+  const url = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@${weight}&display=swap`
+  const css = await (await fetch(url)).text()
+  const resource = css.match(/src: url\((.+)\) format\('(opentype|truetype)'\)/)
+  if (resource) {
+    const response = await fetch(resource[1])
+    if (response.status === 200) {
+      return await response.arrayBuffer()
+    }
+  }
+  throw new Error(`Failed to load font: ${font} ${weight}`)
+}
 
 type Props = {
   params: Promise<{ username: string }>
@@ -11,6 +38,7 @@ export async function GET(_request: Request, { params }: Props) {
   const { username } = await params
   const supabase = await createClient()
 
+  // Fetch profile
   const { data: profile } = await supabase
     .from('profiles')
     .select('id, username, avatar_url, bio, featured_cat_id')
@@ -21,6 +49,7 @@ export async function GET(_request: Request, { params }: Props) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
+  // Fetch user's cats
   const { data: myCats } = await supabase
     .from('cats')
     .select('id, name, primary_photo_url, created_at')
@@ -29,6 +58,7 @@ export async function GET(_request: Request, { params }: Props) {
 
   const catIds = (myCats ?? []).map((cat) => cat.id)
 
+  // Count sightings per cat
   const sightingCounts = new Map<string, number>()
   if (catIds.length > 0) {
     const { data: sightingRows } = await supabase
@@ -48,6 +78,7 @@ export async function GET(_request: Request, { params }: Props) {
 
   const totalSightings = cats.reduce((sum, cat) => sum + cat.timesSpotted, 0)
 
+  // Determine hero cat (featured or most-spotted)
   const heroCat = (() => {
     if (profile.featured_cat_id) {
       const picked = cats.find((c) => c.id === profile.featured_cat_id)
@@ -57,15 +88,28 @@ export async function GET(_request: Request, { params }: Props) {
     return cats.reduce((best, cat) => (cat.timesSpotted > best.timesSpotted ? cat : best), cats[0])
   })()
 
-  const heroTier = heroCat ? getSightingTier(heroCat.timesSpotted) : null
+  const heroSightingTier = heroCat ? getSightingTier(heroCat.timesSpotted) : null
+  const tier: CardTier = heroSightingTier
+    ? CARD_TIERS[tierKeyFromNumber(heroSightingTier.tier)]
+    : CARD_TIERS.stray
 
+  // Collection strip: up to 4 cats excluding hero
   const collectionCats = cats.filter((c) => c.id !== heroCat?.id).slice(0, 4)
+  const overflowCount = cats.length - 1 - collectionCats.length // remaining beyond the 4
 
-  // Card visual system — tier drives the border color
-  const borderColor = heroTier?.color ?? '#94a3b8'
-  const cardGlow = heroTier?.glow
-    ? `0 0 60px ${borderColor}40, 0 0 120px ${borderColor}20, inset 0 0 60px ${borderColor}10`
-    : `0 0 30px ${borderColor}20, inset 0 0 30px ${borderColor}05`
+  // Derived motif values
+  const frameStyle = tierFrameStyle(tier)
+  const chipStyle = tierChipStyle(tier)
+  const photoOutline = tierPhotoOutline(tier)
+  const photoDecorations = tierPhotoDecorations(tier)
+  const frameShadow = outerFrameShadow(tier)
+  const extraPhotoMargin = photoBlockExtraTopMargin(tier.key)
+
+  // Load fonts
+  const [fredokaData, nunitoData] = await Promise.all([
+    loadGoogleFont('Fredoka', 700),
+    loadGoogleFont('Nunito', 600),
+  ])
 
   return new ImageResponse(
     (
@@ -76,296 +120,387 @@ export async function GET(_request: Request, { params }: Props) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          // Dark surround — safe zone for 4:5 and 1:1 crops
-          backgroundColor: '#09090b',
-          padding: '80px 56px',
+          backgroundColor: CARD_NEUTRALS.outerBg,
+          padding: `${Math.round(26 * S)}px ${Math.round(20 * S)}px`,
+          fontFamily: 'Nunito, sans-serif',
         }}
       >
-        {/* === OUTER CARD BORDER — the holographic edge === */}
+        {/* Outer frame */}
         <div
           style={{
             width: '100%',
             height: '100%',
             display: 'flex',
-            borderRadius: 36,
-            padding: 6,
-            // Tier-colored outer border — the "holographic" edge
-            background: `linear-gradient(135deg, ${borderColor}, ${borderColor}80, ${borderColor}40, ${borderColor}80, ${borderColor})`,
-            boxShadow: cardGlow,
+            flexDirection: 'column',
+            borderRadius: Math.round(48 * S),
+            boxShadow: frameShadow,
+            backgroundColor: CARD_NEUTRALS.outerBg,
+            padding: Math.round(20 * S),
           }}
         >
-          {/* === INNER CARD BODY === */}
+          {/* Inner card */}
           <div
             style={{
               width: '100%',
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: 30,
-              overflow: 'hidden',
-              backgroundColor: '#18181b',
-              // Inner border for depth
-              border: '2px solid rgba(255,255,255,0.06)',
+              borderRadius: Math.round(36 * S),
+              backgroundColor: CARD_NEUTRALS.innerBg,
+              overflow: 'visible',
+              position: 'relative',
+              ...frameStyle,
+              ...(frameStyle.background ? { background: frameStyle.background } : {}),
             }}
           >
-            {/* Card header — tier label + rarity dots */}
+            {/* Header row — tier chip + rarity dots */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '22px 28px 14px',
+                padding: `${Math.round(22 * S)}px ${Math.round(24 * S)}px ${Math.round(14 * S)}px`,
               }}
             >
-              <span
+              {/* Tier chip */}
+              <div
                 style={{
-                  color: borderColor,
-                  fontSize: 20,
-                  fontWeight: 800,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.1em',
-                  textShadow: heroTier?.glow ? `0 0 10px ${borderColor}80` : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: Math.round(6 * S),
+                  backgroundColor: chipStyle.background ?? tier.chipBg,
+                  borderRadius: chipStyle.borderRadius ?? Math.round(999),
+                  padding: `${Math.round(6 * S)}px ${Math.round(14 * S)}px`,
+                  ...(chipStyle.border ? { border: chipStyle.border } : {}),
                 }}
               >
-                {heroTier?.name ?? 'Stray'}
-              </span>
-              {/* Rarity dots */}
-              <div style={{ display: 'flex', gap: 6 }}>
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
-                    key={i}
+                {chipStyle.leadingGlyph && (
+                  <span
                     style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: 999,
-                      backgroundColor:
-                        i <= (heroTier?.tier ?? 1) ? borderColor : 'rgba(255,255,255,0.08)',
-                      boxShadow:
-                        i <= (heroTier?.tier ?? 1) && heroTier?.glow
-                          ? `0 0 6px ${borderColor}`
-                          : 'none',
+                      color: chipStyle.glyphColor ?? tier.accent,
+                      fontSize: Math.round(14 * S),
+                      fontFamily: 'Fredoka',
+                      fontWeight: 700,
+                      lineHeight: 1,
                     }}
-                  />
-                ))}
+                  >
+                    {chipStyle.leadingGlyph}
+                  </span>
+                )}
+                <span
+                  style={{
+                    color: tier.rankNameColor,
+                    fontSize: Math.round(15 * S),
+                    fontFamily: 'Fredoka',
+                    fontWeight: 700,
+                  }}
+                >
+                  {tier.label}
+                </span>
+              </div>
+
+              {/* Rarity dots */}
+              <div style={{ display: 'flex', gap: Math.round(5 * S) }}>
+                {([1, 2, 3, 4, 5, 6] as const).map((i) => {
+                  const filled = i <= tier.dotsFilled
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        width: Math.round(10 * S),
+                        height: Math.round(10 * S),
+                        borderRadius: 9999,
+                        backgroundColor: filled ? tier.accent : '#e0dbd4',
+                        boxShadow: rarityDotShadow(tier, filled),
+                      }}
+                    />
+                  )
+                })}
               </div>
             </div>
 
-            {/* === ILLUSTRATION WINDOW === */}
+            {/* Photo block — hero cat */}
             {heroCat && (
               <div
                 style={{
                   display: 'flex',
                   position: 'relative',
-                  margin: '0 20px',
-                  borderRadius: 20,
-                  overflow: 'hidden',
-                  height: '44%',
-                  // Illustration frame border
-                  border: `3px solid ${borderColor}40`,
-                  boxShadow: `inset 0 0 30px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.3)`,
+                  margin: `${extraPhotoMargin}px ${Math.round(20 * S)}px 0`,
+                  borderRadius: Math.round(24 * S),
+                  overflow: 'visible',
+                  flex: '1 1 0px',
                 }}
               >
-                <img
-                  src={heroCat.primary_photo_url}
-                  alt=""
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                {/* Corner vignette */}
+                {/* Photo with white border + tier outline */}
                 <div
                   style={{
-                    position: 'absolute',
-                    inset: 0,
+                    width: '100%',
+                    height: '100%',
                     display: 'flex',
-                    background:
-                      'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%)',
+                    borderRadius: Math.round(24 * S),
+                    overflow: 'hidden',
+                    border: `${Math.round(9 * S)}px solid #fff`,
+                    outline: photoOutline.border,
+                    boxShadow: photoOutline.boxShadow,
+                    opacity: photoOutline.opacity ?? 1,
                   }}
-                />
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={heroCat.primary_photo_url}
+                    alt=""
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                    }}
+                  />
+                </div>
+
+                {/* Tier decorations */}
+                {photoDecorations}
               </div>
             )}
 
-            {/* === CARD INFO PANEL === */}
+            {/* Name + subline */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                flex: 1,
-                padding: '20px 28px 22px',
-                justifyContent: 'space-between',
+                gap: Math.round(2 * S),
+                padding: `${Math.round(12 * S)}px ${Math.round(24 * S)}px 0`,
               }}
             >
-              {/* Cat name + spotted */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span
-                  style={{
-                    color: 'white',
-                    fontSize: 40,
-                    fontWeight: 800,
-                    lineHeight: 1.1,
-                    textShadow: heroTier?.glow ? `0 0 20px ${borderColor}60` : 'none',
-                  }}
-                >
-                  {heroCat?.name ?? 'Unknown Cat'}
-                </span>
-                <span style={{ color: borderColor, fontSize: 20, fontWeight: 600 }}>
-                  Spotted {heroCat?.timesSpotted ?? 0}× by the community
-                </span>
-              </div>
-
-              {/* Stats panel — card-game style */}
-              <div
+              <span
                 style={{
-                  display: 'flex',
-                  gap: 0,
-                  marginTop: 14,
-                  borderRadius: 14,
-                  overflow: 'hidden',
-                  border: `1px solid ${borderColor}20`,
+                  color: CARD_NEUTRALS.nameColor,
+                  fontSize: Math.round(36 * S),
+                  fontFamily: 'Fredoka',
+                  fontWeight: 800,
+                  lineHeight: 1.1,
                 }}
               >
-                {[
-                  { value: cats.length, label: 'Discovered' },
-                  { value: totalSightings, label: 'Sightings' },
-                  { value: heroTier?.tier ?? 1, label: 'Tier', highlight: true },
-                ].map((stat, i) => (
-                  <div
-                    key={stat.label}
+                {heroCat?.name ?? 'No Cats Yet'}
+              </span>
+              <span
+                style={{
+                  color: CARD_NEUTRALS.secondaryText,
+                  fontSize: Math.round(16 * S),
+                  fontFamily: 'Nunito',
+                  fontWeight: 600,
+                }}
+              >
+                @{profile.username}&apos;s top catch
+              </span>
+            </div>
+
+            {/* 3-stat row */}
+            <div
+              style={{
+                display: 'flex',
+                gap: Math.round(8 * S),
+                padding: `${Math.round(10 * S)}px ${Math.round(24 * S)}px 0`,
+              }}
+            >
+              {[
+                { value: String(cats.length), label: 'DISCOVERED' },
+                { value: String(totalSightings), label: 'SIGHTINGS' },
+                { value: tier.label, label: 'TIER', highlight: true },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    flex: 1,
+                    padding: `${Math.round(10 * S)}px ${Math.round(8 * S)}px`,
+                    backgroundColor: CARD_NEUTRALS.chipStatBg,
+                    borderRadius: Math.round(16 * S),
+                  }}
+                >
+                  <span
                     style={{
+                      color: stat.highlight ? tier.rankNameColor : CARD_NEUTRALS.nameColor,
+                      fontSize: Math.round(stat.label === 'TIER' ? 14 * S : 18 * S),
+                      fontFamily: 'Fredoka',
+                      fontWeight: 700,
+                      lineHeight: 1.2,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {stat.value}
+                  </span>
+                  <span
+                    style={{
+                      color: CARD_NEUTRALS.secondaryText,
+                      fontSize: Math.round(10 * S),
+                      fontFamily: 'Nunito',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      marginTop: Math.round(3 * S),
+                    }}
+                  >
+                    {stat.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Collection strip */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: Math.round(6 * S),
+                padding: `${Math.round(10 * S)}px ${Math.round(24 * S)}px ${Math.round(12 * S)}px`,
+              }}
+            >
+              <span
+                style={{
+                  color: CARD_NEUTRALS.secondaryText,
+                  fontSize: Math.round(10 * S),
+                  fontFamily: 'Nunito',
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                }}
+              >
+                COLLECTION
+              </span>
+              <div style={{ display: 'flex', gap: Math.round(8 * S) }}>
+                {collectionCats.map((cat) => (
+                  <div
+                    key={cat.id}
+                    style={{
+                      width: Math.round(56 * S),
+                      height: Math.round(56 * S),
+                      borderRadius: Math.round(12 * S),
+                      overflow: 'hidden',
                       display: 'flex',
-                      flexDirection: 'column',
+                      border: `${Math.round(2 * S)}px solid ${tier.accent}30`,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={cat.primary_photo_url}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                ))}
+                {overflowCount > 0 && (
+                  <div
+                    style={{
+                      width: Math.round(56 * S),
+                      height: Math.round(56 * S),
+                      borderRadius: Math.round(12 * S),
+                      display: 'flex',
                       alignItems: 'center',
-                      flex: 1,
-                      padding: '14px 0',
-                      backgroundColor: 'rgba(255,255,255,0.03)',
-                      borderRight: i < 2 ? `1px solid ${borderColor}15` : 'none',
+                      justifyContent: 'center',
+                      backgroundColor: tier.chipBg,
+                      border: `${Math.round(2 * S)}px solid ${tier.accent}20`,
                     }}
                   >
                     <span
                       style={{
-                        color: stat.highlight ? borderColor : 'white',
-                        fontSize: 28,
-                        fontWeight: 800,
+                        color: CARD_NEUTRALS.secondaryText,
+                        fontSize: Math.round(14 * S),
+                        fontFamily: 'Fredoka',
+                        fontWeight: 700,
                       }}
                     >
-                      {stat.value}
-                    </span>
-                    <span
-                      style={{
-                        color: 'rgba(255,255,255,0.45)',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.1em',
-                        marginTop: 2,
-                      }}
-                    >
-                      {stat.label}
+                      +{overflowCount}
                     </span>
                   </div>
-                ))}
+                )}
               </div>
+            </div>
 
-              {/* Collection strip */}
-              {collectionCats.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                  {collectionCats.map((cat) => (
-                    <div
-                      key={cat.id}
+            {/* Footer */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: 'auto',
+                padding: `${Math.round(14 * S)}px ${Math.round(24 * S)}px ${Math.round(20 * S)}px`,
+                borderTop: `${Math.round(2 * S)}px dashed ${CARD_NEUTRALS.dashedBorder}`,
+                marginLeft: Math.round(24 * S),
+                marginRight: Math.round(24 * S),
+              }}
+            >
+              {/* Left: avatar + handle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: Math.round(8 * S) }}>
+                {profile.avatar_url ? (
+                  <div
+                    style={{
+                      width: Math.round(32 * S),
+                      height: Math.round(32 * S),
+                      borderRadius: 9999,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      border: `${Math.round(2 * S)}px solid ${tier.accent}40`,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: Math.round(32 * S),
+                      height: Math.round(32 * S),
+                      borderRadius: 9999,
+                      backgroundColor: tier.accent,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <span
                       style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 12,
-                        overflow: 'hidden',
-                        display: 'flex',
-                        border: `2px solid ${borderColor}20`,
-                      }}
-                    >
-                      <img
-                        src={cat.primary_photo_url}
-                        alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-                  ))}
-                  {cats.length > 5 && (
-                    <div
-                      style={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: 12,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: 'rgba(255,255,255,0.04)',
-                        border: `2px solid ${borderColor}20`,
-                      }}
-                    >
-                      <span
-                        style={{ color: 'rgba(255,255,255,0.5)', fontSize: 16, fontWeight: 700 }}
-                      >
-                        +{cats.length - 5}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Card footer — trainer + branding */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginTop: 'auto',
-                  paddingTop: 14,
-                  borderTop: `1px solid ${borderColor}15`,
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {profile.avatar_url ? (
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 999,
-                        overflow: 'hidden',
-                        display: 'flex',
-                        border: `2px solid ${borderColor}30`,
-                      }}
-                    >
-                      <img
-                        src={profile.avatar_url}
-                        alt=""
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 999,
-                        backgroundColor: '#f97316',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontSize: 14,
+                        color: '#fff',
+                        fontSize: Math.round(12 * S),
+                        fontFamily: 'Fredoka',
                         fontWeight: 700,
                       }}
                     >
                       {username.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 16, fontWeight: 600 }}>
-                    @{profile.username}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 16 }}>🐾</span>
-                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14, fontWeight: 600 }}>
-                    cat-a-log.app
-                  </span>
-                </div>
+                    </span>
+                  </div>
+                )}
+                <span
+                  style={{
+                    color: CARD_NEUTRALS.secondaryText,
+                    fontSize: Math.round(13 * S),
+                    fontFamily: 'Nunito',
+                    fontWeight: 700,
+                  }}
+                >
+                  @{profile.username}
+                </span>
+              </div>
+
+              {/* Right: brand mark */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: Math.round(4 * S) }}>
+                <span style={{ fontSize: Math.round(14 * S), lineHeight: 1 }}>🐾</span>
+                <span
+                  style={{
+                    color: CARD_NEUTRALS.mutedText,
+                    fontSize: Math.round(12 * S),
+                    fontFamily: 'Nunito',
+                    fontWeight: 700,
+                  }}
+                >
+                  cat-a-log.app
+                </span>
               </div>
             </div>
           </div>
@@ -375,6 +510,20 @@ export async function GET(_request: Request, { params }: Props) {
     {
       width: 1080,
       height: 1920,
+      fonts: [
+        {
+          name: 'Fredoka',
+          data: fredokaData,
+          weight: 700,
+          style: 'normal' as const,
+        },
+        {
+          name: 'Nunito',
+          data: nunitoData,
+          weight: 600,
+          style: 'normal' as const,
+        },
+      ],
       headers: {
         'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
       },
