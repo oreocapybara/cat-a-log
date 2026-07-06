@@ -119,22 +119,34 @@ export function MatchFoundScreen({
         setSightingId(sightingRow.id)
       }
 
-      // Update the cat's location to the latest sighting coordinates
-      const { error: updateError } = await supabase.rpc('update_cat_location', {
-        p_cat_id: cat.id,
-        p_lat: lat,
-        p_lng: lng,
-      })
-
-      if (updateError) {
-        toast.error('Could not update cat location.')
-      }
-
       setSaving(false)
     }
 
     recordSighting()
   }, [cat.id, photoFile, lat, lng, router])
+
+  /** Confirm the match — update the cat's location and navigate to the map */
+  async function handleConfirm() {
+    const supabase = createClient()
+    const { error } = await supabase.rpc('update_cat_location', {
+      p_cat_id: cat.id,
+      p_lat: lat,
+      p_lng: lng,
+    })
+    if (error) {
+      toast.error('Could not update cat location.')
+    }
+    router.push('/map')
+  }
+
+  /** Undo the match — delete the sighting record and go back to candidates */
+  async function handleBack() {
+    if (sightingId) {
+      const supabase = createClient()
+      await supabase.from('sightings').delete().eq('id', sightingId)
+    }
+    onBack()
+  }
 
   // Tags already active on this cat — don't let user add duplicates
   const activeTagValues = tags.map((t) => t.tag)
@@ -203,7 +215,7 @@ export function MatchFoundScreen({
       {/* Back button */}
       <button
         type="button"
-        onClick={onBack}
+        onClick={handleBack}
         className="text-muted-foreground hover:bg-muted hover:text-foreground absolute top-20 left-4 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
         aria-label="Go back"
       >
@@ -433,7 +445,7 @@ export function MatchFoundScreen({
           type="button"
           className="shadow-primary/20 w-full rounded-xl py-6 text-base font-semibold shadow-lg transition-all disabled:shadow-none"
           disabled={saving}
-          onClick={() => router.push('/map')}
+          onClick={handleConfirm}
         >
           {saving ? (
             <span className="flex items-center gap-2">
