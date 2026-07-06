@@ -6,16 +6,13 @@ import { formatLastSeen } from '@/lib/geo'
 import { cn } from '@/lib/utils'
 import { DEFAULT_WELFARE_COLOR, getWelfareTier, TAG_META } from '@/lib/welfare-colors'
 import { CatGalleryModal } from './cat-gallery-modal'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 const RESOLVE_LABEL: Record<string, string> = {
   needs_medical: 'Recovered',
   possible_rabies: 'Cleared',
 }
-
-const TAG_UNDO_TOAST_ID = 'map-tag-undo'
-const TAG_UNDO_DURATION = 5000
 
 // Matches the `duration-200` used on both the enter and exit animation classes below.
 const EXIT_ANIMATION_MS = 200
@@ -96,15 +93,11 @@ export function CatPreviewCard({
 
     const label = RESOLVE_LABEL[tag] ?? tag
 
-    toast(`✓ ${label}`, {
-      id: TAG_UNDO_TOAST_ID,
-      duration: TAG_UNDO_DURATION,
-      action: {
-        label: 'Undo',
-        onClick: () => {
-          setRenderedTags(prevTags)
-          onUndoResolveTag?.(renderedCat.id, tag)
-        },
+    notify.undo('tag-resolved', {
+      values: { label },
+      onUndo: () => {
+        setRenderedTags(prevTags)
+        onUndoResolveTag?.(renderedCat.id, tag)
       },
     })
 
