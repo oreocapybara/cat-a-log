@@ -28,6 +28,8 @@ export type MessageId =
   | 'registered'
   | 'featured-set'
   | 'featured-reset'
+  | 'cat-released'
+  | 'cat-removed'
   // Undo
   | 'tag-added'
   | 'tag-resolved'

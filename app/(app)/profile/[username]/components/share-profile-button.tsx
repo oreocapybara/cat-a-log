@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Image, Link2, Loader2, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { shareCardImage } from '@/lib/share-image'
 
 export function ShareProfileButton({ username }: { username: string }) {
@@ -29,7 +29,7 @@ export function ShareProfileButton({ username }: { username: string }) {
 
     try {
       await navigator.clipboard.writeText(profileUrl)
-      toast.success('Link copied! 🔗')
+      notify.success('link-copied')
     } catch {
       // Clipboard failed — try Web Share with just the URL
       if (navigator.share) {
@@ -58,7 +58,7 @@ export function ShareProfileButton({ username }: { username: string }) {
       if (error instanceof Error && error.name === 'AbortError') {
         // User cancelled — no-op
       } else {
-        toast.error('Could not share card')
+        notify.error('share-failed')
       }
     } finally {
       setLoading(false)

@@ -37,6 +37,8 @@ const MESSAGES: Record<MessageId, string | null> = {
   registered: "You're in — let's set up your profile.",
   'featured-set': '{name} is now your featured cat',
   'featured-reset': 'Now showing your top cat',
+  'cat-released': "Released {name} — it's still on the map",
+  'cat-removed': 'Removed {name} completely',
   // Undo
   'tag-added': 'Tagged: {label}',
   'tag-resolved': '✓ {label}',

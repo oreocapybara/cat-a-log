@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 export function SignOutButton() {
   const router = useRouter()
@@ -16,7 +16,7 @@ export function SignOutButton() {
     const { error } = await supabase.auth.signOut()
 
     if (error) {
-      toast.error(error.message)
+      notify.error('sign-out-failed')
       setLoading(false)
       return
     }
