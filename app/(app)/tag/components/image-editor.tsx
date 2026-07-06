@@ -11,19 +11,19 @@ function buildValidatedUrl(baseUrl: string): string {
   try {
     // Minimal path validation
     if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
-      throw new Error('Invalid path');
+      throw new Error('Invalid path')
     }
-    
-    const url = new URL(baseUrl);
-    
-    // Protocol checks
-    if (!['http:', 'https:'].includes(url.protocol)) {
-      throw new Error('Invalid protocol');
+
+    const url = new URL(baseUrl)
+
+    // Protocol checks — allow blob: for local object URLs from file inputs
+    if (!['http:', 'https:', 'blob:'].includes(url.protocol)) {
+      throw new Error('Invalid protocol')
     }
-    
-    return url.href;
+
+    return url.href
   } catch {
-    throw new Error('Invalid URL');
+    throw new Error('Invalid URL')
   }
 }
 
