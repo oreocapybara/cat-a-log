@@ -33,13 +33,13 @@ const MEDICAL_TAGS = [
 
 export function MatchFoundScreen({
   cat,
-  photoUrl,
+  photoFile,
   lat,
   lng,
   onBack,
 }: {
   cat: NearbyCat
-  photoUrl: string
+  photoFile: File
   lat: number
   lng: number
   onBack: () => void
@@ -80,11 +80,26 @@ export function MatchFoundScreen({
         return
       }
 
+      const path = `${user.id}/${crypto.randomUUID()}-photo.jpg`
+      const { error: uploadError } = await supabase.storage
+        .from('cat-photos')
+        .upload(path, photoFile)
+
+      if (uploadError) {
+        toast.error(uploadError.message)
+        setSaving(false)
+        return
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('cat-photos').getPublicUrl(path)
+
       const { data: sightingRow, error } = await supabase
         .from('sightings')
         .insert({
           cat_id: cat.id,
-          photo_url: photoUrl,
+          photo_url: publicUrl,
           lat,
           lng,
           spotted_by: user.id,
@@ -113,7 +128,7 @@ export function MatchFoundScreen({
     }
 
     recordSighting()
-  }, [cat.id, photoUrl, lat, lng, router])
+  }, [cat.id, photoFile, lat, lng, router])
 
   // Tags already active on this cat — don't let user add duplicates
   const activeTagValues = tags.map((t) => t.tag)
