@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { MapPin, Sparkles, Eye, Cat, Loader2, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 
 import type { NearbyCat } from '@/lib/supabase/types'
 
@@ -50,7 +50,7 @@ export function CandidatesScreen({
       })
 
       if (error) {
-        toast.error('Could not check for nearby cats')
+        notify.error('load-nearby-failed')
         setAllCandidates([])
         setDisplayedCandidates([])
         return
@@ -81,7 +81,7 @@ export function CandidatesScreen({
     setAnalyzing(false)
 
     if (!response.ok) {
-      toast.error("Couldn't analyze the photo, showing nearest cats instead")
+      notify.error('analyze-photo-failed')
       return
     }
 

@@ -39,6 +39,7 @@ const MESSAGES: Record<MessageId, string | null> = {
   'featured-reset': 'Now showing your top cat',
   'cat-released': "Released {name} — it's still on the map",
   'cat-removed': 'Removed {name} completely',
+  'info-updated': 'Info updated',
   // Undo
   'tag-added': 'Tagged: {label}',
   'tag-resolved': '✓ {label}',

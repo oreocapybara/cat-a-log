@@ -30,6 +30,7 @@ export type MessageId =
   | 'featured-reset'
   | 'cat-released'
   | 'cat-removed'
+  | 'info-updated'
   // Undo
   | 'tag-added'
   | 'tag-resolved'
