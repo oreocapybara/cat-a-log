@@ -340,18 +340,18 @@ export function MatchFoundScreen({
                     <span
                       className={cn(
                         'text-xs tabular-nums transition-colors',
-                        editNotes.length > 450
+                        editNotes.length > 80
                           ? 'font-medium text-amber-500 dark:text-amber-400'
                           : 'text-muted-foreground'
                       )}
                     >
-                      {editNotes.length}/500
+                      {editNotes.length}/100
                     </span>
                   </div>
                   <Textarea
                     id="edit-notes"
                     placeholder="Friendly orange tabby, hangs out near the blue dumpster on 5th…"
-                    maxLength={500}
+                    maxLength={100}
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
                     className="border-border/50 bg-muted/30 focus:border-primary/50 min-h-[80px] resize-none rounded-xl border"

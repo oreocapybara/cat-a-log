@@ -26,7 +26,7 @@ const MEDICAL_TAGS = [
 
 const detailsSchema = z.object({
   isEarTipped: z.boolean(),
-  notes: z.string().max(500, 'Notes must be 500 characters or less').optional(),
+  notes: z.string().max(100, 'Notes must be 100 characters or less').optional(),
   tags: z.array(z.string()),
 })
 
@@ -149,18 +149,18 @@ export function DetailsScreen({
             <span
               className={cn(
                 'text-xs tabular-nums transition-colors',
-                notesLength > 450
+                notesLength > 80
                   ? 'font-medium text-amber-500 dark:text-amber-400'
                   : 'text-muted-foreground'
               )}
             >
-              {notesLength}/500
+              {notesLength}/100
             </span>
           </div>
           <Textarea
             id="notes"
             placeholder="Friendly orange tabby, hangs out near the blue dumpster on 5th…"
-            maxLength={500}
+            maxLength={100}
             className="border-border/50 bg-muted/30 focus:border-primary/50 min-h-[100px] resize-none rounded-xl border"
             {...register('notes')}
           />

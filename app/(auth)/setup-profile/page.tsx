@@ -23,7 +23,7 @@ const profileSchema = z.object({
       /^[a-zA-Z0-9_-]+$/,
       'Username can only contain letters, numbers, underscores, and hyphens'
     ),
-  bio: z.string().max(160, 'Bio must be 160 characters or less').optional(),
+  bio: z.string().max(30, 'Bio must be 30 characters or less').optional(),
 })
 
 type ProfileForm = z.infer<typeof profileSchema>
@@ -126,12 +126,12 @@ export default function SetupProfilePage() {
                 <Label htmlFor="bio">
                   Bio <span className="text-muted-foreground">(optional)</span>
                 </Label>
-                <span className="text-muted-foreground text-xs">{bioValue.length}/160</span>
+                <span className="text-muted-foreground text-xs">{bioValue.length}/30</span>
               </div>
               <Input
                 id="bio"
                 placeholder="TNR volunteer, cat lover 🐱"
-                maxLength={160}
+                maxLength={30}
                 {...register('bio')}
               />
               {errors.bio && <p className="text-destructive text-xs">{errors.bio.message}</p>}
