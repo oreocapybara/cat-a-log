@@ -1,3 +1,42 @@
+# Catch Sequence Saving UX Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace the bare spinner on `/tag/flush` with a staged "catch sequence" that shows the cat photo, a smooth progress bar, and stage labels while uploading and registering the cat.
+
+**Architecture:** Single page rewrite. A state machine drives three sequential stages, each with a minimum display time. Real async operations (photo upload, API call) run in parallel with timers; a stage only advances when both its timer and operation have resolved. Error state replaces the progress UI with an inline retry button.
+
+**Tech Stack:** React 19, Next.js 16 App Router (client component), Supabase client SDK, Tailwind CSS v4, Lucide icons.
+
+## Global Constraints
+
+- TypeScript strict mode
+- Tailwind CSS v4 for all styling (no inline styles except dynamic `width` on progress bar)
+- `motion-safe:` prefix on all animation classes
+- Use `@/lib/supabase/client` for Supabase browser client
+- Use `@/lib/pending-tag` for `readPendingTag` / `clearPendingTag`
+- Follow existing code patterns (see current `app/(auth)/tag/flush/page.tsx`)
+- No new dependencies
+
+---
+
+### Task 1: Rewrite `/tag/flush` with Catch Sequence UI
+
+**Files:**
+
+- Modify: `app/(auth)/tag/flush/page.tsx` (full rewrite)
+
+**Interfaces:**
+
+- Consumes: `readPendingTag()` → `{ tag: PendingTag; photo: File } | null`, `clearPendingTag()` → `void` from `@/lib/pending-tag`
+- Consumes: `createClient()` from `@/lib/supabase/client`
+- Produces: Navigation to `/tag/complete?catId=...&name=...` on success, or inline error with retry
+
+- [ ] **Step 1: Write the full replacement for `app/(auth)/tag/flush/page.tsx`**
+
+Replace the entire file content with:
+
+```tsx
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -23,7 +62,7 @@ function stageLabel(stage: Stage, catName: string): string {
     case 2:
       return `Registering ${catName}…`
     case 3:
-      return 'Got \u2019em! 🐾'
+      return 'Got 'em! 🐾'
   }
 }
 
@@ -63,8 +102,6 @@ export default function TagFlushPage() {
     }
 
     // --- Stage 1: Upload photo ---
-    // Small delay to let React paint before starting the transition
-    await new Promise((r) => setTimeout(r, 50))
     setProgress(STAGE_CONFIG[1].holdTarget)
 
     const uploadPromise = (async () => {
@@ -166,7 +203,7 @@ export default function TagFlushPage() {
     init()
   }, [router, runSequence])
 
-  function handleRetry() {
+  async function handleRetry() {
     runSequence()
   }
 
@@ -190,7 +227,9 @@ export default function TagFlushPage() {
       )}
 
       {/* Cat name */}
-      {catName && <h1 className="font-heading text-xl font-bold tracking-tight">{catName}</h1>}
+      {catName && (
+        <h1 className="font-heading text-xl font-bold tracking-tight">{catName}</h1>
+      )}
 
       {/* Stage label */}
       <p
@@ -226,3 +265,62 @@ export default function TagFlushPage() {
     </div>
   )
 }
+```
+
+- [ ] **Step 2: Verify TypeScript compiles**
+
+Run: `npx tsc --noEmit`
+Expected: No errors related to `app/(auth)/tag/flush/page.tsx`
+
+- [ ] **Step 3: Verify lint passes**
+
+Run: `npx eslint app/(auth)/tag/flush/page.tsx`
+Expected: No errors (warnings acceptable)
+
+- [ ] **Step 4: Verify build passes**
+
+Run: `npm run build`
+Expected: Build succeeds
+
+- [ ] **Step 5: Manual verification**
+
+Open the app in a mobile viewport, complete the tag flow (photo → candidates → name → details → save). Verify:
+
+1. Photo appears on the flush page with fade-in animation
+2. Progress bar smoothly fills through stages
+3. Stage labels change: "Uploading photo…" → "Registering {name}…" → "Got 'em! 🐾"
+4. Page fades out and navigates to `/tag/complete`
+5. On network error: error message displays inline with "Try again" button
+6. "Try again" restarts the sequence from stage 1
+7. "Discard tag" clears data and navigates to `/map`
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add app/(auth)/tag/flush/page.tsx
+git commit -m "feat(tag): replace flush spinner with staged catch sequence
+
+Show the cat photo and a smooth progress bar with three timed stages
+while uploading and registering. Errors are shown inline with retry.
+
+Spec: docs/superpowers/specs/2026-07-06-catch-sequence-saving-ux-design.md"
+```
+
+---
+
+## Self-Review
+
+**Spec coverage:**
+
+- ✅ Layout: photo, name, stage label, progress bar
+- ✅ Timing state machine: 3 stages, min times, wait-for-both logic
+- ✅ Pause behavior: bar targets `holdTarget` (target - 5%) during operation, then fills to `target` on resolve
+- ✅ Animations: photo fade-in/zoom, progress bar CSS transition, label crossfade via key prop, page fade-out
+- ✅ `motion-safe:` prefix on animations
+- ✅ Error handling: inline message, retry button (preserves component state), discard link
+- ✅ No new components, single file
+- ✅ Dark mode: uses semantic tokens (border-border, bg-primary, bg-muted, text-muted-foreground)
+
+**Placeholder scan:** No TBDs, TODOs, or vague instructions. All code is complete.
+
+**Type consistency:** `PendingTag` imported from `@/lib/pending-tag`, `Stage` is a local union type. No cross-task references needed (single task).
