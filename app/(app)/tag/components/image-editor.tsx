@@ -7,6 +7,26 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import 'react-image-crop/dist/ReactCrop.css'
 
+function buildValidatedUrl(baseUrl: string): string {
+  try {
+    // Minimal path validation
+    if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
+      throw new Error('Invalid path');
+    }
+    
+    const url = new URL(baseUrl);
+    
+    // Protocol checks
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error('Invalid protocol');
+    }
+    
+    return url.href;
+  } catch {
+    throw new Error('Invalid URL');
+  }
+}
+
 type AspectMode = 'free' | '1:1' | '4:3'
 
 const ASPECT_OPTIONS: { mode: AspectMode; label: string; icon: typeof Square }[] = [
@@ -178,7 +198,8 @@ export function ImageEditor({
         // No crop selected — just apply rotation if any
         if (rotation === 0) {
           // No changes — use original
-          const response = await fetch(imageUrl)
+          const validatedUrl = buildValidatedUrl(imageUrl)
+          const response = await fetch(validatedUrl)
           const blob = await response.blob()
           onDone(new File([blob], 'photo.jpg', { type: 'image/jpeg' }))
         } else {
@@ -202,7 +223,8 @@ export function ImageEditor({
       }
     } catch {
       // Fallback: use original
-      const response = await fetch(imageUrl)
+      const validatedUrl = buildValidatedUrl(imageUrl)
+      const response = await fetch(validatedUrl)
       const blob = await response.blob()
       onDone(new File([blob], 'photo.jpg', { type: 'image/jpeg' }))
     } finally {
