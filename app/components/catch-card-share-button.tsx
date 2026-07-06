@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Loader2, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import { notify } from '@/lib/toast'
 import { shareCardImage } from '@/lib/share-image'
 
 export function CatchCardShareButton({
@@ -35,7 +35,7 @@ export function CatchCardShareButton({
       if (error instanceof Error && error.name === 'AbortError') {
         // User cancelled — no-op
       } else {
-        toast.error('Could not share card')
+        notify.error('share-failed')
       }
     } finally {
       setLoading(false)
