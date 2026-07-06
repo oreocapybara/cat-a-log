@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { CatPreviewCard } from './components/cat-preview-card'
-import { WelcomeSheet } from './components/welcome-sheet'
 import { TagFabHint } from './components/tag-fab-hint'
 import { FilterHint } from './components/filter-hint'
 import { FilterSheet, type CatFilters, matchesFilters } from './components/filter-sheet'
@@ -331,8 +330,6 @@ export default function MapPage() {
         flyToZoom={flyToZoom}
         pinHintCatId={activeMapHint === 'pin' && nearestCat ? nearestCat.id : null}
       />
-
-      <WelcomeSheet />
 
       {activeMapHint === 'tag' && <TagFabHint />}
       {activeMapHint === 'filter' && <FilterHint />}
