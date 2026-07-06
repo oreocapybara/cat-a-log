@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getImageEmbedding } from '@/lib/huggingface'
 
-const ALLOWED_TAGS = ['needs_medical', 'possible_rabies', 'deceased'] as const
+const ALLOWED_TAGS = ['needs_medical', 'possible_rabies', 'deceased', 'invasive_risk'] as const
 type CatTagValue = (typeof ALLOWED_TAGS)[number]
 
 function isValidTag(tag: string): tag is CatTagValue {
@@ -60,15 +60,29 @@ export async function POST(request: NextRequest) {
 
   const validTags = tags.filter(isValidTag)
   if (validTags.length > 0) {
-    await supabase.from('cat_tags').insert(
-      validTags.map((tag) => ({
-        cat_id: cat.id,
-        tag,
-        added_by: user.id,
-      }))
-    )
-    // Not blocking on tag-insert failures — the catch itself already
-    // succeeded, and tags are supplementary metadata.
+    const { data: insertedTags } = await supabase
+      .from('cat_tags')
+      .insert(
+        validTags.map((tag) => ({
+          cat_id: cat.id,
+          tag,
+          added_by: user.id,
+          ...(tag === 'invasive_risk' ? { verification_status: 'pending' as const } : {}),
+        }))
+      )
+      .select('id, tag')
+
+    // Auto-insert first confirm vote for invasive_risk
+    if (insertedTags) {
+      const invasiveRow = insertedTags.find((t) => t.tag === 'invasive_risk')
+      if (invasiveRow) {
+        await supabase.from('invasive_risk_votes').insert({
+          cat_tag_id: invasiveRow.id,
+          voted_by: user.id,
+          vote: 'confirm',
+        })
+      }
+    }
   }
 
   return NextResponse.json({ catId: cat.id })
