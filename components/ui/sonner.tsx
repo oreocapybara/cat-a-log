@@ -27,7 +27,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: 'cn-toast max-w-[calc(100vw-2rem)]',
+          toast: 'cn-toast',
         },
       }}
       {...props}
