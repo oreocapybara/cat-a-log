@@ -42,7 +42,7 @@ Minimum viable list. No version managers, Docker, or optional tooling.
 Three commands:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/oreocapybara/cat-a-log.git
 cd Cat-A-Log
 npm ci
 ```
@@ -177,7 +177,7 @@ Tone matches README — neutral-professional, concise.
 - No screenshots or images
 - No badges
 - No links to external tutorials (only official docs: Supabase, Node.js, Google Cloud Console)
-- `<repo-url>` is left as a placeholder (the actual GitHub URL can be filled in during implementation if available)
+- `https://github.com/oreocapybara/cat-a-log.git` is the repository URL
 - License line is a placeholder until one is chosen
 
 ## Out of Scope
