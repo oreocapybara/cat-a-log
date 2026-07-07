@@ -109,6 +109,10 @@ export default function TagFlushPage() {
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({ error: 'Something went wrong' }))
+        if (body.code === 'NO_PROFILE') {
+          router.replace('/setup-profile?returnTo=/tag/flush')
+          return null
+        }
         throw new Error(body.error ?? 'Something went wrong')
       }
 
@@ -119,7 +123,12 @@ export default function TagFlushPage() {
 
     let result: { catId: string }
     try {
-      ;[result] = (await Promise.all([registerPromise, timer2])) as [{ catId: string }, unknown]
+      const [registerResult] = (await Promise.all([registerPromise, timer2])) as [
+        { catId: string } | null,
+        unknown,
+      ]
+      if (!registerResult) return // Redirecting to setup-profile
+      result = registerResult
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Something went wrong')
       setStatus('error')
