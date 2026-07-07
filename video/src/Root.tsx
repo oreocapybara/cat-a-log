@@ -9,6 +9,8 @@ import {
   WIPE_DURATION,
 } from './constants/timing'
 import { OrangeWipe } from './components/OrangeWipe'
+import { Hook } from './scenes/Hook'
+import { LogoReveal } from './scenes/LogoReveal'
 
 const Placeholder: React.FC = () => (
   <div
@@ -46,8 +48,16 @@ export const RemotionRoot: React.FC = () => {
       />
       <Composition
         id="Hook"
-        component={Placeholder}
+        component={Hook}
         durationInFrames={SCENE_DURATIONS.hook}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="LogoReveal"
+        component={LogoReveal}
+        durationInFrames={SCENE_DURATIONS.logoReveal}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
