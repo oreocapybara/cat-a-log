@@ -12,7 +12,11 @@ const varelaRound = Varela_Round({
 })
 
 export const metadata: Metadata = {
-  title: 'Cat-A-Log',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cat-a-log.vercel.app'),
+  title: {
+    default: 'Cat-A-Log',
+    template: '%s — Cat-A-Log',
+  },
   description: 'Crowdsourced cat registry — tag, track, and identify cats in your area.',
   manifest: '/manifest.json',
   openGraph: {
@@ -20,11 +24,13 @@ export const metadata: Metadata = {
     description: 'Crowdsourced cat registry — tag, track, and identify cats in your area.',
     siteName: 'Cat-A-Log',
     type: 'website',
+    images: ['/og-image.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Cat-A-Log',
     description: 'Crowdsourced cat registry — tag, track, and identify cats in your area.',
+    images: ['/og-image.png'],
   },
   appleWebApp: {
     capable: true,
