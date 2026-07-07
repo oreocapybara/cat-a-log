@@ -189,11 +189,51 @@ Rules:
 - Use the body to explain _what_ and _why_, not _how_
 - Breaking changes add `!` after the scope: `feat(db)!: rename profiles.handle to username`
 
+## Branching strategy
+
+This project uses a three-tier branch model: **main ← dev ← feature branches**.
+
+```
+main          (production — always deployable, receives PRs only from dev)
+ └── dev      (integration — accumulates completed features, receives PRs from feature branches)
+      ├── feat/map-clustering
+      ├── fix/proxy-session-cookie
+      └── chore/upgrade-next
+```
+
+### Branch roles
+
+| Branch                                               | Purpose                     | Receives merges from      | Deploys to      |
+| ---------------------------------------------------- | --------------------------- | ------------------------- | --------------- |
+| `main`                                               | Production-ready code       | `dev` only (via PR)       | Production      |
+| `dev`                                                | Integration & stabilization | Feature branches (via PR) | Preview/staging |
+| `feat/*`, `fix/*`, `chore/*`, `refactor/*`, `docs/*` | Individual units of work    | —                         | CI only         |
+
+### Rules
+
+- **Never push directly to `main` or `dev`.** All changes arrive via pull request.
+- Feature branches are always created from `dev` and PR'd back into `dev`.
+- `dev` is promoted to `main` via a "Release: dev → main" PR when the accumulated work is ready for production.
+- Branch names use a type prefix matching the commit convention: `feat/`, `fix/`, `chore/`, `refactor/`, `docs/`.
+
+### Automation (GitHub Actions)
+
+- **Auto PR to dev** (`.github/workflows/auto-pr.yml`): When you push a feature branch (`feat/**`, `fix/**`, `chore/**`, `refactor/**`, `docs/**`), a PR targeting `dev` is automatically created if one doesn't already exist.
+- **Auto PR to main** (`.github/workflows/auto-pr-main.yml`): When `dev` is updated, a "Release: dev → main" PR is automatically created or kept open.
+
+### When finishing work
+
+- The default base branch for PRs is **`dev`**, not `main`.
+- Use the `finishing-a-development-branch` skill — it detects the base branch and offers merge/PR/keep/discard options.
+- Only merge `dev → main` when you're ready to release accumulated changes to production.
+
 ## CI / quality gates
 
 ### GitHub Actions (`.github/workflows/ci.yml`)
 
-Runs on every PR and every push to any branch except `main`. Steps in order:
+Runs on every PR and every push to any branch except `main` and `dev` (those branches only receive PRs, and the PR trigger covers them). Steps:
+
+**Job 1 — Lint, Format, Type-check & Build:**
 
 1. `npm ci` — clean install
 2. `npm run format:check` — Prettier must pass with no diffs
@@ -201,7 +241,13 @@ Runs on every PR and every push to any branch except `main`. Steps in order:
 4. `npm run type-check` — `tsc --noEmit` with strict mode
 5. `npm run build` — full Next.js production build
 
-The build step requires two repository secrets (Settings → Secrets and variables → Actions):
+**Job 2 — Coverage, Bundle Analysis & Lighthouse** (runs after Job 1 passes):
+
+6. `npm run test:coverage` — run tests with coverage
+7. `npm run analyze` — bundle size analysis (non-blocking)
+8. Lighthouse CI (non-blocking)
+
+The build step requires repository secrets (Settings → Secrets and variables → Actions):
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
