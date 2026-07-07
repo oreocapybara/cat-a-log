@@ -11,6 +11,7 @@ import {
 import { OrangeWipe } from './components/OrangeWipe'
 import { Hook } from './scenes/Hook'
 import { LogoReveal } from './scenes/LogoReveal'
+import { FirstTag } from './scenes/FirstTag'
 
 const Placeholder: React.FC = () => (
   <div
@@ -58,6 +59,14 @@ export const RemotionRoot: React.FC = () => {
         id="LogoReveal"
         component={LogoReveal}
         durationInFrames={SCENE_DURATIONS.logoReveal}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="FirstTag"
+        component={FirstTag}
+        durationInFrames={SCENE_DURATIONS.firstTag}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
