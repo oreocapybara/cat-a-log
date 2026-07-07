@@ -18,7 +18,7 @@ import type { CatTag, NearbyCat } from '@/lib/supabase/types'
 
 const CatMap = dynamic(() => import('./components/cat-map').then((mod) => mod.CatMap), {
   ssr: false,
-  loading: () => <MapSkeleton />,
+  loading: () => <MapSkeleton phase="map-loading" />,
 })
 
 const INITIAL_RADIUS_KM = 2
