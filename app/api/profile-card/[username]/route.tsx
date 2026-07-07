@@ -174,18 +174,15 @@ export async function GET(_request: Request, { params }: Props) {
                   ...(chipStyle.border ? { border: chipStyle.border } : {}),
                 }}
               >
-                {chipStyle.leadingGlyph && (
-                  <span
-                    style={{
-                      color: chipStyle.glyphColor ?? tier.accent,
-                      fontSize: Math.round(14 * S),
-                      fontFamily: 'Fredoka',
-                      fontWeight: 700,
-                      lineHeight: 1,
-                    }}
+                {chipStyle.leadingSvgPath && (
+                  <svg
+                    width={Math.round(14 * S)}
+                    height={Math.round(14 * S)}
+                    viewBox="0 0 24 24"
+                    fill={chipStyle.glyphColor ?? tier.accent}
                   >
-                    {chipStyle.leadingGlyph}
-                  </span>
+                    <path d={chipStyle.leadingSvgPath} />
+                  </svg>
                 )}
                 <span
                   style={{
