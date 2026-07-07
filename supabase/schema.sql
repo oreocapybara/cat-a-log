@@ -144,8 +144,7 @@ CREATE POLICY "Match votes are publicly readable"
 CREATE POLICY "Authenticated users can propose matches"
   ON match_votes FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "System can update match vote counts"
-  ON match_votes FOR UPDATE USING (auth.role() = 'authenticated');
+-- No UPDATE policy: vote counts are maintained by trigger, not client updates
 
 -- MATCH VOTE ENTRIES
 CREATE POLICY "Vote entries are publicly readable"
@@ -153,6 +152,41 @@ CREATE POLICY "Vote entries are publicly readable"
 
 CREATE POLICY "Authenticated users can vote"
   ON match_vote_entries FOR INSERT WITH CHECK (auth.uid() = voted_by);
+
+-- ============================================================
+-- MATCH VOTE AGGREGATION TRIGGER
+-- Automatically updates vote counts when entries are added
+-- ============================================================
+CREATE OR REPLACE FUNCTION update_match_vote_counts()
+RETURNS trigger AS $$
+BEGIN
+  UPDATE match_votes
+  SET
+    votes_confirm = (
+      SELECT COUNT(*) FROM match_vote_entries
+      WHERE match_vote_id = NEW.match_vote_id AND vote = 'confirm'
+    ),
+    votes_deny = (
+      SELECT COUNT(*) FROM match_vote_entries
+      WHERE match_vote_id = NEW.match_vote_id AND vote = 'deny'
+    ),
+    status = CASE
+      WHEN (SELECT COUNT(*) FROM match_vote_entries WHERE match_vote_id = NEW.match_vote_id AND vote = 'confirm') >= 3 THEN 'merged'
+      WHEN (SELECT COUNT(*) FROM match_vote_entries WHERE match_vote_id = NEW.match_vote_id AND vote = 'deny') >= 3 THEN 'rejected'
+      ELSE 'pending'
+    END
+  WHERE id = NEW.match_vote_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
+
+CREATE TRIGGER match_vote_entries_after_insert_update_counts
+  AFTER INSERT ON match_vote_entries
+  FOR EACH ROW
+  EXECUTE FUNCTION update_match_vote_counts();
+
+-- Restrict direct calls — only triggers should fire this
+REVOKE EXECUTE ON FUNCTION update_match_vote_counts() FROM PUBLIC, anon, authenticated;
 
 -- ============================================================
 -- HELPER FUNCTION: Nearby Cats
