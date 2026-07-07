@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CatchCardShareButton } from '@/app/components/catch-card-share-button'
+import { CatchCardImage } from '@/app/components/catch-card-image'
 
 export default function TagCompletePage() {
   const router = useRouter()
@@ -32,11 +33,11 @@ export default function TagCompletePage() {
       <h1 className="font-heading text-2xl font-bold tracking-tight">You found {name}!</h1>
       <p className="text-muted-foreground mt-1 text-sm">Added to the registry. Show it off.</p>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <CatchCardImage
         src={cardUrl}
         alt={`${name}'s catch card`}
-        className="border-border motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 mt-6 w-full max-w-xs rounded-2xl border shadow-lg motion-safe:duration-500"
+        isNewCatch={true}
+        className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 mt-6 w-full max-w-xs motion-safe:duration-500"
       />
 
       <div className="mt-8 w-full max-w-sm space-y-3">
@@ -45,7 +46,7 @@ export default function TagCompletePage() {
           downloadFilename={`${name}-catch-card.png`}
           shareTitle={`I found ${name} on Cat-A-Log`}
           shareText={`I just tagged ${name} on Cat-A-Log 🐾`}
-          sharePath={`/map?cat=${catId}`}
+          sharePath={`/cat/${catId}`}
         />
         <button
           type="button"
