@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cat-a-log-v1';
+const CACHE_NAME = 'cat-a-log-v2';
 const STATIC_ASSETS = [
   '/',
   '/map',
@@ -25,34 +25,47 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API routes, cache-first for static assets
+// Fetch: network-first for navigation and static assets
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET and API routes — always go to network
-  if (request.method !== 'GET' || url.pathname.startsWith('/api/')) {
+  // Skip non-GET requests — let the browser handle them
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Skip API routes and Supabase requests — always go to network
+  if (url.pathname.startsWith('/api/') || url.origin !== self.location.origin) {
     return;
   }
 
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Cache a clone of the response for static assets
-        if (response.ok && !url.pathname.startsWith('/api/')) {
+        // Cache successful responses
+        if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
       })
-      .catch(() => {
+      .catch(async () => {
         // Fallback to cache when offline
-        return caches.match(request).then((cached) => {
-          if (cached) return cached;
-          // For navigation requests, return the cached home page
-          if (request.mode === 'navigate') {
-            return caches.match('/');
-          }
+        const cached = await caches.match(request);
+        if (cached) return cached;
+
+        // For navigation requests, return the cached home page as a fallback
+        if (request.mode === 'navigate') {
+          const fallback = await caches.match('/');
+          if (fallback) return fallback;
+        }
+
+        // Last resort: return a proper offline response
+        return new Response('Offline', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: { 'Content-Type': 'text/plain' },
         });
       })
   );
