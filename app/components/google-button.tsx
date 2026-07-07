@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { notify } from '@/lib/toast'
+import { getSafeRedirect } from '@/lib/safe-redirect'
 
 function GoogleLogo() {
   return (
@@ -32,14 +33,6 @@ function getAppOrigin() {
   return (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, '')
 }
 
-function getSafeReturnTo(returnTo: string | undefined) {
-  if (!returnTo || !returnTo.startsWith('/') || returnTo.startsWith('//')) {
-    return null
-  }
-
-  return returnTo
-}
-
 export function GoogleButton({ label, returnTo }: { label: string; returnTo?: string }) {
   const [loading, setLoading] = useState(false)
 
@@ -47,9 +40,10 @@ export function GoogleButton({ label, returnTo }: { label: string; returnTo?: st
     setLoading(true)
     const supabase = createClient()
     const callbackUrl = new URL('/auth/callback', getAppOrigin())
-    const safeReturnTo = getSafeReturnTo(returnTo)
+    const safeReturnTo = getSafeRedirect(returnTo)
 
-    if (safeReturnTo) {
+    // Only append returnTo if it differs from the default fallback
+    if (safeReturnTo !== '/map') {
       callbackUrl.searchParams.set('returnTo', safeReturnTo)
     }
 

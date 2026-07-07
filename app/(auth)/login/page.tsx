@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { GoogleButton } from '@/app/components/google-button'
 import { useReturnTo } from '@/lib/use-return-to'
 import { notify } from '@/lib/toast'
+import { getSafeRedirect } from '@/lib/safe-redirect'
 
 const loginSchema = z.object({
   email: z.string().email('Enter a valid email address'),
@@ -92,7 +93,7 @@ export default function LoginPage() {
       if (!profile) {
         router.push(`/setup-profile${returnTo ? `?returnTo=${encodeURIComponent(returnTo)}` : ''}`)
       } else {
-        router.push(returnTo || '/map')
+        router.push(getSafeRedirect(returnTo))
       }
     }
   }

@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useReturnTo } from '@/lib/use-return-to'
 import { notify } from '@/lib/toast'
+import { getSafeRedirect } from '@/lib/safe-redirect'
 
 const profileSchema = z.object({
   username: z
@@ -82,7 +83,7 @@ export default function SetupProfilePage() {
     }
 
     notify.success('welcome', { values: { username: data.username } })
-    router.push(returnTo || '/map')
+    router.push(getSafeRedirect(returnTo))
   }
 
   return (
