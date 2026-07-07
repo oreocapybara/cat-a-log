@@ -25,6 +25,7 @@ export function NameScreen({
   onNext: (name: string) => void
 }) {
   const [rolling, setRolling] = useState(false)
+  const [placeholder] = useState(() => generateCatName())
 
   const {
     register,
@@ -34,7 +35,7 @@ export function NameScreen({
     formState: { errors },
   } = useForm<NameForm>({
     resolver: zodResolver(nameSchema),
-    defaultValues: { name: generateCatName() },
+    defaultValues: { name: '' },
   })
 
   const nameValue = watch('name')
@@ -69,7 +70,7 @@ export function NameScreen({
         </div>
         <h1 className="font-heading text-2xl font-bold tracking-tight">New cat unlocked!</h1>
         <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-          Every cat deserves a name. We picked one — keep it or make it yours.
+          Every cat deserves a name. Type one in or roll the dice.
         </p>
       </div>
 
@@ -87,6 +88,7 @@ export function NameScreen({
               <Input
                 id="catName"
                 maxLength={30}
+                placeholder={placeholder}
                 className={cn(
                   'rounded-xl py-6 text-center text-lg font-semibold transition-all',
                   rolling &&
@@ -102,11 +104,11 @@ export function NameScreen({
           <Button
             type="button"
             variant="outline"
-            className="w-full rounded-xl py-5"
+            className="border-primary/30 text-primary hover:bg-primary/5 w-full rounded-xl py-5 font-medium"
             onClick={rollName}
           >
             <Dices className={cn('h-4 w-4 transition-transform', rolling && 'rotate-180')} />
-            Roll another name
+            Roll a name
           </Button>
         </div>
 
