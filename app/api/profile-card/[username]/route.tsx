@@ -200,6 +200,7 @@ export async function GET(_request: Request, { params }: Props) {
               <div style={{ display: 'flex', gap: Math.round(5 * S) }}>
                 {([1, 2, 3, 4, 5, 6] as const).map((i) => {
                   const filled = i <= tier.dotsFilled
+                  const dotShadow = rarityDotShadow(tier, filled)
                   return (
                     <div
                       key={i}
@@ -208,7 +209,7 @@ export async function GET(_request: Request, { params }: Props) {
                         height: Math.round(10 * S),
                         borderRadius: 9999,
                         backgroundColor: filled ? tier.accent : '#e0dbd4',
-                        boxShadow: rarityDotShadow(tier, filled),
+                        ...(dotShadow ? { boxShadow: dotShadow } : {}),
                       }}
                     />
                   )
@@ -238,7 +239,7 @@ export async function GET(_request: Request, { params }: Props) {
                     overflow: 'hidden',
                     border: `${Math.round(9 * S)}px solid #fff`,
                     outline: photoOutline.border,
-                    boxShadow: photoOutline.boxShadow,
+                    ...(photoOutline.boxShadow ? { boxShadow: photoOutline.boxShadow } : {}),
                     opacity: photoOutline.opacity ?? 1,
                   }}
                 >
