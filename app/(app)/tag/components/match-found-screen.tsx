@@ -215,20 +215,50 @@ export function MatchFoundScreen({
       }
     }
 
-    // Insert new tags
+    // Insert new tags — if a tag was previously resolved (row exists but
+    // resolved_at is set), reactivate it instead of inserting a duplicate.
     if (selectedNewTags.length > 0) {
-      const { error } = await supabase.from('cat_tags').insert(
-        selectedNewTags.map((tag) => ({
-          cat_id: cat.id,
-          tag,
-          added_by: user.id,
-        }))
-      )
+      // Check which tags already have a resolved row in the DB
+      const { data: existingRows } = await supabase
+        .from('cat_tags')
+        .select('tag')
+        .eq('cat_id', cat.id)
+        .in('tag', selectedNewTags)
 
-      if (error) {
-        notify.error('save-tag-failed')
-        setSavingEdit(false)
-        return
+      const existingTagValues = new Set((existingRows ?? []).map((r) => r.tag))
+      const trulyNewTags = selectedNewTags.filter((t) => !existingTagValues.has(t))
+      const tagsToReactivate = selectedNewTags.filter((t) => existingTagValues.has(t))
+
+      // Insert genuinely new tags
+      if (trulyNewTags.length > 0) {
+        const { error } = await supabase.from('cat_tags').insert(
+          trulyNewTags.map((tag) => ({
+            cat_id: cat.id,
+            tag,
+            added_by: user.id,
+          }))
+        )
+
+        if (error) {
+          notify.error('save-tag-failed')
+          setSavingEdit(false)
+          return
+        }
+      }
+
+      // Reactivate previously resolved tags
+      for (const tag of tagsToReactivate) {
+        const { error } = await supabase
+          .from('cat_tags')
+          .update({ resolved_at: null, resolved_by: null })
+          .eq('cat_id', cat.id)
+          .eq('tag', tag)
+
+        if (error) {
+          notify.error('save-tag-failed')
+          setSavingEdit(false)
+          return
+        }
       }
     }
 
