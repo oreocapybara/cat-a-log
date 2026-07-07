@@ -476,6 +476,76 @@
   animation: gallery-lightbox-contract 250ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+/* ── Catch card glow animations ── */
+
+/* New catch: celebratory pulse that plays 3× then settles to a static glow.
+   UX guideline: infinite animations for loading only; achievement moments
+   use finite bursts then rest. */
+@keyframes catch-card-glow-new {
+  0% {
+    box-shadow:
+      0 0 16px 0 rgba(249, 115, 22, 0.3),
+      0 0 40px 0 rgba(249, 115, 22, 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 32px 6px rgba(249, 115, 22, 0.55),
+      0 0 64px 12px rgba(249, 115, 22, 0.2);
+  }
+  100% {
+    box-shadow:
+      0 0 16px 0 rgba(249, 115, 22, 0.3),
+      0 0 40px 0 rgba(249, 115, 22, 0.12);
+  }
+}
+
+/* Skeleton shimmer for card loading placeholder */
+@keyframes catch-card-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.catch-card-new {
+  animation: catch-card-glow-new 1.6s ease-out 3;
+  box-shadow:
+    0 0 16px 0 rgba(249, 115, 22, 0.3),
+    0 0 40px 0 rgba(249, 115, 22, 0.12);
+}
+
+.catch-card-existing {
+  box-shadow: 0 0 14px 0 rgba(249, 115, 22, 0.12);
+}
+
+.catch-card-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in srgb, var(--muted-foreground) 10%, transparent) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: catch-card-shimmer 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catch-card-new {
+    animation: none;
+    box-shadow:
+      0 0 16px 0 rgba(249, 115, 22, 0.3),
+      0 0 40px 0 rgba(249, 115, 22, 0.12);
+  }
+  .catch-card-existing {
+    box-shadow: 0 0 14px 0 rgba(249, 115, 22, 0.12);
+  }
+  .catch-card-shimmer {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .map-marker-pop {
     animation: none;

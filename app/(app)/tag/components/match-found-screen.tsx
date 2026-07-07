@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   MapPin,
@@ -10,25 +10,29 @@ import {
   AlertTriangle,
   Sparkles,
   Loader2,
+  Stethoscope,
+  Skull,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { CatchCardShareButton } from '@/app/components/catch-card-share-button'
+import { CatchCardImage } from '@/app/components/catch-card-image'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { notify } from '@/lib/toast'
 import { cn } from '@/lib/utils'
 import type { NearbyCat, CatTag } from '@/lib/supabase/types'
+import type { LucideIcon } from 'lucide-react'
 
-const TAG_LABELS: Record<string, { label: string; emoji: string }> = {
-  needs_medical: { label: 'Needs medical', emoji: '🩺' },
-  possible_rabies: { label: 'Possible rabies', emoji: '⚠️' },
-  deceased: { label: 'Passed away', emoji: '🕊️' },
+const TAG_META: Record<string, { label: string; icon: LucideIcon }> = {
+  needs_medical: { label: 'Needs medical', icon: Stethoscope },
+  possible_rabies: { label: 'Possible rabies', icon: AlertTriangle },
+  deceased: { label: 'Passed away', icon: Skull },
 }
 
 const MEDICAL_TAGS = [
-  { value: 'needs_medical', label: 'Needs medical', emoji: '🩺', color: 'amber' },
-  { value: 'possible_rabies', label: 'Possible rabies', emoji: '⚠️', color: 'red' },
-  { value: 'deceased', label: 'Passed away', emoji: '🕊️', color: 'slate' },
+  { value: 'needs_medical', label: 'Needs medical', icon: Stethoscope, color: 'amber' },
+  { value: 'possible_rabies', label: 'Possible rabies', icon: AlertTriangle, color: 'red' },
+  { value: 'deceased', label: 'Passed away', icon: Skull, color: 'slate' },
 ] as const
 
 export function MatchFoundScreen({
@@ -49,11 +53,14 @@ export function MatchFoundScreen({
   const [saving, setSaving] = useState(true)
   const [showContent, setShowContent] = useState(false)
   const [sightingId, setSightingId] = useState<string | null>(null)
+  const [actualTimesSpotted, setActualTimesSpotted] = useState<number | null>(null)
+  const recordedRef = useRef(false)
 
   // Community editing state
   const [editExpanded, setEditExpanded] = useState(false)
   const [editNotes, setEditNotes] = useState(cat.notes ?? '')
   const [selectedNewTags, setSelectedNewTags] = useState<string[]>([])
+  const [tagsToResolve, setTagsToResolve] = useState<string[]>([])
   const [savingEdit, setSavingEdit] = useState(false)
   const [editSaved, setEditSaved] = useState(false)
 
@@ -64,6 +71,9 @@ export function MatchFoundScreen({
 
   useEffect(() => {
     async function recordSighting() {
+      if (recordedRef.current) return
+      recordedRef.current = true
+
       const supabase = createClient()
 
       const [{ data: tagRows }, { data: userData }] = await Promise.all([
@@ -120,6 +130,13 @@ export function MatchFoundScreen({
         notify.error('unknown-error')
       } else if (sightingRow) {
         setSightingId(sightingRow.id)
+
+        // Fetch the actual sighting count from DB so the display is accurate
+        const { count } = await supabase
+          .from('sightings')
+          .select('id', { count: 'exact', head: true })
+          .eq('cat_id', cat.id)
+        setActualTimesSpotted(1 + (count ?? 0))
       }
 
       setSaving(false)
@@ -161,7 +178,14 @@ export function MatchFoundScreen({
     )
   }
 
-  const hasEdits = editNotes !== (cat.notes ?? '') || selectedNewTags.length > 0
+  function toggleResolveTag(value: string) {
+    setTagsToResolve((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    )
+  }
+
+  const hasEdits =
+    editNotes !== (cat.notes ?? '') || selectedNewTags.length > 0 || tagsToResolve.length > 0
 
   async function handleSaveEdits() {
     setSavingEdit(true)
@@ -206,6 +230,28 @@ export function MatchFoundScreen({
         setSavingEdit(false)
         return
       }
+    }
+
+    // Resolve existing tags
+    if (tagsToResolve.length > 0) {
+      const now = new Date().toISOString()
+      for (const tag of tagsToResolve) {
+        const { error } = await supabase
+          .from('cat_tags')
+          .update({ resolved_at: now, resolved_by: user.id })
+          .eq('cat_id', cat.id)
+          .eq('tag', tag)
+          .is('resolved_at', null)
+
+        if (error) {
+          notify.error('save-tag-failed')
+          setSavingEdit(false)
+          return
+        }
+      }
+
+      // Remove resolved tags from local state
+      setTags((prev) => prev.filter((t) => !tagsToResolve.includes(t.tag)))
     }
 
     setSavingEdit(false)
@@ -265,7 +311,9 @@ export function MatchFoundScreen({
         <div className="mt-4 flex items-center justify-center gap-4">
           {cat.times_spotted > 0 && (
             <div className="flex flex-col items-center">
-              <span className="text-foreground text-lg font-bold">{cat.times_spotted + 1}</span>
+              <span className="text-foreground text-lg font-bold">
+                {actualTimesSpotted ?? cat.times_spotted + 1}
+              </span>
               <span className="text-muted-foreground text-xs">sightings</span>
             </div>
           )}
@@ -289,13 +337,14 @@ export function MatchFoundScreen({
               </span>
             )}
             {tags.map((tag) => {
-              const info = TAG_LABELS[tag.tag] ?? { label: tag.tag, emoji: '🏷️' }
+              const info = TAG_META[tag.tag] ?? { label: tag.tag, icon: AlertTriangle }
+              const Icon = info.icon
               return (
                 <span
                   key={tag.id}
                   className="bg-destructive/10 text-destructive inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
                 >
-                  {info.emoji} {info.label}
+                  <Icon className="h-3 w-3" /> {info.label}
                 </span>
               )
             })}
@@ -305,11 +354,11 @@ export function MatchFoundScreen({
         {/* Catch card */}
         {sightingId && (
           <div className="mt-6 flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <CatchCardImage
               src={`/api/catch-card?sightingId=${sightingId}`}
               alt={`${cat.name ?? 'This cat'}'s catch card`}
-              className="border-border motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 w-full max-w-[220px] rounded-2xl border shadow-lg motion-safe:duration-500"
+              isNewCatch={false}
+              className="motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 w-full max-w-[220px] motion-safe:duration-500"
             />
           </div>
         )}
@@ -361,6 +410,46 @@ export function MatchFoundScreen({
                   />
                 </div>
 
+                {/* Resolve existing health flags */}
+                {tags.length > 0 && (
+                  <div className="bg-card/80 ring-border space-y-3 rounded-2xl p-4 ring-1 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <Check className="text-muted-foreground h-3.5 w-3.5" />
+                      <span className="text-sm font-semibold">Active flags</span>
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      Tap to mark as resolved if the issue has been addressed.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tagRow) => {
+                        const meta = MEDICAL_TAGS.find((t) => t.value === tagRow.tag)
+                        const isMarkedForResolve = tagsToResolve.includes(tagRow.tag)
+                        const Icon = meta?.icon ?? AlertTriangle
+                        return (
+                          <button
+                            key={tagRow.id}
+                            type="button"
+                            onClick={() => toggleResolveTag(tagRow.tag)}
+                            className={cn(
+                              'flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-medium ring-1 transition-all duration-200 active:scale-95',
+                              isMarkedForResolve
+                                ? 'bg-emerald-50 text-emerald-700 line-through ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:ring-emerald-700/50'
+                                : 'bg-destructive/10 text-destructive ring-destructive/20 hover:ring-destructive/40'
+                            )}
+                          >
+                            {isMarkedForResolve ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <Icon className="h-4 w-4" />
+                            )}
+                            <span>{meta?.label ?? tagRow.tag}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Health flags */}
                 {availableTags.length > 0 && (
                   <div className="bg-card/80 ring-border space-y-3 rounded-2xl p-4 ring-1 backdrop-blur-sm">
@@ -387,7 +476,7 @@ export function MatchFoundScreen({
                                 : 'bg-muted/50 text-muted-foreground ring-border hover:bg-muted'
                             )}
                           >
-                            <span className="text-base leading-none">{tag.emoji}</span>
+                            <tag.icon className="h-4 w-4" />
                             <span>{tag.label}</span>
                             {isChecked && <Check className="h-3 w-3" />}
                           </button>
@@ -441,7 +530,7 @@ export function MatchFoundScreen({
             downloadFilename={`${cat.name ?? 'cat'}-catch-card.png`}
             shareTitle={`I spotted ${cat.name ?? 'a cat'} on Cat-A-Log`}
             shareText={`I just spotted ${cat.name ?? 'a cat'} again on Cat-A-Log 🐾`}
-            sharePath={`/map?cat=${cat.id}`}
+            sharePath={`/cat/${cat.id}`}
           />
         )}
         <Button
