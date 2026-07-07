@@ -150,6 +150,88 @@
   }
 }
 
+/* ── Map skeleton: orchestrated loading motion ── */
+
+/* Main paw: gentle breathing scale */
+@keyframes paw-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.55;
+  }
+}
+
+/* Radial glow behind the paw: expands/fades opposite to paw scale */
+@keyframes paw-glow {
+  0%,
+  100% {
+    transform: scale(1.1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.15;
+  }
+}
+
+/* Trailing paw prints: fade in then breathe softly */
+@keyframes trail-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) translateY(4px);
+  }
+  100% {
+    opacity: 0.2;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Status text: slide up and fade in */
+@keyframes status-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.map-skeleton-pulse {
+  animation: paw-pulse 2s ease-in-out infinite;
+}
+
+.map-skeleton-glow {
+  animation: paw-glow 2s ease-in-out infinite;
+}
+
+.map-skeleton-trail {
+  opacity: 0;
+  animation: trail-appear 0.4s ease-out forwards;
+}
+
+.map-skeleton-trail-1 {
+  animation-delay: 0.2s;
+}
+
+.map-skeleton-trail-2 {
+  animation-delay: 0.45s;
+}
+
+.map-skeleton-trail-3 {
+  animation-delay: 0.7s;
+}
+
+.map-skeleton-status {
+  opacity: 0;
+  animation: status-reveal 0.5s ease-out 0.9s forwards;
+}
+
 /* Map screen motion (cat markers, user-location dot, tile loading) */
 @keyframes bounce-in {
   0% {
@@ -547,6 +629,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .map-skeleton-pulse {
+    animation: none;
+    opacity: 0.35;
+  }
+  .map-skeleton-glow {
+    animation: none;
+    opacity: 0.25;
+  }
+  .map-skeleton-trail {
+    animation: none;
+    opacity: 0.15;
+  }
+  .map-skeleton-status {
+    animation: none;
+    opacity: 1;
+  }
   .map-marker-pop {
     animation: none;
   }
