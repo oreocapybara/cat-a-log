@@ -12,7 +12,7 @@
 
 - Tone: neutral-professional (no emojis, no puns, no cutesy language)
 - No badges or images
-- `<repo-url>` left as placeholder in clone command (no GitHub URL confirmed)
+- `https://github.com/oreocapybara/cat-a-log.git` used as repo URL in clone command
 - License line is "TBD"
 - All Supabase CLI commands use `npx supabase` (no global install required)
 
@@ -88,7 +88,7 @@ Before you begin, make sure you have:
 ## Clone & Install
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/oreocapybara/cat-a-log.git
 cd Cat-A-Log
 npm ci
 ```
