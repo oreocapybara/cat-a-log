@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     // Agent worktree artifacts:
     '.claude/**',
+    '.worktrees/**',
+    // Generated submission packaging:
+    'submission/**',
     // Third-party skill scripts (CommonJS, not app code):
     'superpowers/**',
     '.kiro/**',
