@@ -16,6 +16,8 @@ import { TechClip } from './scenes/TechClip'
 import { MapPopulates } from './scenes/MapPopulates'
 import { AIMatch } from './scenes/AIMatch'
 import { VotingVision } from './scenes/VotingVision'
+import { TechSimilarity } from './scenes/TechSimilarity'
+import { WelfareFlag } from './scenes/WelfareFlag'
 
 const Placeholder: React.FC = () => (
   <div
@@ -103,6 +105,22 @@ export const RemotionRoot: React.FC = () => {
         id="VotingVision"
         component={VotingVision}
         durationInFrames={SCENE_DURATIONS.votingVision}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="TechSimilarity"
+        component={TechSimilarity}
+        durationInFrames={SCENE_DURATIONS.techSimilarity}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="WelfareFlag"
+        component={WelfareFlag}
+        durationInFrames={SCENE_DURATIONS.welfareFlag}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
