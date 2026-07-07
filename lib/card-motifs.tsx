@@ -30,8 +30,11 @@ export function tierFrameStyle(tier: CardTier): TierFrameStyle {
       return { border: `${Math.round(7 * S)}px dashed ${tier.accent}` }
 
     case 'lurker':
-      // Double-line border
-      return { border: `${Math.round(7 * S)}px double ${tier.accent}` }
+      // Double-line effect: solid border + inset shadow ring (Satori can't parse border-style:double)
+      return {
+        border: `${Math.round(3 * S)}px solid ${tier.accent}`,
+        boxShadow: `inset 0 0 0 ${Math.round(3 * S)}px #fffdf9, inset 0 0 0 ${Math.round(5 * S)}px ${tier.accent}`,
+      }
 
     case 'urbanLegend':
       // Gold gradient border via transparent border + background-clip trick
@@ -60,7 +63,8 @@ export type TierChipOverride = {
   borderRadius?: number
   border?: string
   background?: string
-  leadingGlyph?: string // prepended text glyph (★, ♛, ✦)
+  leadingGlyph?: string // prepended text glyph — DEPRECATED, use leadingSvgPath
+  leadingSvgPath?: string // SVG path d="" for Satori-safe rendering
   glyphColor?: string
 }
 
@@ -73,20 +77,21 @@ export function tierChipStyle(tier: CardTier): TierChipOverride {
     case 'streetRoyalty':
       return {
         border: `${Math.round(2 * S)}px solid ${tier.accent}54`,
-        leadingGlyph: '♛',
+        leadingSvgPath: 'M2 20h20v2H2v-2zm1-7l4 4 5-7 5 7 4-4-1 9H4L3 13zm9-11l2.5 5h-5L12 2z',
         glyphColor: tier.accent,
       }
 
     case 'localCelebrity':
       return {
-        leadingGlyph: '★',
+        leadingSvgPath:
+          'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
         glyphColor: tier.accent,
       }
 
     case 'urbanLegend':
       return {
         background: 'linear-gradient(135deg,#fdf1d6,#fde68a)',
-        leadingGlyph: '✦',
+        leadingSvgPath: 'M12 0l3 9h9l-7.5 5.5L19.5 24 12 18l-7.5 6 3-9.5L0 9h9z',
         glyphColor: '#d97706',
       }
 
@@ -152,7 +157,7 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
       break
 
     case 'regular':
-      // Star sticker badge on photo top-right
+      // Star sticker badge on photo top-right (SVG star — Satori can't render ★ glyph from Fredoka)
       decorations.push(
         <div
           key="regular-sticker"
@@ -171,23 +176,20 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
             boxShadow: `0 ${Math.round(6 * S)}px ${Math.round(14 * S)}px rgba(0,0,0,.18)`,
           }}
         >
-          <span
-            style={{
-              color: '#fff',
-              fontSize: Math.round(24 * S),
-              fontFamily: 'Fredoka',
-              fontWeight: 700,
-              lineHeight: 1,
-            }}
+          <svg
+            width={Math.round(24 * S)}
+            height={Math.round(24 * S)}
+            viewBox="0 0 24 24"
+            fill="white"
           >
-            ★
-          </span>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
         </div>
       )
       break
 
     case 'localCelebrity':
-      // Two starbursts — top-left and bottom-right
+      // Two starbursts — top-left and bottom-right (SVG — Satori can't render ★ glyph)
       decorations.push(
         <div
           key="celeb-star-tl"
@@ -200,18 +202,14 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
             justifyContent: 'center',
           }}
         >
-          <span
-            style={{
-              color: tier.accent,
-              fontSize: Math.round(36 * S),
-              fontFamily: 'Fredoka',
-              fontWeight: 700,
-              textShadow: `0 ${Math.round(3 * S)}px 0 #fff`,
-              lineHeight: 1,
-            }}
+          <svg
+            width={Math.round(36 * S)}
+            height={Math.round(36 * S)}
+            viewBox="0 0 24 24"
+            fill={tier.accent}
           >
-            ★
-          </span>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
         </div>,
         <div
           key="celeb-star-br"
@@ -224,24 +222,20 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
             justifyContent: 'center',
           }}
         >
-          <span
-            style={{
-              color: tier.accent,
-              fontSize: Math.round(26 * S),
-              fontFamily: 'Fredoka',
-              fontWeight: 700,
-              textShadow: `0 ${Math.round(3 * S)}px 0 #fff`,
-              lineHeight: 1,
-            }}
+          <svg
+            width={Math.round(26 * S)}
+            height={Math.round(26 * S)}
+            viewBox="0 0 24 24"
+            fill={tier.accent}
           >
-            ★
-          </span>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
         </div>
       )
       break
 
     case 'streetRoyalty':
-      // Crown centered above the photo
+      // Crown centered above the photo (SVG — Satori can't render ♛ glyph)
       decorations.push(
         <div
           key="royalty-crown"
@@ -255,24 +249,20 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
             justifyContent: 'center',
           }}
         >
-          <span
-            style={{
-              color: tier.accent,
-              fontSize: Math.round(46 * S),
-              fontFamily: 'Fredoka',
-              fontWeight: 700,
-              textShadow: `0 ${Math.round(3 * S)}px 0 #fff`,
-              lineHeight: 1,
-            }}
+          <svg
+            width={Math.round(46 * S)}
+            height={Math.round(46 * S)}
+            viewBox="0 0 24 24"
+            fill={tier.accent}
           >
-            ♛
-          </span>
+            <path d="M2 20h20v2H2v-2zm1-7l4 4 5-7 5 7 4-4-1 9H4L3 13zm9-11l2.5 5h-5L12 2z" />
+          </svg>
         </div>
       )
       break
 
     case 'urbanLegend':
-      // Three sparkles around photo
+      // Three sparkles around photo (SVG — Satori can't render ✦ glyph)
       decorations.push(
         <div
           key="legend-sparkle-1"
@@ -283,18 +273,14 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
             display: 'flex',
           }}
         >
-          <span
-            style={{
-              color: '#d97706',
-              fontSize: Math.round(30 * S),
-              fontFamily: 'Fredoka',
-              fontWeight: 700,
-              textShadow: `0 ${Math.round(2 * S)}px 0 #fff`,
-              lineHeight: 1,
-            }}
+          <svg
+            width={Math.round(30 * S)}
+            height={Math.round(30 * S)}
+            viewBox="0 0 24 24"
+            fill="#d97706"
           >
-            ✦
-          </span>
+            <path d="M12 0l3 9h9l-7.5 5.5L19.5 24 12 18l-7.5 6 3-9.5L0 9h9z" />
+          </svg>
         </div>,
         <div
           key="legend-sparkle-2"
@@ -305,18 +291,14 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
             display: 'flex',
           }}
         >
-          <span
-            style={{
-              color: '#fbbf24',
-              fontSize: Math.round(22 * S),
-              fontFamily: 'Fredoka',
-              fontWeight: 700,
-              textShadow: `0 ${Math.round(2 * S)}px 0 #fff`,
-              lineHeight: 1,
-            }}
+          <svg
+            width={Math.round(22 * S)}
+            height={Math.round(22 * S)}
+            viewBox="0 0 24 24"
+            fill="#fbbf24"
           >
-            ✦
-          </span>
+            <path d="M12 0l3 9h9l-7.5 5.5L19.5 24 12 18l-7.5 6 3-9.5L0 9h9z" />
+          </svg>
         </div>,
         <div
           key="legend-sparkle-3"
@@ -327,18 +309,14 @@ export function tierPhotoDecorations(tier: CardTier): React.ReactElement[] {
             display: 'flex',
           }}
         >
-          <span
-            style={{
-              color: '#fbbf24',
-              fontSize: Math.round(22 * S),
-              fontFamily: 'Fredoka',
-              fontWeight: 700,
-              textShadow: `0 ${Math.round(2 * S)}px 0 #fff`,
-              lineHeight: 1,
-            }}
+          <svg
+            width={Math.round(22 * S)}
+            height={Math.round(22 * S)}
+            viewBox="0 0 24 24"
+            fill="#fbbf24"
           >
-            ✦
-          </span>
+            <path d="M12 0l3 9h9l-7.5 5.5L19.5 24 12 18l-7.5 6 3-9.5L0 9h9z" />
+          </svg>
         </div>
       )
       break
