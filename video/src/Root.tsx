@@ -18,6 +18,9 @@ import { AIMatch } from './scenes/AIMatch'
 import { VotingVision } from './scenes/VotingVision'
 import { TechSimilarity } from './scenes/TechSimilarity'
 import { WelfareFlag } from './scenes/WelfareFlag'
+import { CatchCard } from './scenes/CatchCard'
+import { TechStack } from './scenes/TechStack'
+import { Closing } from './scenes/Closing'
 
 const Placeholder: React.FC = () => (
   <div
@@ -121,6 +124,30 @@ export const RemotionRoot: React.FC = () => {
         id="WelfareFlag"
         component={WelfareFlag}
         durationInFrames={SCENE_DURATIONS.welfareFlag}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="CatchCard"
+        component={CatchCard}
+        durationInFrames={SCENE_DURATIONS.catchCard}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="TechStack"
+        component={TechStack}
+        durationInFrames={SCENE_DURATIONS.techStack}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="Closing"
+        component={Closing}
+        durationInFrames={SCENE_DURATIONS.closing}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
