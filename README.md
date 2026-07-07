@@ -1,8 +1,109 @@
 # Cat-A-Log
 
-A crowdsourced stray cat registry. Tag cats you spot with a photo and GPS location, view them on a map, and vote on whether two records are the same animal. Built as a mobile-first progressive web app.
+<p align="center">
+  <img src="public/app1.png" alt="Map view with cat markers" width="200" />
+  <img src="public/app2.png" alt="Tag a cat flow" width="200" />
+  <img src="public/app3.png" alt="User profile" width="200" />
+  <img src="public/app4.png" alt="Cat collection card" width="200" />
+</p>
 
-**Stack:** Next.js 16 · TypeScript · Supabase · Tailwind CSS
+<p align="center">
+  <a href="https://github.com/oreocapybara/cat-a-log">GitHub</a> · <a href="https://cat-a-log-oreo.vercel.app">Live Demo</a>
+</p>
+
+A crowdsourced stray cat registry. Tag cats you spot with a photo and GPS location, view them on a map, and help the community track and care for neighborhood strays. Built as a mobile-first progressive web app.
+
+**Stack:** Next.js 16 · TypeScript · Supabase · Tailwind CSS · Voyage AI
+
+## Features
+
+### 🗺️ Interactive Cat Map
+
+- Real-time map showing all tagged cats in your area as photo markers with orange ring borders
+- GPS-based nearby cat discovery using PostGIS spatial queries
+- Smart marker clustering — groups overlapping pins at low zoom, expands on tap
+- "Search this area" pill for exploring beyond your initial radius
+- Cat name search bar with autocomplete — fly to any cat on the map
+- Filter sheet — filter by ear-tipped (TNR) status or welfare tags (needs medical, possible rabies, deceased)
+- Cat preview card — tap any marker to see name, photo, sighting count, tier, distance, and welfare flags
+- Locate me button with follow mode — continuously tracks your position
+- Welfare indicator badges on markers (color-coded urgency levels)
+- Resolve/unresolve welfare tags directly from the map card
+
+### 📸 Tag a Cat (Photo-First Catch Flow)
+
+- Multi-step wizard: Photo → Match → Name → Details
+- Camera or gallery photo capture with image editing (crop/resize)
+- Auto GPS lock from device location with manual "Adjust on map" fallback (interactive Leaflet picker)
+- **AI-powered duplicate detection** — compares your photo against nearby cats using Voyage AI multimodal embeddings (`voyage-multimodal-3`) and pgvector cosine similarity re-ranking
+- Candidate matching screen (max 2 candidates + "None of these" to reduce cognitive load)
+- If matched to an existing cat: add a new sighting with optional welfare tags and notes
+- If new cat: name it (or get a random fun name), mark TNR status, add notes, attach welfare flags
+- Shareable catch card generated on successful tag
+
+### 🃏 Shareable Catch Cards
+
+- Auto-generated collectible-style cards for each cat you tag
+- Tier system based on sighting count: Stray → Lurker → Regular → Local Celebrity → Street Royalty → Urban Legend
+- Tier-specific visual styling (colors, accents, glow effects for top tiers)
+- Share via Web Share API (mobile) or download as PNG (desktop)
+- OG image generation for social media link previews (Open Graph + Twitter cards)
+
+### 👤 User Profiles
+
+- Google OAuth sign-in (Supabase Auth)
+- Custom username + bio on first setup
+- Avatar upload with live preview
+- Public profile pages (`/profile/:username`) with social media card metadata
+- Stats: cats tagged count + total sightings across all your cats
+- Featured cat card — auto-selects your most-spotted cat, or manually pin one
+- "My Cats" list with welfare tags, sighting counts, and tier badges
+- Theme toggle (light/dark mode)
+
+### 🏥 Welfare & Medical Flags
+
+- Tag cats with fixed vocabulary: `needs_medical`, `possible_rabies`, `deceased`
+- TNR (Trap-Neuter-Return) status tracked via ear-tipped field
+- Color-coded urgency on map markers and preview cards
+- Community members can resolve flags when issues are addressed (with undo support)
+
+### 📱 Progressive Web App
+
+- Installable on mobile (standalone display, home screen icon)
+- Service worker with network-first caching strategy
+- Offline support for static assets and previously visited pages
+- Portrait-primary orientation lock
+- Orange theme color matching the app brand
+
+### 🔒 Security
+
+- Row-Level Security (RLS) on all Supabase tables
+- Proxy-based route guard — unauthenticated users redirected to login
+- Session refresh on every request
+- Safe redirect validation (prevents open redirects)
+- Server-side and client-side Supabase client separation
+- Environment variable isolation (API keys server-only)
+
+### ♿ Accessibility
+
+- `prefers-reduced-motion` fallback on all animations
+- WCAG AA contrast on urgency/welfare colors
+- 44px minimum touch targets
+- Keyboard-navigable with visible focus states
+- Semantic HTML with proper ARIA labels
+- Mobile-first responsive design (thumb-friendly, one-handed outdoor use)
+
+### 🛠️ Developer Experience
+
+- TypeScript strict mode
+- React Hook Form + Zod schema validation
+- Vitest unit tests with coverage reporting
+- Playwright end-to-end tests
+- ESLint + Prettier with Husky pre-commit hooks
+- GitHub Actions CI (lint → format → type-check → build → test → coverage → Lighthouse)
+- Conventional Commits with auto-PR workflows
+- Sentry error monitoring (client, server, edge)
+- Bundle analysis
 
 ## Prerequisites
 
