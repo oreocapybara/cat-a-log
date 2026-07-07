@@ -15,7 +15,7 @@ Before you begin, make sure you have:
 ## Clone & Install
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/oreocapybara/cat-a-log.git
 cd Cat-A-Log
 npm ci
 ```
