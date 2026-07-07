@@ -12,6 +12,8 @@ import { OrangeWipe } from './components/OrangeWipe'
 import { Hook } from './scenes/Hook'
 import { LogoReveal } from './scenes/LogoReveal'
 import { FirstTag } from './scenes/FirstTag'
+import { TechClip } from './scenes/TechClip'
+import { MapPopulates } from './scenes/MapPopulates'
 
 const Placeholder: React.FC = () => (
   <div
@@ -67,6 +69,22 @@ export const RemotionRoot: React.FC = () => {
         id="FirstTag"
         component={FirstTag}
         durationInFrames={SCENE_DURATIONS.firstTag}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="TechClip"
+        component={TechClip}
+        durationInFrames={SCENE_DURATIONS.techClip}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="MapPopulates"
+        component={MapPopulates}
+        durationInFrames={SCENE_DURATIONS.mapPopulates}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
