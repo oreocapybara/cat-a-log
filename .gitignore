@@ -55,3 +55,11 @@ next-env.d.ts
 
 .superpowers/
 .kiro/
+
+# submission packaging
+submission/
+Cat-A-Log-submission.zip
+.worktrees/
+
+# video (Remotion)
+video/
