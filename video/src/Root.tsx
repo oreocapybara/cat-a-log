@@ -14,6 +14,8 @@ import { LogoReveal } from './scenes/LogoReveal'
 import { FirstTag } from './scenes/FirstTag'
 import { TechClip } from './scenes/TechClip'
 import { MapPopulates } from './scenes/MapPopulates'
+import { AIMatch } from './scenes/AIMatch'
+import { VotingVision } from './scenes/VotingVision'
 
 const Placeholder: React.FC = () => (
   <div
@@ -85,6 +87,22 @@ export const RemotionRoot: React.FC = () => {
         id="MapPopulates"
         component={MapPopulates}
         durationInFrames={SCENE_DURATIONS.mapPopulates}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="AIMatch"
+        component={AIMatch}
+        durationInFrames={SCENE_DURATIONS.aiMatch}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="VotingVision"
+        component={VotingVision}
+        durationInFrames={SCENE_DURATIONS.votingVision}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
