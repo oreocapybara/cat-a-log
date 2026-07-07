@@ -15,6 +15,17 @@ export const metadata: Metadata = {
   title: 'Cat-A-Log',
   description: 'Crowdsourced cat registry — tag, track, and identify cats in your area.',
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'Cat-A-Log',
+    description: 'Crowdsourced cat registry — tag, track, and identify cats in your area.',
+    siteName: 'Cat-A-Log',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cat-A-Log',
+    description: 'Crowdsourced cat registry — tag, track, and identify cats in your area.',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
