@@ -14,15 +14,28 @@ type AvatarCropScreenProps = {
 
 function buildValidatedUrl(baseUrl: string): string {
   try {
+    const url = new URL(baseUrl)
+
+    // Blob URLs are local to the browser — no network request, no SSRF risk
+    if (url.protocol === 'blob:') {
+      return baseUrl
+    }
+
     // Minimal path validation
     if (baseUrl.includes('/../') || /\/%2e%2e\//i.test(baseUrl)) {
       throw new Error('Invalid path')
     }
 
-    const url = new URL(baseUrl)
-
     // Protocol + host checks
-    const allowedDomains = ['example.com'] // add your allowed domains here
+    const allowedDomains = [
+      'localhost',
+      '127.0.0.1',
+      'izmgruerqrbbovaigjqg.supabase.co',
+      'avatars.githubusercontent.com',
+      'lh3.googleusercontent.com',
+      'graph.facebook.com',
+      'pbs.twimg.com',
+    ]
     if (!allowedDomains.includes(url.hostname)) {
       throw new Error('Invalid host')
     }
