@@ -1,6 +1,14 @@
 import React from 'react'
 import { Composition } from 'remotion'
-import { FPS, WIDTH, HEIGHT, SCENE_DURATIONS, TOTAL_DURATION } from './constants/timing'
+import {
+  FPS,
+  WIDTH,
+  HEIGHT,
+  SCENE_DURATIONS,
+  TOTAL_DURATION,
+  WIPE_DURATION,
+} from './constants/timing'
+import { OrangeWipe } from './components/OrangeWipe'
 
 const Placeholder: React.FC = () => (
   <div
@@ -24,6 +32,14 @@ export const RemotionRoot: React.FC = () => {
         id="DemoVideo"
         component={Placeholder}
         durationInFrames={TOTAL_DURATION}
+        fps={FPS}
+        width={WIDTH}
+        height={HEIGHT}
+      />
+      <Composition
+        id="OrangeWipe"
+        component={OrangeWipe}
+        durationInFrames={WIPE_DURATION}
         fps={FPS}
         width={WIDTH}
         height={HEIGHT}
