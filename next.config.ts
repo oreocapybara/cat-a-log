@@ -1,5 +1,7 @@
 import path from 'node:path'
 import type { NextConfig } from 'next'
+import { withSentryConfig } from '@sentry/nextjs'
+import withBundleAnalyzer from '@next/bundle-analyzer'
 
 // Content Security Policy directives.
 // next/font self-hosts fonts, so no external font-src needed.
@@ -19,8 +21,8 @@ const cspDirectives = [
   "img-src 'self' blob: data: https://*.supabase.co https://*.basemaps.cartocdn.com",
   // Fonts: self-hosted by next/font
   "font-src 'self'",
-  // Connect: self, blob (canvas/image exports), Supabase (auth + realtime + storage), CARTO tiles (fetched by Leaflet)
-  "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.basemaps.cartocdn.com",
+  // Connect: self, blob (canvas/image exports), Supabase (auth + realtime + storage), CARTO tiles (fetched by Leaflet), Sentry
+  "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://*.basemaps.cartocdn.com https://*.ingest.sentry.io",
   // Frames: none needed
   "frame-src 'none'",
   // Objects: disallow plugins
@@ -43,6 +45,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     // A parent directory's package-lock.json otherwise gets misdetected as the workspace root.
     root: path.join(__dirname),
+  },
+
+  // Dev logging: log all fetch() calls with full URL and cache status
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
   },
 
   async headers() {
@@ -76,4 +85,25 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+// Conditionally wrap with bundle analyzer
+const withAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
+
+// Wrap with Sentry for source maps + auto-instrumentation
+export default withSentryConfig(withAnalyzer(nextConfig), {
+  // Suppresses source map upload logs during build
+  silent: !process.env.CI,
+
+  // Upload source maps for better error debugging
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Only upload source maps when auth token is available (CI)
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Wipe source maps after upload to keep bundle clean
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+})
