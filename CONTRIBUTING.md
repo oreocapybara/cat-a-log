@@ -63,8 +63,52 @@ GitHub Actions runs on every pull request:
 
 All steps must pass for a PR to be mergeable.
 
-## Branch Workflow
+## Branching Strategy
 
-- Don't push directly to `main` — create a branch and open a pull request
-- Keep PRs focused on a single change
-- Make sure CI passes before requesting review
+This project uses a three-tier branch model: **main ← dev ← feature branches**.
+
+```
+main          (production — always deployable)
+ └── dev      (integration — accumulates completed features)
+      ├── feat/map-clustering
+      ├── fix/proxy-session-cookie
+      └── chore/upgrade-next
+```
+
+### Branch roles
+
+| Branch                                               | Purpose                     | Receives merges from      |
+| ---------------------------------------------------- | --------------------------- | ------------------------- |
+| `main`                                               | Production-ready code       | `dev` only (via PR)       |
+| `dev`                                                | Integration & stabilization | Feature branches (via PR) |
+| `feat/*`, `fix/*`, `chore/*`, `refactor/*`, `docs/*` | Individual units of work    | —                         |
+
+### Rules
+
+1. **Never push directly to `main` or `dev`.** All changes arrive via pull request.
+2. Create feature branches from `dev` and PR them back into `dev`.
+3. Promote `dev` to `main` via a "Release: dev → main" PR when ready for production.
+4. Branch names use a type prefix matching commit conventions: `feat/`, `fix/`, `chore/`, `refactor/`, `docs/`.
+5. Keep PRs focused on a single change.
+6. Make sure CI passes before requesting review.
+
+### Typical workflow
+
+```bash
+# Start new work
+git checkout dev
+git pull
+git checkout -b feat/my-feature
+
+# ... make changes, commit ...
+
+# Push — a PR to dev is auto-created by GitHub Actions
+git push -u origin feat/my-feature
+```
+
+### Automation
+
+- **Push a feature branch** → GitHub Actions auto-creates a PR targeting `dev`.
+- **dev is updated** → GitHub Actions auto-creates/updates a "Release: dev → main" PR.
+
+You don't need to manually create PRs in most cases — just push your branch.
