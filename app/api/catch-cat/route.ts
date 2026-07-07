@@ -31,6 +31,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Verify the user has a profile row — the cats.tagged_by FK references profiles(id)
+  const { data: profile } = await supabase.from('profiles').select('id').eq('id', user.id).single()
+
+  if (!profile) {
+    return NextResponse.json(
+      { error: 'Profile not found — please complete your profile first', code: 'NO_PROFILE' },
+      { status: 403 }
+    )
+  }
+
   let embedding: number[] | null = null
   try {
     embedding = await getImageEmbedding(photoUrl)

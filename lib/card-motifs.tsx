@@ -111,10 +111,8 @@ export type PhotoOutlineStyle = {
 export function tierPhotoOutline(tier: CardTier): PhotoOutlineStyle {
   switch (tier.key) {
     case 'stray':
-      // Lower opacity outline
       return {
         border: `${Math.round(3 * S)}px solid ${tier.accent}`,
-        opacity: 0.53,
       }
 
     case 'urbanLegend':
