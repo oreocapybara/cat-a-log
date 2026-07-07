@@ -15,7 +15,7 @@ const PUBLIC_ROUTES = [
 ]
 
 // Prefix-based public routes (matches any path starting with these)
-const PUBLIC_PREFIXES = ['/profile/', '/api/profile-card/', '/api/catch-card']
+const PUBLIC_PREFIXES = ['/profile/', '/cat/', '/api/profile-card/', '/api/catch-card']
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
